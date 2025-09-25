@@ -5,7 +5,9 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "express-validator": "^7.2.1",
+    "ollama": "^0.5.18",
     "path": "^0.12.7",
     "path-to-regexp": "^8.3.0"
-  }
+  },
+  "type": "module"
 }
