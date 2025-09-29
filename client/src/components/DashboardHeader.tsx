@@ -2,6 +2,8 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
+import ClientThemeToggle from './ClientThemeToggle'
 
 export default function DashboardHeader() {
   const router = useRouter()
@@ -85,11 +87,12 @@ export default function DashboardHeader() {
   return (
     <div className="dashboard-header">
       <div className="logo-section" onClick={handleLogoClick}>
-        <div className="logo-placeholder">🍆</div>
+        <Image src="/logo.png" alt="EggplantEDU Logo" className="header-logo" width={32} height={32} />
         <span className="service-name">EggplantEDU</span>
       </div>
       <h1 className={`page-title ${isTitleChanging ? 'changing' : ''}`}>{currentTitle}</h1>
       <div className="account-section">
+        <ClientThemeToggle />
         <div className="account-settings">
           <div className="profile-picture">
             <div className="profile-placeholder">👤</div>

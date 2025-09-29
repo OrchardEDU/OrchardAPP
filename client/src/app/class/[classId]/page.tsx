@@ -94,7 +94,7 @@ export default function ClassPage() {
   }
 
   const handleBackToHome = () => {
-    router.push('/')
+    router.push('/dashboard')
   }
 
   return (
