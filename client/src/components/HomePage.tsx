@@ -1,315 +1,239 @@
 'use client'
 
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function HomePage() {
-  const [expandedSections, setExpandedSections] = useState({
-    recent: false,
-    classes: false,
-    resources: false
-  })
+  const router = useRouter()
 
-  const toggleExpand = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }))
+  const handleClassClick = (classId: string) => {
+    router.push(`/class/${classId}`)
   }
+
+  const handleCreateClass = () => {
+    alert('Create new class functionality coming soon!')
+  }
+
   return (
     <div className="page-content">
-      <div className="dashboard-content">
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h2>Recent</h2>
+      <div className="dashboard-layout">
+        {/* Left Activity Feed */}
+        <div className="activity-feed">
+          <div className="activity-header">
+            <h3>Recent Activity</h3>
           </div>
-          <div className={`section-content ${expandedSections.recent ? 'expanded' : ''}`}>
-            <div className={`scrollable-container ${expandedSections.recent ? 'expanded-grid' : ''}`} onWheel={(e) => {
-              if (!expandedSections.recent) {
-                const container = e.currentTarget;
-                if (e.deltaY > 0) {
-                  container.scrollLeft += 50;
-                } else {
-                  container.scrollLeft -= 50;
-                }
-              }
-            }}>
-              <div className={`placeholder-grid ${expandedSections.recent ? 'grid-layout' : 'horizontal-scroll'}`}>
-                <div className="placeholder-card create-inspiration">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📄</div>
-                    <div className="placeholder-title">Recent Lesson Plan</div>
-                    <div className="placeholder-subtitle">Created 2 hours ago</div>
-                  </div>
+          <div className="activity-content">
+            <div className="activity-item">
+              <div className="activity-icon">📝</div>
+              <div className="activity-details">
+                <div className="activity-title">Assignment Due Tomorrow</div>
+                <div className="activity-subtitle">Math 101 - Calculus Problem Set</div>
+                <div className="activity-time">2 hours ago</div>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-icon">🎯</div>
+              <div className="activity-details">
+                <div className="activity-title">New Project Posted</div>
+                <div className="activity-subtitle">Science 201 - Lab Report</div>
+                <div className="activity-time">4 hours ago</div>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-icon">✅</div>
+              <div className="activity-details">
+                <div className="activity-title">Quiz Graded</div>
+                <div className="activity-subtitle">History 150 - World War II</div>
+                <div className="activity-time">1 day ago</div>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-icon">📋</div>
+              <div className="activity-details">
+                <div className="activity-title">Test Scheduled</div>
+                <div className="activity-subtitle">English 101 - Midterm Exam</div>
+                <div className="activity-time">2 days ago</div>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-icon">🔔</div>
+              <div className="activity-details">
+                <div className="activity-title">Student Question</div>
+                <div className="activity-subtitle">Physics 201 - Office Hours</div>
+                <div className="activity-time">3 days ago</div>
+              </div>
+            </div>
+            <div className="activity-item">
+              <div className="activity-icon">📊</div>
+              <div className="activity-details">
+                <div className="activity-title">Grades Updated</div>
+                <div className="activity-subtitle">All Classes - Final Grades</div>
+                <div className="activity-time">1 week ago</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Classes Section */}
+        <div className="classes-main">
+          <div className="classes-header">
+            <h2>My Classes</h2>
+          </div>
+          <div className="classes-content">
+            <div className="classes-grid">
+              <div className="class-card create-class" onClick={handleCreateClass}>
+                <div className="class-content">
+                  <div className="class-icon">➕</div>
+                  <div className="class-title">Create New Class</div>
+                  <div className="class-subtitle">Start building your classroom</div>
                 </div>
-                <div className="placeholder-card create-inspiration">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">✅</div>
-                    <div className="placeholder-title">Math Quiz</div>
-                    <div className="placeholder-subtitle">Completed yesterday</div>
-                  </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('math101')}>
+                <div className="class-content">
+                  <div className="class-icon">🧮</div>
+                  <div className="class-title">Math 101</div>
+                  <div className="class-subtitle">Calculus I</div>
+                  <div className="class-stats">24 students</div>
                 </div>
-                <div className="placeholder-card create-inspiration">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🎯</div>
-                    <div className="placeholder-title">Science Project</div>
-                    <div className="placeholder-subtitle">Updated 3 days ago</div>
-                  </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('science201')}>
+                <div className="class-content">
+                  <div className="class-icon">🔬</div>
+                  <div className="class-title">Science 201</div>
+                  <div className="class-subtitle">General Chemistry</div>
+                  <div className="class-stats">18 students</div>
                 </div>
-                <div className="placeholder-card create-inspiration">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📝</div>
-                    <div className="placeholder-title">English Assignment</div>
-                    <div className="placeholder-subtitle">Due next week</div>
-                  </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('english101')}>
+                <div className="class-content">
+                  <div className="class-icon">📚</div>
+                  <div className="class-title">English 101</div>
+                  <div className="class-subtitle">Composition</div>
+                  <div className="class-stats">22 students</div>
                 </div>
-                <div className="placeholder-card create-inspiration">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📋</div>
-                    <div className="placeholder-title">History Test</div>
-                    <div className="placeholder-subtitle">Graded last week</div>
-                  </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('history150')}>
+                <div className="class-content">
+                  <div className="class-icon">🌍</div>
+                  <div className="class-title">History 150</div>
+                  <div className="class-subtitle">World History</div>
+                  <div className="class-stats">30 students</div>
                 </div>
-                <div className="placeholder-card create-inspiration">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📊</div>
-                    <div className="placeholder-title">Grade Report</div>
-                    <div className="placeholder-subtitle">Updated 4 days ago</div>
-                  </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('physics201')}>
+                <div className="class-content">
+                  <div className="class-icon">⚡</div>
+                  <div className="class-title">Physics 201</div>
+                  <div className="class-subtitle">Mechanics</div>
+                  <div className="class-stats">16 students</div>
                 </div>
-                <div className="placeholder-card create-inspiration">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🎨</div>
-                    <div className="placeholder-title">Art Project</div>
-                    <div className="placeholder-subtitle">Submitted yesterday</div>
-                  </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('art101')}>
+                <div className="class-content">
+                  <div className="class-icon">🎨</div>
+                  <div className="class-title">Art 101</div>
+                  <div className="class-subtitle">Drawing Fundamentals</div>
+                  <div className="class-stats">12 students</div>
                 </div>
-                <div className="placeholder-card create-inspiration">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🔬</div>
-                    <div className="placeholder-title">Lab Report</div>
-                    <div className="placeholder-subtitle">Due tomorrow</div>
-                  </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('pe101')}>
+                <div className="class-content">
+                  <div className="class-icon">🏃</div>
+                  <div className="class-title">PE 101</div>
+                  <div className="class-subtitle">Physical Education</div>
+                  <div className="class-stats">25 students</div>
                 </div>
-                <div className="placeholder-card create-inspiration">
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📝</div>
-                    <div className="placeholder-title">Essay Draft</div>
-                    <div className="placeholder-subtitle">In progress</div>
-                  </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('music101')}>
+                <div className="class-content">
+                  <div className="class-icon">🎵</div>
+                  <div className="class-title">Music 101</div>
+                  <div className="class-subtitle">Music Theory</div>
+                  <div className="class-stats">15 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('biology201')}>
+                <div className="class-content">
+                  <div className="class-icon">🧬</div>
+                  <div className="class-title">Biology 201</div>
+                  <div className="class-subtitle">Cell Biology</div>
+                  <div className="class-stats">28 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('psychology101')}>
+                <div className="class-content">
+                  <div className="class-icon">🧠</div>
+                  <div className="class-title">Psychology 101</div>
+                  <div className="class-subtitle">Introduction to Psychology</div>
+                  <div className="class-stats">32 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('economics101')}>
+                <div className="class-content">
+                  <div className="class-icon">💰</div>
+                  <div className="class-title">Economics 101</div>
+                  <div className="class-subtitle">Microeconomics</div>
+                  <div className="class-stats">20 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('computer101')}>
+                <div className="class-content">
+                  <div className="class-icon">💻</div>
+                  <div className="class-title">Computer Science 101</div>
+                  <div className="class-subtitle">Programming Fundamentals</div>
+                  <div className="class-stats">35 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('geography101')}>
+                <div className="class-content">
+                  <div className="class-icon">🌎</div>
+                  <div className="class-title">Geography 101</div>
+                  <div className="class-subtitle">World Geography</div>
+                  <div className="class-stats">18 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('philosophy101')}>
+                <div className="class-content">
+                  <div className="class-icon">🤔</div>
+                  <div className="class-title">Philosophy 101</div>
+                  <div className="class-subtitle">Introduction to Philosophy</div>
+                  <div className="class-stats">14 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('sociology101')}>
+                <div className="class-content">
+                  <div className="class-icon">👥</div>
+                  <div className="class-title">Sociology 101</div>
+                  <div className="class-subtitle">Introduction to Sociology</div>
+                  <div className="class-stats">26 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('statistics101')}>
+                <div className="class-content">
+                  <div className="class-icon">📊</div>
+                  <div className="class-title">Statistics 101</div>
+                  <div className="class-subtitle">Elementary Statistics</div>
+                  <div className="class-stats">22 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('literature101')}>
+                <div className="class-content">
+                  <div className="class-icon">📖</div>
+                  <div className="class-title">Literature 101</div>
+                  <div className="class-subtitle">World Literature</div>
+                  <div className="class-stats">19 students</div>
+                </div>
+              </div>
+              <div className="class-card" onClick={() => handleClassClick('chemistry201')}>
+                <div className="class-content">
+                  <div className="class-icon">⚗️</div>
+                  <div className="class-title">Chemistry 201</div>
+                  <div className="class-subtitle">Organic Chemistry</div>
+                  <div className="class-stats">17 students</div>
                 </div>
               </div>
             </div>
-            <button className="expand-button bottom-right" onClick={() => toggleExpand('recent')}>
-              <span className="expand-text">expand</span>
-              <span className={`expand-arrow ${expandedSections.recent ? 'expanded' : ''}`}>▼</span>
-            </button>
           </div>
         </div>
-        
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h2>Classes</h2>
-          </div>
-          <div className={`section-content ${expandedSections.classes ? 'expanded' : ''}`}>
-            <div className={`scrollable-container ${expandedSections.classes ? 'expanded-grid' : ''}`} onWheel={(e) => {
-              if (!expandedSections.classes) {
-                const container = e.currentTarget;
-                if (e.deltaY > 0) {
-                  container.scrollLeft += 50;
-                } else {
-                  container.scrollLeft -= 50;
-                }
-              }
-            }}>
-              <div className={`placeholder-grid ${expandedSections.classes ? 'grid-layout' : 'horizontal-scroll'}`}>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">➕</div>
-                    <div className="placeholder-title">Create New Class</div>
-                    <div className="placeholder-subtitle">Start building your classroom</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🏫</div>
-                    <div className="placeholder-title">Create your first class!</div>
-                    <div className="placeholder-subtitle">Start building your classroom community</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📚</div>
-                    <div className="placeholder-title">Add another class</div>
-                    <div className="placeholder-subtitle">Organize different subjects or grade levels</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">👥</div>
-                    <div className="placeholder-title">Create study groups</div>
-                    <div className="placeholder-subtitle">Set up collaborative learning spaces</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🔬</div>
-                    <div className="placeholder-title">Lab Sessions</div>
-                    <div className="placeholder-subtitle">Organize hands-on experiments</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🎨</div>
-                    <div className="placeholder-title">Art Workshop</div>
-                    <div className="placeholder-subtitle">Creative expression sessions</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">💻</div>
-                    <div className="placeholder-title">Computer Science</div>
-                    <div className="placeholder-subtitle">Programming fundamentals</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🌍</div>
-                    <div className="placeholder-title">Geography</div>
-                    <div className="placeholder-subtitle">World cultures and maps</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🎵</div>
-                    <div className="placeholder-title">Music Theory</div>
-                    <div className="placeholder-subtitle">Harmony and composition</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🏃</div>
-                    <div className="placeholder-title">Physical Education</div>
-                    <div className="placeholder-subtitle">Sports and fitness</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Create new class!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🧪</div>
-                    <div className="placeholder-title">Chemistry Lab</div>
-                    <div className="placeholder-subtitle">Advanced experiments</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <button className="expand-button bottom-right" onClick={() => toggleExpand('classes')}>
-              <span className="expand-text">expand</span>
-              <span className={`expand-arrow ${expandedSections.classes ? 'expanded' : ''}`}>▼</span>
-            </button>
-          </div>
-        </div>
-        
-        <div className="dashboard-section">
-          <div className="section-header">
-            <h2>Resources</h2>
-          </div>
-          <div className={`section-content ${expandedSections.resources ? 'expanded' : ''}`}>
-            <div className={`scrollable-container ${expandedSections.resources ? 'expanded-grid' : ''}`} onWheel={(e) => {
-              if (!expandedSections.resources) {
-                const container = e.currentTarget;
-                if (e.deltaY > 0) {
-                  container.scrollLeft += 50;
-                } else {
-                  container.scrollLeft -= 50;
-                }
-              }
-            }}>
-              <div className={`placeholder-grid ${expandedSections.resources ? 'grid-layout' : 'horizontal-scroll'}`}>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">➕</div>
-                    <div className="placeholder-title">Add New Resource</div>
-                    <div className="placeholder-subtitle">Share your materials</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📄</div>
-                    <div className="placeholder-title">Upload your first resource!</div>
-                    <div className="placeholder-subtitle">Share documents, links, and materials</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🔗</div>
-                    <div className="placeholder-title">Add external links</div>
-                    <div className="placeholder-subtitle">Connect to useful websites and tools</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📁</div>
-                    <div className="placeholder-title">Organize folders</div>
-                    <div className="placeholder-subtitle">Create collections for different topics</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📊</div>
-                    <div className="placeholder-title">Data Sheets</div>
-                    <div className="placeholder-subtitle">Spreadsheets and analytics</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🎥</div>
-                    <div className="placeholder-title">Video Library</div>
-                    <div className="placeholder-subtitle">Educational videos and tutorials</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📚</div>
-                    <div className="placeholder-title">Textbook PDFs</div>
-                    <div className="placeholder-subtitle">Digital textbooks and readings</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🎮</div>
-                    <div className="placeholder-title">Interactive Games</div>
-                    <div className="placeholder-subtitle">Educational games and simulations</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📋</div>
-                    <div className="placeholder-title">Assessment Rubrics</div>
-                    <div className="placeholder-subtitle">Grading criteria and standards</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">🔧</div>
-                    <div className="placeholder-title">Tools & Software</div>
-                    <div className="placeholder-subtitle">Educational software and apps</div>
-                  </div>
-                </div>
-                <div className="placeholder-card create-inspiration" onClick={() => alert('Add new resource!')}>
-                  <div className="placeholder-content">
-                    <div className="placeholder-icon">📝</div>
-                    <div className="placeholder-title">Templates</div>
-                    <div className="placeholder-subtitle">Reusable document templates</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <button className="expand-button bottom-right" onClick={() => toggleExpand('resources')}>
-              <span className="expand-text">expand</span>
-              <span className={`expand-arrow ${expandedSections.resources ? 'expanded' : ''}`}>▼</span>
-            </button>
-          </div>
-        </div>
-        
       </div>
     </div>
   )
