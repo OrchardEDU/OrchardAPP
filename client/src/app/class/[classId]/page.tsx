@@ -1,11 +1,25 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
 
 export default function ClassPage() {
   const params = useParams()
   const router = useRouter()
+  
+  // Handle null params
+  if (!params || !params.classId) {
+    return (
+      <div className="page-content">
+        <div className="dashboard-layout">
+          <div className="error-message">
+            <h2>Invalid class ID</h2>
+            <p>No class ID provided in the URL.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
   const classId = params.classId as string
 
   // Mock class data
@@ -45,56 +59,12 @@ export default function ClassPage() {
     )
   }
 
-  // Mock data for class-specific content
-  const upcomingEvents = [
-    { id: 1, title: 'Quiz: Derivatives', date: 'Tomorrow', type: 'quiz', icon: '📝' },
-    { id: 2, title: 'Assignment: Integration Problems', date: 'Next Monday', type: 'assignment', icon: '📋' },
-    { id: 3, title: 'Midterm Exam', date: 'Next Friday', type: 'exam', icon: '📊' },
-    { id: 4, title: 'Project Presentation', date: 'In 2 weeks', type: 'project', icon: '🎯' }
-  ]
-
-  const gradeables = [
-    { id: 1, title: 'Homework 1: Limits', dueDate: '2024-01-15', status: 'graded', score: '95/100', icon: '📝' },
-    { id: 2, title: 'Quiz 1: Functions', dueDate: '2024-01-20', status: 'graded', score: '88/100', icon: '📋' },
-    { id: 3, title: 'Lab Report 1', dueDate: '2024-01-25', status: 'pending', score: null, icon: '🔬' },
-    { id: 4, title: 'Group Project', dueDate: '2024-02-01', status: 'pending', score: null, icon: '👥' }
-  ]
-
-  const students = [
-    { id: 1, name: 'Alice Johnson', email: 'alice.johnson@school.edu', grade: 'A', attendance: '95%', avatar: '👩‍🎓' },
-    { id: 2, name: 'Bob Smith', email: 'bob.smith@school.edu', grade: 'B+', attendance: '88%', avatar: '👨‍🎓' },
-    { id: 3, name: 'Carol Davis', email: 'carol.davis@school.edu', grade: 'A-', attendance: '92%', avatar: '👩‍🎓' },
-    { id: 4, name: 'David Wilson', email: 'david.wilson@school.edu', grade: 'B', attendance: '85%', avatar: '👨‍🎓' },
-    { id: 5, name: 'Emma Brown', email: 'emma.brown@school.edu', grade: 'A+', attendance: '98%', avatar: '👩‍🎓' }
-  ]
-
-  const courseMaterials = [
-    { id: 1, title: 'Chapter 1: Introduction', type: 'PDF', size: '2.3 MB', icon: '📄' },
-    { id: 2, title: 'Lecture Slides - Week 1', type: 'PPTX', size: '5.1 MB', icon: '📊' },
-    { id: 3, title: 'Assignment Template', type: 'DOCX', size: '1.2 MB', icon: '📝' },
-    { id: 4, title: 'Video: Basic Concepts', type: 'MP4', size: '45.2 MB', icon: '🎥' },
-    { id: 5, title: 'Practice Problems', type: 'PDF', size: '3.8 MB', icon: '📚' }
-  ]
-
-  // Navigation handlers
-  const handleUpcomingClick = () => {
-    router.push(`/class/${classId}/upcoming`)
-  }
-
-  const handleGradeablesClick = () => {
-    router.push(`/class/${classId}/gradeables`)
-  }
-
-  const handleStudentsClick = () => {
-    router.push(`/class/${classId}/students`)
-  }
-
-  const handleMaterialsClick = () => {
-    router.push(`/class/${classId}/materials`)
-  }
-
   const handleBackToHome = () => {
     router.push('/dashboard')
+  }
+
+  const handleNavigateToSection = (section: string) => {
+    router.push(`/class/${classId}/${section}`)
   }
 
   return (
@@ -130,26 +100,10 @@ export default function ClassPage() {
                 <div className="activity-time">1 day ago</div>
               </div>
             </div>
-            <div className="activity-item">
-              <div className="activity-icon">📋</div>
-              <div className="activity-details">
-                <div className="activity-title">Assignment Posted</div>
-                <div className="activity-subtitle">{currentClass.title} - Integration Problems</div>
-                <div className="activity-time">2 days ago</div>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-icon">🎯</div>
-              <div className="activity-details">
-                <div className="activity-title">Project Due</div>
-                <div className="activity-subtitle">{currentClass.title} - Final Project</div>
-                <div className="activity-time">3 days ago</div>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Main Class Content */}
+        {/* Main Content */}
         <div className="class-main">
           <div className="class-header">
             <div className="class-info">
@@ -169,108 +123,115 @@ export default function ClassPage() {
           </div>
 
           <div className="class-content">
-            {/* 2x2 Grid Layout */}
-            <div className="content-grid">
-              {/* Top Left - Upcoming */}
-              <div className="class-section clickable-section" onClick={handleUpcomingClick}>
+            <div className="class-sections">
+              <div className="class-section">
                 <div className="section-header">
-                  <h3>Upcoming</h3>
-                  <button className="section-action">View All</button>
+                  <h3>📊 Gradeables</h3>
+                  <button 
+                    className="section-btn" 
+                    onClick={() => handleNavigateToSection('gradeables')}
+                  >
+                    View All →
+                  </button>
                 </div>
                 <div className="section-content">
-                  <div className="upcoming-grid">
-                    {upcomingEvents.map((event) => (
-                      <div key={event.id} className="upcoming-card">
-                        <div className="upcoming-icon">{event.icon}</div>
-                        <div className="upcoming-details">
-                          <div className="upcoming-title">{event.title}</div>
-                          <div className="upcoming-date">{event.date}</div>
-                          <div className="upcoming-type">{event.type}</div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="upcoming-item">
+                    <div className="upcoming-icon">📝</div>
+                    <div className="upcoming-details">
+                      <div className="upcoming-title">Homework 1: Limits</div>
+                      <div className="upcoming-date">Due: 2024-01-15</div>
+                    </div>
+                  </div>
+                  <div className="upcoming-item">
+                    <div className="upcoming-icon">📋</div>
+                    <div className="upcoming-details">
+                      <div className="upcoming-title">Quiz 1: Functions</div>
+                      <div className="upcoming-date">Due: 2024-01-20</div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Top Right - Gradeables */}
-              <div className="class-section clickable-section" onClick={handleGradeablesClick}>
+              <div className="class-section">
                 <div className="section-header">
-                  <h3>Gradeables</h3>
-                  <div className="section-actions">
-                    <button className="action-btn settings-btn">⚙️</button>
-                    <button className="action-btn plus-btn">+</button>
-                  </div>
+                  <h3>👥 Students</h3>
+                  <button 
+                    className="section-btn" 
+                    onClick={() => handleNavigateToSection('students')}
+                  >
+                    View All →
+                  </button>
                 </div>
                 <div className="section-content">
-                  <div className="gradeables-list">
-                    {gradeables.map((item) => (
-                      <div key={item.id} className="gradeable-item">
-                        <div className="gradeable-icon">{item.icon}</div>
-                        <div className="gradeable-details">
-                          <div className="gradeable-title">{item.title}</div>
-                          <div className="gradeable-due">Due: {item.dueDate}</div>
-                          <div className={`gradeable-status ${item.status}`}>
-                            {item.status === 'graded' ? `Score: ${item.score}` : 'Pending'}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="student-item">
+                    <div className="student-avatar">👩‍🎓</div>
+                    <div className="student-details">
+                      <div className="student-name">Alice Johnson</div>
+                      <div className="student-attendance">95% attendance</div>
+                    </div>
+                  </div>
+                  <div className="student-item">
+                    <div className="student-avatar">👨‍🎓</div>
+                    <div className="student-details">
+                      <div className="student-name">Bob Smith</div>
+                      <div className="student-attendance">88% attendance</div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Left - Students */}
-              <div className="class-section clickable-section" onClick={handleStudentsClick}>
+              <div className="class-section">
                 <div className="section-header">
-                  <h3>Students</h3>
-                  <div className="section-actions">
-                    <button className="action-btn settings-btn">⚙️</button>
-                    <button className="action-btn plus-btn">+</button>
-                  </div>
+                  <h3>📚 Materials</h3>
+                  <button 
+                    className="section-btn" 
+                    onClick={() => handleNavigateToSection('materials')}
+                  >
+                    View All →
+                  </button>
                 </div>
                 <div className="section-content">
-                  <div className="students-grid">
-                    {students.map((student) => (
-                      <div key={student.id} className="student-card">
-                        <div className="student-avatar">{student.avatar}</div>
-                        <div className="student-details">
-                          <div className="student-name">{student.name}</div>
-                          <div className="student-email">{student.email}</div>
-                          <div className="student-stats">
-                            <span className="student-grade">Grade: {student.grade}</span>
-                            <span className="student-attendance">Attendance: {student.attendance}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="material-item">
+                    <div className="material-icon">📄</div>
+                    <div className="material-details">
+                      <div className="material-title">Chapter 1: Introduction</div>
+                      <div className="material-type">PDF - 2.3 MB</div>
+                    </div>
+                  </div>
+                  <div className="material-item">
+                    <div className="material-icon">📊</div>
+                    <div className="material-details">
+                      <div className="material-title">Lecture Slides - Week 1</div>
+                      <div className="material-type">PPTX - 5.1 MB</div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Bottom Right - Course Materials */}
-              <div className="class-section clickable-section" onClick={handleMaterialsClick}>
+              <div className="class-section">
                 <div className="section-header">
-                  <h3>Course Materials</h3>
-                  <div className="section-actions">
-                    <button className="action-btn settings-btn">⚙️</button>
-                    <button className="action-btn plus-btn">+</button>
-                  </div>
+                  <h3>📅 Upcoming</h3>
+                  <button 
+                    className="section-btn" 
+                    onClick={() => handleNavigateToSection('upcoming')}
+                  >
+                    View All →
+                  </button>
                 </div>
                 <div className="section-content">
-                  <div className="materials-list">
-                    {courseMaterials.map((material) => (
-                      <div key={material.id} className="material-item">
-                        <div className="material-icon">{material.icon}</div>
-                        <div className="material-details">
-                          <div className="material-title">{material.title}</div>
-                          <div className="material-meta">
-                            <span className="material-type">{material.type}</span>
-                            <span className="material-size">{material.size}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="upcoming-item">
+                    <div className="upcoming-icon">📋</div>
+                    <div className="upcoming-details">
+                      <div className="upcoming-title">Quiz 2: Derivatives</div>
+                      <div className="upcoming-date">Feb 5, 2024 at 10:00 AM</div>
+                    </div>
+                  </div>
+                  <div className="upcoming-item">
+                    <div className="upcoming-icon">📊</div>
+                    <div className="upcoming-details">
+                      <div className="upcoming-title">Midterm Exam</div>
+                      <div className="upcoming-date">Feb 15, 2024 at 9:00 AM</div>
+                    </div>
                   </div>
                 </div>
               </div>

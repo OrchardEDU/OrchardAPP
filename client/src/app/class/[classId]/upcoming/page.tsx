@@ -1,11 +1,25 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
 
 export default function UpcomingPage() {
   const params = useParams()
   const router = useRouter()
+  
+  // Handle null params
+  if (!params || !params.classId) {
+    return (
+      <div className="page-content">
+        <div className="dashboard-layout">
+          <div className="error-message">
+            <h2>Invalid class ID</h2>
+            <p>No class ID provided in the URL.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
   const classId = params.classId as string
 
   // Mock class data
@@ -49,68 +63,74 @@ export default function UpcomingPage() {
   const upcomingEvents = [
     { 
       id: 1, 
-      title: 'Quiz: Derivatives', 
-      date: 'Tomorrow', 
-      type: 'quiz', 
-      icon: '📝',
-      description: 'A comprehensive quiz covering derivative rules and applications',
-      duration: '45 minutes',
-      points: '50 points',
+      title: 'Quiz 2: Derivatives', 
+      date: '2024-02-05', 
+      time: '10:00 AM', 
+      type: 'quiz',
+      icon: '📋',
+      description: 'Quiz covering derivative rules and applications',
+      location: 'Room 201',
+      duration: '50 minutes',
       status: 'upcoming'
     },
     { 
       id: 2, 
-      title: 'Assignment: Integration Problems', 
-      date: 'Next Monday', 
-      type: 'assignment', 
-      icon: '📋',
-      description: 'Complete integration problems from chapters 4-6',
+      title: 'Lab Session 3', 
+      date: '2024-02-07', 
+      time: '2:00 PM', 
+      type: 'lab',
+      icon: '🔬',
+      description: 'Hands-on practice with derivative applications',
+      location: 'Lab 105',
       duration: '2 hours',
-      points: '100 points',
       status: 'upcoming'
     },
     { 
       id: 3, 
-      title: 'Midterm Exam', 
-      date: 'Next Friday', 
-      type: 'exam', 
-      icon: '📊',
-      description: 'Comprehensive midterm covering all material from weeks 1-8',
-      duration: '2 hours',
-      points: '200 points',
+      title: 'Homework 3 Due', 
+      date: '2024-02-08', 
+      time: '11:59 PM', 
+      type: 'assignment',
+      icon: '📝',
+      description: 'Submit derivative practice problems',
+      location: 'Online',
+      duration: 'N/A',
       status: 'upcoming'
     },
     { 
       id: 4, 
-      title: 'Project Presentation', 
-      date: 'In 2 weeks', 
-      type: 'project', 
-      icon: '🎯',
-      description: 'Present your calculus application project to the class',
-      duration: '15 minutes',
-      points: '150 points',
+      title: 'Midterm Exam', 
+      date: '2024-02-15', 
+      time: '9:00 AM', 
+      type: 'exam',
+      icon: '📊',
+      description: 'Comprehensive midterm examination',
+      location: 'Room 301',
+      duration: '2 hours',
       status: 'upcoming'
     },
     { 
       id: 5, 
-      title: 'Lab Session: Limits', 
-      date: 'This Friday', 
-      type: 'lab', 
-      icon: '🔬',
-      description: 'Hands-on exploration of limit concepts using graphing calculators',
-      duration: '90 minutes',
-      points: '75 points',
+      title: 'Group Project Presentation', 
+      date: '2024-02-20', 
+      time: '1:00 PM', 
+      type: 'presentation',
+      icon: '🎯',
+      description: 'Present calculus applications project',
+      location: 'Room 205',
+      duration: '30 minutes per group',
       status: 'upcoming'
     },
     { 
       id: 6, 
-      title: 'Homework: Chain Rule', 
-      date: 'Next Wednesday', 
-      type: 'homework', 
-      icon: '📚',
-      description: 'Practice problems applying the chain rule to various functions',
+      title: 'Office Hours', 
+      date: '2024-02-12', 
+      time: '3:00 PM', 
+      type: 'office-hours',
+      icon: '👨‍🏫',
+      description: 'Professor office hours for questions',
+      location: 'Office 402',
       duration: '1 hour',
-      points: '25 points',
       status: 'upcoming'
     }
   ]
@@ -129,27 +149,27 @@ export default function UpcomingPage() {
           </div>
           <div className="activity-content">
             <div className="activity-item">
+              <div className="activity-icon">📅</div>
+              <div className="activity-details">
+                <div className="activity-title">Event Added</div>
+                <div className="activity-subtitle">{currentClass.title} - Midterm Exam</div>
+                <div className="activity-time">1 day ago</div>
+              </div>
+            </div>
+            <div className="activity-item">
               <div className="activity-icon">📝</div>
               <div className="activity-details">
-                <div className="activity-title">Quiz Submitted</div>
-                <div className="activity-subtitle">{currentClass.title} - Derivatives Quiz</div>
-                <div className="activity-time">2 hours ago</div>
+                <div className="activity-title">Assignment Posted</div>
+                <div className="activity-subtitle">{currentClass.title} - Homework 3</div>
+                <div className="activity-time">2 days ago</div>
               </div>
             </div>
             <div className="activity-item">
-              <div className="activity-icon">📊</div>
+              <div className="activity-icon">🔬</div>
               <div className="activity-details">
-                <div className="activity-title">Grades Updated</div>
-                <div className="activity-subtitle">{currentClass.title} - Homework 1</div>
-                <div className="activity-time">4 hours ago</div>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-icon">👥</div>
-              <div className="activity-details">
-                <div className="activity-title">New Student Joined</div>
-                <div className="activity-subtitle">{currentClass.title} - John Doe</div>
-                <div className="activity-time">1 day ago</div>
+                <div className="activity-title">Lab Scheduled</div>
+                <div className="activity-subtitle">{currentClass.title} - Lab Session 3</div>
+                <div className="activity-time">3 days ago</div>
               </div>
             </div>
           </div>
@@ -182,25 +202,38 @@ export default function UpcomingPage() {
                     <div className="upcoming-icon-large">{event.icon}</div>
                     <div className="upcoming-card-info">
                       <h3 className="upcoming-title-large">{event.title}</h3>
-                      <div className="upcoming-date-large">{event.date}</div>
-                      <div className="upcoming-type-badge">{event.type}</div>
+                      <div className="upcoming-date-large">{event.date} at {event.time}</div>
+                      <div className={`upcoming-type-badge ${event.type}`}>
+                        {event.type === 'quiz' ? 'Quiz' : 
+                         event.type === 'lab' ? 'Lab' : 
+                         event.type === 'assignment' ? 'Assignment' :
+                         event.type === 'exam' ? 'Exam' :
+                         event.type === 'presentation' ? 'Presentation' :
+                         event.type === 'office-hours' ? 'Office Hours' : event.type}
+                      </div>
                     </div>
                   </div>
                   <div className="upcoming-card-content">
                     <p className="upcoming-description">{event.description}</p>
-                    <div className="upcoming-details">
-                      <div className="upcoming-detail-item">
-                        <span className="detail-label">Duration:</span>
-                        <span className="detail-value">{event.duration}</span>
+                    <div className="upcoming-stats">
+                      <div className="upcoming-stat-item">
+                        <span className="stat-label">Location:</span>
+                        <span className="stat-value">{event.location}</span>
                       </div>
-                      <div className="upcoming-detail-item">
-                        <span className="detail-label">Points:</span>
-                        <span className="detail-value">{event.points}</span>
+                      <div className="upcoming-stat-item">
+                        <span className="stat-label">Duration:</span>
+                        <span className="stat-value">{event.duration}</span>
                       </div>
-                      <div className="upcoming-detail-item">
-                        <span className="detail-label">Status:</span>
-                        <span className={`detail-value status-${event.status}`}>{event.status}</span>
+                      <div className="upcoming-stat-item">
+                        <span className="stat-label">Status:</span>
+                        <span className={`status-upcoming ${event.status}`}>
+                          {event.status === 'upcoming' ? 'Upcoming' : event.status}
+                        </span>
                       </div>
+                    </div>
+                    <div className="upcoming-actions">
+                      <button className="remind-btn">🔔 Set Reminder</button>
+                      <button className="details-btn">📋 View Details</button>
                     </div>
                   </div>
                 </div>

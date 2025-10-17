@@ -11,6 +11,15 @@ interface ConditionalLayoutProps {
 export default function ConditionalLayout({ children }: ConditionalLayoutProps) {
   const pathname = usePathname()
   
+  // Handle null pathname
+  if (!pathname) {
+    return (
+      <div className="landing-layout">
+        {children}
+      </div>
+    )
+  }
+  
   // Show dashboard layout for dashboard routes and class routes
   const isDashboardRoute = pathname.startsWith('/dashboard') || pathname.startsWith('/class')
   

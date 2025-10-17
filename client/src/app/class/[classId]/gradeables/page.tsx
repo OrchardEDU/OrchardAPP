@@ -1,11 +1,25 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
 
 export default function GradeablesPage() {
   const params = useParams()
   const router = useRouter()
+  
+  // Handle null params
+  if (!params || !params.classId) {
+    return (
+      <div className="page-content">
+        <div className="dashboard-layout">
+          <div className="error-message">
+            <h2>Invalid class ID</h2>
+            <p>No class ID provided in the URL.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
   const classId = params.classId as string
 
   // Mock class data

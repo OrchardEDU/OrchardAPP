@@ -1,11 +1,25 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
 
 export default function StudentsPage() {
   const params = useParams()
   const router = useRouter()
+  
+  // Handle null params
+  if (!params || !params.classId) {
+    return (
+      <div className="page-content">
+        <div className="dashboard-layout">
+          <div className="error-message">
+            <h2>Invalid class ID</h2>
+            <p>No class ID provided in the URL.</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
   const classId = params.classId as string
 
   // Mock class data
@@ -50,92 +64,102 @@ export default function StudentsPage() {
     { 
       id: 1, 
       name: 'Alice Johnson', 
-      email: 'alice.johnson@school.edu', 
-      grade: 'A', 
-      attendance: '95%', 
+      email: 'alice.johnson@university.edu', 
       avatar: '👩‍🎓',
-      studentId: 'S001',
-      major: 'Mathematics',
-      year: 'Junior',
-      gpa: '3.8',
+      attendance: '95%',
       lastActive: '2 hours ago',
-      assignmentsSubmitted: 8,
-      totalAssignments: 10
+      grade: 'A',
+      status: 'active'
     },
     { 
       id: 2, 
       name: 'Bob Smith', 
-      email: 'bob.smith@school.edu', 
-      grade: 'B+', 
-      attendance: '88%', 
+      email: 'bob.smith@university.edu', 
       avatar: '👨‍🎓',
-      studentId: 'S002',
-      major: 'Engineering',
-      year: 'Sophomore',
-      gpa: '3.5',
+      attendance: '88%',
       lastActive: '1 day ago',
-      assignmentsSubmitted: 7,
-      totalAssignments: 10
+      grade: 'B+',
+      status: 'active'
     },
     { 
       id: 3, 
       name: 'Carol Davis', 
-      email: 'carol.davis@school.edu', 
-      grade: 'A-', 
-      attendance: '92%', 
+      email: 'carol.davis@university.edu', 
       avatar: '👩‍🎓',
-      studentId: 'S003',
-      major: 'Physics',
-      year: 'Senior',
-      gpa: '3.7',
+      attendance: '92%',
       lastActive: '3 hours ago',
-      assignmentsSubmitted: 9,
-      totalAssignments: 10
+      grade: 'A-',
+      status: 'active'
     },
     { 
       id: 4, 
       name: 'David Wilson', 
-      email: 'david.wilson@school.edu', 
-      grade: 'B', 
-      attendance: '85%', 
+      email: 'david.wilson@university.edu', 
       avatar: '👨‍🎓',
-      studentId: 'S004',
-      major: 'Computer Science',
-      year: 'Freshman',
-      gpa: '3.2',
-      lastActive: '2 days ago',
-      assignmentsSubmitted: 6,
-      totalAssignments: 10
+      attendance: '78%',
+      lastActive: '5 days ago',
+      grade: 'C+',
+      status: 'at-risk'
     },
     { 
       id: 5, 
       name: 'Emma Brown', 
-      email: 'emma.brown@school.edu', 
-      grade: 'A+', 
-      attendance: '98%', 
+      email: 'emma.brown@university.edu', 
       avatar: '👩‍🎓',
-      studentId: 'S005',
-      major: 'Mathematics',
-      year: 'Junior',
-      gpa: '3.9',
+      attendance: '96%',
       lastActive: '1 hour ago',
-      assignmentsSubmitted: 10,
-      totalAssignments: 10
+      grade: 'A+',
+      status: 'active'
     },
     { 
       id: 6, 
       name: 'Frank Miller', 
-      email: 'frank.miller@school.edu', 
-      grade: 'B-', 
-      attendance: '82%', 
+      email: 'frank.miller@university.edu', 
       avatar: '👨‍🎓',
-      studentId: 'S006',
-      major: 'Economics',
-      year: 'Sophomore',
-      gpa: '3.1',
-      lastActive: '4 days ago',
-      assignmentsSubmitted: 5,
-      totalAssignments: 10
+      attendance: '85%',
+      lastActive: '2 days ago',
+      grade: 'B',
+      status: 'active'
+    },
+    { 
+      id: 7, 
+      name: 'Grace Lee', 
+      email: 'grace.lee@university.edu', 
+      avatar: '👩‍🎓',
+      attendance: '90%',
+      lastActive: '4 hours ago',
+      grade: 'A-',
+      status: 'active'
+    },
+    { 
+      id: 8, 
+      name: 'Henry Taylor', 
+      email: 'henry.taylor@university.edu', 
+      avatar: '👨‍🎓',
+      attendance: '82%',
+      lastActive: '1 week ago',
+      grade: 'B-',
+      status: 'inactive'
+    },
+    { 
+      id: 9, 
+      name: 'Ivy Chen', 
+      email: 'ivy.chen@university.edu', 
+      avatar: '👩‍🎓',
+      attendance: '94%',
+      lastActive: '30 minutes ago',
+      grade: 'A',
+      status: 'active'
+    },
+    { 
+      id: 10, 
+      name: 'Jack Anderson', 
+      email: 'jack.anderson@university.edu', 
+      avatar: '👨‍🎓',
+      attendance: '87%',
+      lastActive: '6 hours ago',
+      grade: 'B+',
+      status: 'active'
     }
   ]
 
@@ -153,27 +177,27 @@ export default function StudentsPage() {
           </div>
           <div className="activity-content">
             <div className="activity-item">
-              <div className="activity-icon">📝</div>
+              <div className="activity-icon">👥</div>
               <div className="activity-details">
-                <div className="activity-title">Quiz Submitted</div>
-                <div className="activity-subtitle">{currentClass.title} - Derivatives Quiz</div>
-                <div className="activity-time">2 hours ago</div>
+                <div className="activity-title">New Student Joined</div>
+                <div className="activity-subtitle">{currentClass.title} - Sarah Wilson</div>
+                <div className="activity-time">1 hour ago</div>
               </div>
             </div>
             <div className="activity-item">
               <div className="activity-icon">📊</div>
               <div className="activity-details">
-                <div className="activity-title">Grades Updated</div>
-                <div className="activity-subtitle">{currentClass.title} - Homework 1</div>
-                <div className="activity-time">4 hours ago</div>
+                <div className="activity-title">Attendance Updated</div>
+                <div className="activity-subtitle">{currentClass.title} - Weekly Report</div>
+                <div className="activity-time">3 hours ago</div>
               </div>
             </div>
             <div className="activity-item">
-              <div className="activity-icon">👥</div>
+              <div className="activity-icon">📝</div>
               <div className="activity-details">
-                <div className="activity-title">New Student Joined</div>
-                <div className="activity-subtitle">{currentClass.title} - John Doe</div>
-                <div className="activity-time">1 day ago</div>
+                <div className="activity-title">Assignment Submitted</div>
+                <div className="activity-subtitle">{currentClass.title} - Alice Johnson</div>
+                <div className="activity-time">5 hours ago</div>
               </div>
             </div>
           </div>
@@ -207,39 +231,31 @@ export default function StudentsPage() {
                     <div className="student-card-info">
                       <h3 className="student-name-large">{student.name}</h3>
                       <div className="student-email-large">{student.email}</div>
-                      <div className="student-id">ID: {student.studentId}</div>
+                      <div className={`student-status-badge ${student.status}`}>
+                        {student.status === 'active' ? 'Active' : 
+                         student.status === 'at-risk' ? 'At Risk' : 
+                         student.status === 'inactive' ? 'Inactive' : student.status}
+                      </div>
                     </div>
                   </div>
                   <div className="student-card-content">
-                    <div className="student-stats-grid">
-                      <div className="student-stat-item">
-                        <span className="stat-label">Current Grade:</span>
-                        <span className={`stat-value grade-${student.grade}`}>{student.grade}</span>
-                      </div>
+                    <div className="student-stats">
                       <div className="student-stat-item">
                         <span className="stat-label">Attendance:</span>
                         <span className="stat-value">{student.attendance}</span>
                       </div>
                       <div className="student-stat-item">
-                        <span className="stat-label">GPA:</span>
-                        <span className="stat-value">{student.gpa}</span>
+                        <span className="stat-label">Current Grade:</span>
+                        <span className="stat-value">{student.grade}</span>
                       </div>
                       <div className="student-stat-item">
-                        <span className="stat-label">Major:</span>
-                        <span className="stat-value">{student.major}</span>
-                      </div>
-                      <div className="student-stat-item">
-                        <span className="stat-label">Year:</span>
-                        <span className="stat-value">{student.year}</span>
-                      </div>
-                      <div className="student-stat-item">
-                        <span className="stat-label">Assignments:</span>
-                        <span className="stat-value">{student.assignmentsSubmitted}/{student.totalAssignments}</span>
+                        <span className="stat-label">Last Active:</span>
+                        <span className="stat-value">{student.lastActive}</span>
                       </div>
                     </div>
-                    <div className="student-activity">
-                      <span className="activity-label">Last Active:</span>
-                      <span className="activity-value">{student.lastActive}</span>
+                    <div className="student-actions">
+                      <button className="message-btn">💬 Message</button>
+                      <button className="grade-btn">📊 View Grades</button>
                     </div>
                   </div>
                 </div>

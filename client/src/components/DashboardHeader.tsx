@@ -36,6 +36,11 @@ export default function DashboardHeader() {
       }
     }
     
+    // Handle null pathname
+    if (!pathname) {
+      return
+    }
+    
     const newTitle = getPageTitle(pathname)
     if (newTitle !== currentTitle) {
       setIsTitleChanging(true)
@@ -48,41 +53,15 @@ export default function DashboardHeader() {
 
   const handleSidebarToggle = () => {
     if (isSidebarMinimized) {
-      // Expanding sidebar, hide circle immediately
-      setIsSidebarMinimized(false)
+      setIsCircleDisappearing(true)
+      setTimeout(() => {
+        setIsSidebarMinimized(false)
+        setIsCircleDisappearing(false)
+      }, 150)
     } else {
-      // Collapsing sidebar, show circle with animation
       setIsSidebarMinimized(true)
     }
-    
-    // Dispatch custom event to notify sidebar of state change
-    const event = new CustomEvent('headerSidebarToggle', {
-      detail: { isMinimized: !isSidebarMinimized }
-    })
-    window.dispatchEvent(event)
   }
-
-  // Listen for sidebar state changes from the ChatbotSidebar component
-  useEffect(() => {
-    const handleSidebarStateChange = (event: CustomEvent) => {
-      const newMinimizedState = event.detail.isMinimized
-      if (newMinimizedState && !isSidebarMinimized) {
-        // Sidebar is collapsing, start circle disappearance animation
-        setIsCircleDisappearing(true)
-        setTimeout(() => {
-          setIsSidebarMinimized(true)
-          setIsCircleDisappearing(false)
-        }, 300)
-      } else {
-        setIsSidebarMinimized(newMinimizedState)
-      }
-    }
-
-    window.addEventListener('sidebarStateChange', handleSidebarStateChange as EventListener)
-    return () => {
-      window.removeEventListener('sidebarStateChange', handleSidebarStateChange as EventListener)
-    }
-  }, [isSidebarMinimized])
 
   return (
     <div className="dashboard-header">
