@@ -41,6 +41,12 @@
   --landing-stats-bg: linear-gradient(135deg, #1f2937 0%, #374151 100%);
   --landing-cta-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --landing-footer-bg: #1f2937;
+  
+  /* Navbar Colors */
+  --navbar-bg: rgba(255, 255, 255, 0.95);
+  --navbar-border: rgba(226, 232, 240, 0.8);
+  --navbar-link-color: #4b5563;
+  --navbar-link-hover: #667eea;
 }
 
 /* Dark Mode Colors */
@@ -85,6 +91,12 @@
   --landing-stats-bg: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
   --landing-cta-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --landing-footer-bg: #1a202c;
+  
+  /* Navbar Colors (Dark Mode) */
+  --navbar-bg: rgba(26, 32, 44, 0.95);
+  --navbar-border: rgba(74, 85, 104, 0.8);
+  --navbar-link-color: #cbd5e0;
+  --navbar-link-hover: #63b3ed;
 }
 
 /* Smooth transitions for all themeable elements */

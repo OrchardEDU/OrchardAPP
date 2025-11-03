@@ -1,14 +1,28 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import ClientThemeToggle from './ClientThemeToggle'
 
 export default function LandingPage() {
-  const router = useRouter()
+  const [showScrollTop, setShowScrollTop] = useState(false)
 
-  const handleGetStarted = () => {
-    router.push('/dashboard')
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 300)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  const scrollToTop = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -16,15 +30,35 @@ export default function LandingPage() {
       {/* Navigation Bar */}
       <nav className="landing-navbar">
         <div className="navbar-container">  
-          <div className="navbar-brand">
-            <Image src="/logo.png" alt="EggplantEDU Logo" className="navbar-logo" width={40} height={40} />
-            <div className="navbar-name">EggplantEDU</div>
+          <div 
+            className="navbar-brand" 
+            onClick={scrollToTop} 
+            role="button" 
+            tabIndex={0} 
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                scrollToTop(e)
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            <Image 
+              src="/oedutemplogo.png" 
+              alt="OrchardEDU Logo" 
+              className="navbar-logo" 
+              width={40} 
+              height={40}
+              style={{ pointerEvents: 'none' }}
+            />
+            <div className="navbar-name" style={{ pointerEvents: 'none' }}>OrchardEDU</div>
           </div>
           <div className="navbar-links">
-            <a href="#about" className="navbar-link">About</a>
+            <a href="#about" className="navbar-link" onClick={(e) => {
+              e.preventDefault()
+              document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
+            }}>About</a>
             <ClientThemeToggle />
-            <button className="navbar-button" onClick={handleGetStarted}>Get Started</button>
-            <button className="navbar-button login-button">Login</button>
           </div>
         </div>
       </nav>
@@ -34,26 +68,25 @@ export default function LandingPage() {
         <div className="hero-content">
           <div className="hero-text">
             <h1 className="hero-title">
-              Welcome to <span className="brand-name">EggplantEDU</span>
+              Welcome to <span className="brand-name">OrchardEDU</span>
             </h1>
             <p className="hero-subtitle">
               Create engaging lesson plans, interactive projects, and comprehensive quizzes with AI assistance. 
               Transform your teaching experience with intelligent content generation.
             </p>
-            <div className="hero-actions">
-              <button className="cta-button primary" onClick={handleGetStarted}>
-                Get Started
-              </button>
-              <button className="cta-button secondary">
-                Learn More
-              </button>
+            <div className="coming-soon-badge">
+              <span className="coming-soon-text">Coming Soon</span>
             </div>
           </div>
           <div className="hero-visual">
-            <div className="hero-card">
-              <div className="card-icon">🎓</div>
-              <div className="card-title">Smart Education</div>
-              <div className="card-description">AI-powered content creation for modern educators</div>
+            <div className="hero-image-container">
+              <Image 
+                src="/classroom.jpg" 
+                alt="OrchardEDU Hero" 
+                className="hero-image"
+                width={600}
+                height={400}
+              />
             </div>
           </div>
         </div>
@@ -96,75 +129,52 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Stats Section */}
-      <div className="stats-section">
-        <div className="stats-container">
-          <div className="stat-item">
-            <div className="stat-number">10,000+</div>
-            <div className="stat-label">Educators</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-number">50,000+</div>
-            <div className="stat-label">Lessons Created</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-number">95%</div>
-            <div className="stat-label">Satisfaction Rate</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-number">24/7</div>
-            <div className="stat-label">AI Support</div>
-          </div>
-        </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="cta-section">
-        <div className="cta-container">
-          <h2 className="cta-title">Ready to transform your teaching?</h2>
-          <p className="cta-description">
-            Join thousands of educators who are already creating better content with AI assistance.
-          </p>
-          <button className="cta-button primary large" onClick={handleGetStarted}>
-            Start Creating Now
-          </button>
-        </div>
-      </div>
-
       {/* Footer */}
       <div className="landing-footer">
         <div className="footer-container">
           <div className="footer-content">
             <div className="footer-brand">
-              <Image src="/logo.png" alt="EggplantEDU Logo" className="footer-logo" width={32} height={32} />
-              <div className="footer-name">EggplantEDU</div>
+              <Image src="/oedutemplogo.png" alt="OrchardEDU Logo" className="footer-logo" width={32} height={32} />
+              <div className="footer-name">OrchardEDU</div>
             </div>
             <div className="footer-links">
               <div className="footer-section">
-                <h4>Product</h4>
-                <a href="#">Features</a>
-                <a href="#">Pricing</a>
-                <a href="#">Tutorials</a>
-              </div>
-              <div className="footer-section">
-                <h4>Support</h4>
-                <a href="#">Help Center</a>
-                <a href="#">Contact Us</a>
-                <a href="#">Community</a>
-              </div>
-              <div className="footer-section">
-                <h4>Company</h4>
-                <a href="#">About</a>
-                <a href="#">Blog</a>
-                <a href="#">Careers</a>
+                <h4>Contact</h4>
+                <a href="mailto:support@orchardedu.com">Email Us</a>
+                <a href="#about" onClick={(e) => {
+                  e.preventDefault()
+                  document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
+                }}>About</a>
               </div>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>&copy; 2024 EggplantEDU. All rights reserved.</p>
+            <p>&copy; 2025 OrchardEDU. All rights reserved.</p>
           </div>
         </div>
       </div>
+
+      {/* Scroll to Top Button */}
+      {showScrollTop && (
+        <button 
+          className="scroll-to-top" 
+          onClick={scrollToTop}
+          aria-label="Scroll to top"
+        >
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M18 15l-6-6-6 6" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }

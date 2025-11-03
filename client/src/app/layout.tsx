@@ -2,17 +2,16 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import '../styles/theme.css'
-import ConditionalLayout from '@/components/ConditionalLayout'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'EggplantEDU - Educational Content Creator',
-  description: 'Create lesson plans, projects, and quizzes with AI assistance',
+  title: 'OrchardEDU',
+  description: 'AI-powered educational content creation for teachers',
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/oedutemplogo.png',
+    apple: '/oedutemplogo.png',
   },
 }
 
@@ -25,9 +24,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <ThemeProvider>
-          <ConditionalLayout>
-            {children}
-          </ConditionalLayout>
+          {children}
         </ThemeProvider>
       </body>
     </html>
