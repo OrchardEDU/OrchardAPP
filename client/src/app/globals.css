@@ -2290,6 +2290,21 @@ body {
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
+.navbar-button.coming-soon-button {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 2px solid var(--border-primary);
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.navbar-button.coming-soon-button:hover {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.8;
+}
+
 /* Hero Section */
 .hero-section {
   padding: 6rem 2rem 4rem;
@@ -2455,8 +2470,8 @@ body {
 
 /* Footer */
 .landing-footer {
-  background: var(--text-primary);
-  color: white;
+  background: var(--landing-footer-bg);
+  color: var(--landing-footer-text);
   padding: 3rem 2rem 1rem;
 }
 
@@ -2487,7 +2502,7 @@ body {
 .footer-name {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #fbbf24;
+  color: var(--landing-footer-accent);
 }
 
 .footer-links {
@@ -2499,33 +2514,33 @@ body {
   font-size: 1.125rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  color: #fbbf24;
+  color: var(--landing-footer-accent);
 }
 
 .footer-section a {
   display: block;
-  color: #d1d5db;
+  color: var(--landing-footer-text-secondary);
   text-decoration: none;
   margin-bottom: 0.5rem;
   transition: color 0.2s ease, transform 0.2s ease;
 }
 
 .footer-section a:hover {
-  color: #fbbf24;
+  color: var(--landing-footer-accent);
   transform: translateX(4px);
 }
 
 .footer-section a:focus-visible {
-  outline: 2px solid #fbbf24;
+  outline: 2px solid var(--landing-footer-accent);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 .footer-bottom {
-  border-top: 1px solid #374151;
+  border-top: 1px solid var(--landing-footer-border);
   padding-top: 1rem;
   text-align: center;
-  color: #9ca3af;
+  color: var(--landing-footer-text-muted);
 }
 
 /* Responsive Design */

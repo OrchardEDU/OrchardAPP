@@ -58,6 +58,9 @@ export default function LandingPage() {
               e.preventDefault()
               document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })
             }}>About</a>
+            <button className="navbar-button coming-soon-button" disabled>
+              Coming Soon
+            </button>
             <ClientThemeToggle />
           </div>
         </div>

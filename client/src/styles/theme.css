@@ -40,7 +40,12 @@
   --landing-hero-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --landing-stats-bg: linear-gradient(135deg, #1f2937 0%, #374151 100%);
   --landing-cta-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --landing-footer-bg: #1f2937;
+  --landing-footer-bg: #f1f5f9;
+  --landing-footer-text: #1a202c;
+  --landing-footer-text-secondary: #4a5568;
+  --landing-footer-text-muted: #718096;
+  --landing-footer-accent: #667eea;
+  --landing-footer-border: #cbd5e0;
   
   /* Navbar Colors */
   --navbar-bg: rgba(255, 255, 255, 0.95);
@@ -91,6 +96,11 @@
   --landing-stats-bg: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
   --landing-cta-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   --landing-footer-bg: #1a202c;
+  --landing-footer-text: #f7fafc;
+  --landing-footer-text-secondary: #e2e8f0;
+  --landing-footer-text-muted: #a0aec0;
+  --landing-footer-accent: #f6e05e;
+  --landing-footer-border: #4a5568;
   
   /* Navbar Colors (Dark Mode) */
   --navbar-bg: rgba(26, 32, 44, 0.95);
