@@ -21,8 +21,8 @@ const Hero = () => {
                     {/* Placeholder for a hero image or illustration */}
                     <div className="hero-placeholder">
                         <div className="floating-card card-1">
-                            <div className="icon">📄</div>
-                            <div className="text">Lecture Slides.pdf</div>
+                            <div className="icon">📚</div>
+                            <div className="text">Import Course Content</div>
                         </div>
                         <div className="arrow">➔</div>
                         <div className="floating-card card-2">
