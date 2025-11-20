@@ -2,6 +2,29 @@
     background-color: var(--color-light);
 }
 
+.how-it-works .section-header {
+    text-align: center;
+    margin-bottom: 4rem;
+    display: block !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+    border-bottom: none !important;
+    background: transparent !important;
+}
+
+.how-it-works .section-header h2 {
+    margin-bottom: 1rem;
+    display: block;
+    width: 100%;
+}
+
+.how-it-works .section-header p {
+    font-size: 1.2rem;
+    color: var(--color-text-light);
+    display: block;
+    width: 100%;
+}
+
 .steps-container {
     display: flex;
     justify-content: space-between;
