@@ -13,7 +13,7 @@ const Hero = () => {
                         Upload your lecture slides and test banks. Orchard's AI generates unlimited multiple-choice questions for your students, grading them instantly.
                     </p>
                     <div className="hero-actions">
-                        <button className="btn btn-primary btn-lg">Get Started for Free</button>
+                        <button className="btn btn-primary btn-lg">Coming Soon</button>
                         <button className="btn btn-secondary btn-lg">Watch Demo</button>
                     </div>
                 </div>

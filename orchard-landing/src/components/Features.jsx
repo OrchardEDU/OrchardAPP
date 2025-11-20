@@ -25,7 +25,7 @@ const Features = () => {
             <div className="container">
                 <div className="section-header">
                     <h2>Everything You Need to Assess Learning</h2>
-                    <p>Streamline your workflow from content creation to grading.</p>
+                    <p>Streamline your workflow from exam creation to grading.</p>
                 </div>
                 <div className="features-grid">
                     {features.map((feature, index) => (

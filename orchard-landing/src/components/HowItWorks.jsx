@@ -16,7 +16,7 @@ const HowItWorks = () => {
         {
             number: "03",
             title: "Generate & Assess",
-            description: "Instantly create quizzes and exams. Students take them online with auto-grading."
+            description: "Create quizzes and exams in seconds. Students can practice or take them online and get instant feedback."
         }
     ];
 
@@ -25,7 +25,7 @@ const HowItWorks = () => {
             <div className="container">
                 <div className="section-header">
                     <h2>How Orchard Works</h2>
-                    <p>Three simple steps to unlimited practice questions.</p>
+                    <p>Three simple steps to unlimited test questions.</p>
                 </div>
                 <div className="steps-container">
                     {steps.map((step, index) => (
