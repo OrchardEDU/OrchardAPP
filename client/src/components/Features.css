@@ -43,7 +43,6 @@
     display: inline-block;
     padding: 1rem;
     background-color: #FFF8E1;
-    /* Light yellow */
     border-radius: 50%;
     width: 80px;
     height: 80px;
@@ -52,12 +51,10 @@
 
 .feature-card:nth-child(2) .feature-icon {
     background-color: #E3F2FD;
-    /* Light blue */
 }
 
 .feature-card:nth-child(3) .feature-icon {
     background-color: #FFEBEE;
-    /* Light red */
 }
 
 .feature-card h3 {
@@ -67,3 +64,4 @@
 .feature-card p {
     color: var(--color-text-light);
 }
+

@@ -1,5 +1,7 @@
-import React from 'react';
-import './Hero.css';
+'use client'
+
+import React from 'react'
+import './Hero.css'
 
 const Hero = () => {
     return (
@@ -10,7 +12,7 @@ const Hero = () => {
                         Transform Your Teaching Materials into <span className="highlight">Unlimited Practice</span>
                     </h1>
                     <p className="hero-subtitle">
-                        Upload your lecture slides and test banks. Orchard's AI generates unlimited multiple-choice questions for your students, grading them instantly.
+                        Upload your lecture slides and test banks. Orchard&apos;s AI generates unlimited multiple-choice questions for your students, grading them instantly.
                     </p>
                     <div className="hero-actions">
                         <button className="btn btn-primary btn-lg">Coming Soon</button>
@@ -18,7 +20,6 @@ const Hero = () => {
                     </div>
                 </div>
                 <div className="hero-visual">
-                    {/* Placeholder for a hero image or illustration */}
                     <div className="hero-placeholder">
                         <div className="floating-card card-1">
                             <div className="icon">📚</div>
@@ -38,7 +39,8 @@ const Hero = () => {
                 </div>
             </div>
         </section>
-    );
-};
+    )
+}
 
-export default Hero;
+export default Hero
+

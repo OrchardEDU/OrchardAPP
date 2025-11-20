@@ -1,5 +1,7 @@
-import React from 'react';
-import './HowItWorks.css';
+'use client'
+
+import React from 'react'
+import './HowItWorks.css'
 
 const HowItWorks = () => {
     const steps = [
@@ -11,14 +13,14 @@ const HowItWorks = () => {
         {
             number: "02",
             title: "AI Processing",
-            description: "Orchard's AI analyzes your material to understand key concepts and learning objectives."
+            description: "Orchard&apos;s AI analyzes your material to understand key concepts and learning objectives."
         },
         {
             number: "03",
             title: "Generate & Assess",
             description: "Create quizzes and exams in seconds. Students can practice or take them online and get instant feedback."
         }
-    ];
+    ]
 
     return (
         <section id="how-it-works" className="how-it-works">
@@ -41,7 +43,8 @@ const HowItWorks = () => {
                 </div>
             </div>
         </section>
-    );
-};
+    )
+}
 
-export default HowItWorks;
+export default HowItWorks
+

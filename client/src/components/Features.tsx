@@ -1,5 +1,7 @@
-import React from 'react';
-import './Features.css';
+'use client'
+
+import React from 'react'
+import './Features.css'
 
 const Features = () => {
     const features = [
@@ -18,7 +20,7 @@ const Features = () => {
             title: "Instant Grading",
             description: "Students get immediate feedback on their exams. You get detailed analytics on class performance."
         }
-    ];
+    ]
 
     return (
         <section id="features" className="features">
@@ -38,7 +40,8 @@ const Features = () => {
                 </div>
             </div>
         </section>
-    );
-};
+    )
+}
 
-export default Features;
+export default Features
+

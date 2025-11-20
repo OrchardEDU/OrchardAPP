@@ -33,7 +33,6 @@
     width: 100%;
     height: 15px;
     background-color: rgba(251, 192, 45, 0.3);
-    /* Yellow accent */
     z-index: -1;
     transform: rotate(-5deg);
 }
@@ -137,6 +136,6 @@
 
     .hero-visual {
         display: none;
-        /* Hide complex visual on mobile for now */
     }
 }
+

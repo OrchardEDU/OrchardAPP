@@ -1,5 +1,7 @@
-import React from 'react';
-import './Footer.css';
+'use client'
+
+import React from 'react'
+import './Footer.css'
 
 const Footer = () => {
     return (
@@ -13,17 +15,14 @@ const Footer = () => {
                     <div className="footer-links">
                         <div className="link-group">
                             <h4>Product</h4>
-                            <a href="#">Features</a>
-
+                            <a href="#features">Features</a>
                             <a href="#">Demo</a>
                         </div>
                         <div className="link-group">
                             <h4>Company</h4>
                             <a href="#">About Us</a>
-
                             <a href="mailto:support@orchardedu.com">Email Us</a>
                         </div>
-
                     </div>
                 </div>
                 <div className="footer-bottom">
@@ -31,7 +30,8 @@ const Footer = () => {
                 </div>
             </div>
         </footer>
-    );
-};
+    )
+}
 
-export default Footer;
+export default Footer
+

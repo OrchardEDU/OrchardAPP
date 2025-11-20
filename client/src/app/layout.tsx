@@ -8,11 +8,11 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'EggplantEDU - Educational Content Creator',
-  description: 'Create lesson plans, projects, and quizzes with AI assistance',
+  title: 'Orchard - Educational Content Creator',
+  description: 'Transform your teaching materials into unlimited practice questions',
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png',
+    icon: '/favicon.ico',
+    apple: '/favicon-white.png',
   },
 }
 
