@@ -29,7 +29,6 @@ const Header = () => {
           </ul>
         </nav>
         <div className="header-actions">
-          <a href="#" className="btn btn-secondary btn-sm">Log In</a>
           <a href="mailto:support@orchardedu.com" className="btn btn-primary btn-sm">Get Updates</a>
         </div>
       </div>

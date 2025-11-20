@@ -16,7 +16,6 @@ const Hero = () => {
                     </p>
                     <div className="hero-actions">
                         <button className="btn btn-primary btn-lg">Coming Soon</button>
-                        <button className="btn btn-secondary btn-lg">Watch Demo</button>
                     </div>
                 </div>
                 <div className="hero-visual">
