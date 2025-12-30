@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import pkg from "pg";
 const { Pool } = pkg;
+import { body, validationResult } from "express-validator";
 
 dotenv.config();
 
@@ -16,6 +17,8 @@ const __dirname = dirname(__filename);
 const PORT = process.env.PORT || 8086;
 const IP = process.env.IP || "localhost";
 
+const PORT_OLLAMA = process.env.PORT_OLLAMA;
+const ollama = new Ollama({ host: PORT_OLLAMA });
 // PostgreSQL connection configuration
 const postgresConfig = {
     host: process.env.POSTGRES_HOST || "localhost",
@@ -57,10 +60,68 @@ const handle = nextApp.getRequestHandler();
 nextApp.prepare().then(() => {
     const expressApp = express();
 
+    // Middleware to parse JSON bodies
+    expressApp.use(express.json());
+
     // Example backend API route
     expressApp.get("/api/hello", (req, res) => {
         res.json({ message: "Hello from Express backend!" });
     });
+
+    // Demo endpoint with input sanitization
+    expressApp.post(
+        "/api/demo",
+        [
+            // Server-side validation + basic sanitization
+            body("password")
+                .trim()
+                .notEmpty().withMessage("Password is required")
+                .isLength({ min: 1, max: 500 }).withMessage("Password must be between 1 and 500 characters"),
+            body("prompt")
+                .trim()
+                .notEmpty().withMessage("Prompt is required")
+                .isLength({ min: 1, max: 10000 }).withMessage("Prompt must be between 1 and 10000 characters")
+                .customSanitizer((value) =>
+                    // Strip non-printable control chars but keep normal text/newlines
+                    value.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "")
+                ),
+        ],
+        async (req, res) => {
+            // Check for validation errors
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    errors: errors.array(),
+                });
+            }
+
+            // Get validated + sanitized inputs
+            const password = String(req.body.password || "");
+            const prompt = String(req.body.prompt || "");
+
+            try {
+                // Call the demo Ollama function with the sanitized prompt
+                const ollamaResponse = await demo(prompt);
+
+                res.json({
+                    success: true,
+                    message: "Demo endpoint called successfully",
+                    data: {
+                        password,
+                        prompt,
+                        ollamaResponse,
+                    },
+                });
+            } catch (error) {
+                console.error("Error in demo endpoint:", error);
+                res.status(500).json({
+                    success: false,
+                    message: "Internal server error",
+                });
+            }
+        }
+    );
 
     // Let Next handle all other routes
     expressApp.all(/.*/, (req, res) => {
@@ -73,23 +134,34 @@ nextApp.prepare().then(() => {
     });
 });
 
-const PORT_OLLAMA = process.env.PORT_OLLAMA;
-const ollama = new Ollama({ host: PORT_OLLAMA });
 
 // test ollama backend calls
 const test = async () => {
     const response = await ollama.chat({
-        model: 'llama3',
+        model: "llama3",
         messages: [
-            { role: 'user', content: 'Why is the sky blue?' },
-            { role: 'assistant', content: 'It is not blue. It only appears blue' },
-            { role: 'user', content: 'Are you sure? check and tell me why' },
+            { role: "user", content: "Why is the sky blue?" },
+            { role: "assistant", content: "It is not blue. It only appears blue" },
+            { role: "user", content: "Are you sure? check and tell me why" },
         ],
     });
     console.log("Ollama response\n:");
     console.log(response);
-}
+};
 // test();
+
+// Demo Ollama call (similar to test, but uses the provided prompt)
+const demo = async (prompt) => {
+    const response = await ollama.chat({
+        model: "llama3",
+        messages: [
+            { role: "user", content: prompt },
+            { role: "assistant", content: "It is not blue. It only appears blue" },
+            { role: "user", content: "Are you sure? check and tell me why" },
+        ],
+    });
+    return response;
+};
 
 // Export the PostgreSQL pool for use in other modules
 export { pool };
