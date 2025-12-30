@@ -10,6 +10,7 @@ interface Message {
 const DemoPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -20,7 +21,7 @@ const DemoPage: React.FC = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !password.trim()) return;
 
     const userMessage: Message = { role: 'user', content: input };
     setMessages((prev) => [...prev, userMessage]);
@@ -28,17 +29,28 @@ const DemoPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:8086/ask', {
+      const apiBase =
+        process.env.NEXT_PUBLIC_API_BASE_URL ||
+        (typeof window !== 'undefined' ? window.location.origin : '');
+
+      const response = await fetch(`${apiBase}/api/demo`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: input }),
+        body: JSON.stringify({ password, prompt: input }),
       });
 
       const data = await response.json();
-      
+
+      const ollamaResponse = data?.data?.ollamaResponse;
+      const content =
+        ollamaResponse?.message?.content ||
+        ollamaResponse?.choices?.[0]?.message?.content ||
+        data?.message ||
+        'No response from demo endpoint.';
+
       const aiMessage: Message = {
         role: 'assistant',
-        content: data.answer,
+        content,
         sources: data.sources,
       };
 
@@ -92,8 +104,14 @@ const DemoPage: React.FC = () => {
 
         <form className="input-area" onSubmit={handleSendMessage}>
           <input
+            type="password"
+            placeholder="Enter demo password..."
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <input
             type="text"
-            placeholder="Ask a question about your documents..."
+            placeholder="Enter a prompt for the demo..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
