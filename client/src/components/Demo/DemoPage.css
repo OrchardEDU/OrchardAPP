@@ -1,0 +1,133 @@
+.demo-container {
+  display: flex;
+  height: 100vh;
+  background-color: #f8f9fa;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Sidebar */
+.knowledge-base {
+  width: 300px;
+  background-color: #ffffff;
+  border-right: 1px solid #dee2e6;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.subtitle {
+  font-size: 0.85rem;
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+.upload-label {
+  display: block;
+  padding: 15px;
+  border: 2px dashed #007bff;
+  border-radius: 8px;
+  text-align: center;
+  cursor: pointer;
+  color: #007bff;
+  transition: 0.3s;
+}
+
+.upload-label:hover {
+  background-color: #f0f7ff;
+}
+
+.doc-list {
+  margin-top: 20px;
+}
+
+.doc-item {
+  padding: 10px;
+  font-size: 0.9rem;
+  border-bottom: 1px solid #eee;
+}
+
+/* Main Chat */
+.chat-interface {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  padding: 15px 30px;
+  background: white;
+  border-bottom: 1px solid #dee2e6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.status-badge {
+  background: #e1fcef;
+  color: #14804a;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+}
+
+.messages-container {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+}
+
+.message-bubble {
+  max-width: 70%;
+  margin-bottom: 20px;
+  padding: 15px;
+  border-radius: 12px;
+  line-height: 1.5;
+}
+
+.message-bubble.user {
+  background-color: #007bff;
+  color: white;
+  align-self: flex-end;
+  margin-left: auto;
+}
+
+.message-bubble.assistant {
+  background-color: #ffffff;
+  color: #212529;
+  border: 1px solid #dee2e6;
+}
+
+.sources-list {
+  margin-top: 10px;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: #6c757d;
+}
+
+.input-area {
+  padding: 20px 30px;
+  background: white;
+  border-top: 1px solid #dee2e6;
+  display: flex;
+  gap: 15px;
+}
+
+.input-area input {
+  flex: 1;
+  padding: 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+}
+
+.btn-send {
+  padding: 0 25px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-send:disabled {
+  background-color: #ccc;
+}

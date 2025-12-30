@@ -13,7 +13,7 @@ const HowItWorks = () => {
         {
             number: "02",
             title: "AI Processing",
-            description: "Orchard&apos;s AI analyzes your material to understand key concepts and learning objectives."
+            description: "Orchard's AI analyzes your material to understand key concepts and learning objectives."
         },
         {
             number: "03",
