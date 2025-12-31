@@ -3,11 +3,13 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useTheme } from '@/contexts/ThemeContext'
 import ClientThemeToggle from './ClientThemeToggle'
 
 export default function DashboardHeader() {
   const router = useRouter()
   const pathname = usePathname()
+  const { theme } = useTheme()
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false)
   const [isCircleDisappearing, setIsCircleDisappearing] = useState(false)
   const [currentTitle, setCurrentTitle] = useState('Dashboard')
@@ -63,10 +65,13 @@ export default function DashboardHeader() {
     }
   }
 
+  // Select logo based on theme
+  const logoSrc = theme === 'dark' ? '/orchardedulogowhite.png' : '/orchardedulogo.png'
+
   return (
     <div className="dashboard-header">
       <div className="logo-section" onClick={handleLogoClick}>
-        <Image src="/logo.png" alt="EggplantEDU Logo" className="header-logo" width={32} height={32} />
+        <Image src={logoSrc} alt="OrchardEDU Logo" className="header-logo" width={32} height={32} />
         <span className="service-name">EggplantEDU</span>
       </div>
       <h1 className={`page-title ${isTitleChanging ? 'changing' : ''}`}>{currentTitle}</h1>

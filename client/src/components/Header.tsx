@@ -2,10 +2,12 @@
 
 import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
+import { useTheme } from '@/contexts/ThemeContext'
 import './Header.css'
 
 const Header = () => {
   const [scrolled, setScrolled] = useState(false)
+  const { theme } = useTheme()
 
   useEffect(() => {
     const handleScroll = () => {
@@ -15,11 +17,14 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  // Select logo based on theme
+  const logoSrc = theme === 'dark' ? '/orchardedulogowhite.png' : '/orchardedulogo.png'
+
   return (
     <header className={`header ${scrolled ? 'scrolled' : ''}`}>
       <div className="container header-container">
         <div className="logo">
-          <Image src="/logo.png" alt="Orchard Logo" width={40} height={40} />
+          <Image src={logoSrc} alt="Orchard Logo" width={40} height={40} />
           <span>Orchard</span>
         </div>
         <nav>

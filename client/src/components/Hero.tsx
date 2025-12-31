@@ -17,7 +17,7 @@ const Hero = () => {
                     </p>
                     <div className="hero-actions">
                         <button className="btn btn-primary btn-lg">Coming Soon</button>
-                        <Link href="/Demo">
+                        <Link href="/demo">
                             <button className="btn btn-secondary btn-lg">Watch Demo</button>
                         </Link>
                     </div>
