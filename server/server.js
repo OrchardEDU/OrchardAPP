@@ -11,6 +11,7 @@ import { body, validationResult } from "express-validator";
 import multer from "multer";
 import fs from "fs";
 import crypto from "crypto";
+import { Generator } from "./ragGenerator.js";
 
 dotenv.config();
 
@@ -90,10 +91,38 @@ const validateDemoPassword = (inputPassword) => {
 
 // Configure Next.js to serve the built client app
 const dev = process.env.NODE_ENV !== "production";
-const nextApp = next({ dev, dir: path.join(__dirname, "../client") });
+const nextApp = next({ 
+    dev, 
+    dir: path.join(__dirname, "../client"),
+    quiet: true // Suppress Next.js compilation/output messages
+});
 const handle = nextApp.getRequestHandler();
 
-nextApp.prepare().then(() => {
+// Initialize RAG Generator (will be set up before server starts)
+let ragGenerator = null;
+
+const initializeRAG = async () => {
+    try {
+        if (process.env.QDRANT_COLLECTION_NAME && process.env.QDRANT_API_KEY && process.env.QDRANT_CLUSTER_URL) {
+            ragGenerator = new Generator();
+            // Verify collection exists (async operation)
+            await ragGenerator._ensureCollection();
+            console.log("RAG Generator initialized with Qdrant");
+        } else {
+            console.log("Qdrant not configured - RAG features disabled. Using basic question generation.");
+        }
+    } catch (error) {
+        console.warn("Failed to initialize RAG Generator:", error.message);
+        console.log("Falling back to basic question generation without RAG.");
+        ragGenerator = null; // Ensure it's null if initialization fails
+    }
+};
+
+nextApp.prepare().then(async () => {
+    // Initialize RAG Generator before setting up Express routes
+    await initializeRAG();
+    
+    console.log("\n=== Server Starting ===");
     const expressApp = express();
 
     // Middleware to parse JSON bodies
@@ -177,20 +206,91 @@ nextApp.prepare().then(() => {
             }
 
             try {
-                // Call the demo Ollama function with the sanitized prompt
+                console.log(`[Demo] Generating question for prompt: "${prompt}"`);
+                // Call the demo function which uses RAG (Qdrant + Ollama) if available
                 const ollamaResponse = await demo(prompt);
+
+                // Extract the generated question from the response
+                const generatedQuestion = ollamaResponse?.message?.content || 
+                                        ollamaResponse?.choices?.[0]?.message?.content ||
+                                        "No question generated";
+                
+                console.log(`[Demo] Generated question for prompt "${prompt}": ${generatedQuestion}`);
 
                 res.json({
                     success: true,
-                    message: "Demo endpoint called successfully",
+                    message: "Question generated successfully",
                     data: {
-                        password,
                         prompt,
+                        question: generatedQuestion,
                         ollamaResponse,
                     },
                 });
             } catch (error) {
                 console.error("Error in demo endpoint:", error);
+                res.status(500).json({
+                    success: false,
+                    message: "Internal server error",
+                });
+            }
+        }
+    );
+
+    // Demo question generation endpoint
+    expressApp.post(
+        "/api/demo/question",
+        [
+            body("password")
+                .trim()
+                .notEmpty().withMessage("Password is required")
+                .isLength({ min: 1, max: 500 }).withMessage("Password must be between 1 and 500 characters"),
+            body("prompt")
+                .trim()
+                .notEmpty().withMessage("Prompt is required")
+                .isLength({ min: 1, max: 10000 }).withMessage("Prompt must be between 1 and 10000 characters")
+                .customSanitizer((value) =>
+                    value.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, "")
+                ),
+        ],
+        async (req, res) => {
+            // Check for validation errors
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    errors: errors.array(),
+                });
+            }
+
+            // Get validated + sanitized inputs
+            const password = String(req.body.password || "").trim();
+            const prompt = String(req.body.prompt || "");
+
+            // Validate password against DEMO_PWD
+            if (!validateDemoPassword(password)) {
+                return res.status(401).json({
+                    success: false,
+                    message: "Invalid password",
+                });
+            }
+
+            try {
+                // Call the demo Ollama function to generate a question
+                const ollamaResponse = await demo(prompt);
+
+                res.json({
+                    success: true,
+                    message: "Question generated successfully",
+                    data: {
+                        prompt,
+                        question: ollamaResponse?.message?.content || 
+                                 ollamaResponse?.choices?.[0]?.message?.content ||
+                                 "No question generated",
+                        ollamaResponse,
+                    },
+                });
+            } catch (error) {
+                console.error("Error in demo question endpoint:", error);
                 res.status(500).json({
                     success: false,
                     message: "Internal server error",
@@ -258,13 +358,45 @@ nextApp.prepare().then(() => {
             }
 
             try {
+                const fileId = req.file.filename;
+                const filename = req.file.originalname;
+                const filePath = req.file.path;
+
+                // If RAG generator is available, process and upload to Qdrant
+                if (ragGenerator) {
+                    try {
+                        // Read file content (for now, handle text files)
+                        const fileExtension = path.extname(filename).toLowerCase();
+                        let fileText = "";
+
+                        if (fileExtension === ".txt" || fileExtension === ".md") {
+                            // Read as text
+                            fileText = fs.readFileSync(filePath, "utf-8");
+                        } else {
+                            // For other file types (PDF, DOC, etc.), we'd need a parser
+                            // For now, skip Qdrant upload for unsupported types
+                            console.log(`[Upload] File type ${fileExtension} not yet supported for Qdrant upload`);
+                        }
+
+                        // Upload to Qdrant if we have text content
+                        if (fileText) {
+                            const chunksUploaded = await ragGenerator.addDocument(fileId, fileText, filename);
+                            console.log(`[Upload] File "${filename}" successfully processed and uploaded to Qdrant (${chunksUploaded} chunks)`);
+                        }
+                    } catch (ragError) {
+                        console.error("[Upload] Error uploading to Qdrant:", ragError);
+                        // Don't fail the entire upload if Qdrant fails - file is still saved
+                        // User can still use the file, just won't be in RAG context
+                    }
+                }
+
                 // File upload successful
                 res.json({
                     success: true,
                     message: "File uploaded successfully",
                     data: {
-                        id: req.file.filename,
-                        filename: req.file.originalname,
+                        id: fileId,
+                        filename: filename,
                         size: req.file.size,
                         mimetype: req.file.mimetype,
                     },
@@ -306,6 +438,19 @@ nextApp.prepare().then(() => {
 
         try {
             const filePath = path.join(__dirname, "uploads", fileId);
+            
+            // Delete from Qdrant if RAG generator is available
+            if (ragGenerator) {
+                try {
+                    await ragGenerator.deleteDocument(fileId);
+                    console.log(`[Delete] Removed ${fileId} from Qdrant`);
+                } catch (ragError) {
+                    console.error("[Delete] Error removing from Qdrant:", ragError);
+                    // Continue with file deletion even if Qdrant deletion fails
+                }
+            }
+
+            // Delete file from filesystem
             if (fs.existsSync(filePath)) {
                 fs.unlinkSync(filePath);
                 res.json({
@@ -333,8 +478,9 @@ nextApp.prepare().then(() => {
     });
 
     const listener = expressApp.listen(PORT, IP, () => {
-        console.log(`Server running on http://${IP}:${PORT}`);
+        console.log(`\nServer running on http://${IP}:${PORT}`);
         console.log(`Visit: http://${IP}:${PORT}`);
+        console.log(`RAG Generator: ${ragGenerator ? 'Enabled' : 'Disabled'}\n`);
     });
 });
 
@@ -354,15 +500,44 @@ const test = async () => {
 };
 // test();
 
-// Demo Ollama call (similar to test, but uses the provided prompt)
-const demo = async (prompt) => {
-    const query = "Please answer the following question: " + prompt + "."
+// RAG Generator is initialized above in initializeRAG() function, called during server startup
+
+// Demo Ollama call - generates a good question based on the prompt
+// Uses RAG if available, otherwise falls back to basic generation
+const demo = async (prompt, userId = null, subjectId = null) => {
+    // Try to use RAG if available
+    if (ragGenerator) {
+        try {
+            const question = await ragGenerator.generateQuestionWithContext(prompt, userId, subjectId, 5);
+            return {
+                message: {
+                    content: question,
+                },
+            };
+        } catch (error) {
+            console.error("RAG generation failed, falling back to basic generation:", error);
+            // Fall through to basic generation
+        }
+    }
+
+    // Fallback to basic question generation without RAG
+    const query = `Based on the following topic or context: "${prompt}"
+
+Please generate a thoughtful, educational question that would be appropriate for students. The question should:
+- Be clear and well-formulated
+- Test understanding of the topic
+- Be appropriate for educational purposes
+- Be engaging and thought-provoking
+
+Generate the question now:`;
+    
     const response = await ollama.chat({
         model: "llama3",
-        messages: [
-            { role: "user", content: query },
-        ],
+        messages: [{ role: "user", content: query }],
     });
+    
+    const generatedQuestion = response.message?.content || response.choices?.[0]?.message?.content || "No question generated";
+    console.log(`[Demo] Generated question for prompt "${prompt}": ${generatedQuestion}`);
     return response;
 };
 

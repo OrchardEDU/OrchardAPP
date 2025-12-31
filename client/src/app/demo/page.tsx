@@ -77,10 +77,10 @@ export default function DemoPage() {
         return
       }
 
-      const ollamaResponse = data?.data?.ollamaResponse
-      const content =
-        ollamaResponse?.message?.content ||
-        ollamaResponse?.choices?.[0]?.message?.content ||
+      // Extract the generated question from the response
+      const content = data?.data?.question ||
+        data?.data?.ollamaResponse?.message?.content ||
+        data?.data?.ollamaResponse?.choices?.[0]?.message?.content ||
         data?.message ||
         'No response from demo endpoint.'
 

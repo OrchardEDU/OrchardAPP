@@ -2,6 +2,7 @@
   "name": "orchard-server",
   "version": "0.1.0",
   "dependencies": {
+    "@qdrant/js-client-rest": "^1.16.2",
     "color": "^5.0.0",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
