@@ -1,52 +1,48 @@
-'use client'
+'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark'
+type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
-  theme: Theme
-  toggleTheme: () => void
+	theme: Theme;
+	toggleTheme: () => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('light')
-  const [mounted, setMounted] = useState(false)
+	const [theme, setTheme] = useState<Theme>('light');
+	const [mounted, setMounted] = useState(false);
 
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') as Theme
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-      setTheme(savedTheme)
-    }
-    setMounted(true)
-  }, [])
+	useEffect(() => {
+		const savedTheme = localStorage.getItem('theme') as Theme;
+		if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
+			setTheme(savedTheme);
+		}
+		setMounted(true);
+	}, []);
 
-  useEffect(() => {
-    if (mounted) {
-      document.documentElement.setAttribute('data-theme', theme)
-      localStorage.setItem('theme', theme)
-    }
-  }, [theme, mounted])
+	useEffect(() => {
+		if (mounted) {
+			document.documentElement.setAttribute('data-theme', theme);
+			localStorage.setItem('theme', theme);
+		}
+	}, [theme, mounted]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light')
-  }
+	const toggleTheme = () => {
+		setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+	};
 
-  // Always provide the context, even before mounted, to prevent errors
-  // The mounted state only controls when we apply theme to document
-  return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  )
+	// Always provide the context, even before mounted, to prevent errors
+	// The mounted state only controls when we apply theme to document
+	return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
 }
 
 export function useTheme() {
-  const context = useContext(ThemeContext)
-  if (context === undefined) {
-    throw new Error('useTheme must be used within a ThemeProvider')
-  }
-  return context
+	const context = useContext(ThemeContext);
+	if (context === undefined) {
+		throw new Error('useTheme must be used within a ThemeProvider');
+	}
+	return context;
 }

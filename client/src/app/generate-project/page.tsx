@@ -1,5 +1,5 @@
-import GenerateProjectPage from '@/components/GenerateProjectPage'
+import GenerateProjectPage from '@/components/GenerateProjectPage';
 
 export default function Page() {
-  return <GenerateProjectPage />
+	return <GenerateProjectPage />;
 }
