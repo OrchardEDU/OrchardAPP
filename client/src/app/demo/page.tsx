@@ -63,7 +63,13 @@ export default function DemoPage() {
 					setMessages((prev) => [...prev, errorMessage]);
 					return;
 				}
-				throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+				// Error response
+				const errorMessage: Message = {
+					role: 'assistant',
+					content: errorData.message || `HTTP error! status: ${response.status}`,
+				};
+				setMessages((prev) => [...prev, errorMessage]);
+				return;
 			}
 		} catch (error) {
 			console.error('DEMO ERROR: Failed to fetch response from API', error);
@@ -91,22 +97,9 @@ export default function DemoPage() {
 			return;
 		}
 
-		// TODO: turn this into a structured output system
-		// Extract the generated question from the response
+		// Handle new response format: { success, message, data: "question string" }
 		try {
-			let content = 'No response from demo endpoint.';
-			if (data?.data?.question) {
-				content = data.data.question;
-			} else if (data?.data?.ollamaResponse?.message?.content) {
-				content = data.data.ollamaResponse.message.content;
-			} else if (data?.data?.ollamaResponse?.choices?.[0]?.message?.content) {
-				content = data.data.ollamaResponse.choices[0].message.content;
-			} else if (data?.message) {
-				content = data.message;
-			}
-			console.log('--------RESPONSE CONTENT--------');
-			console.log(content);
-			console.log('--------RESPONSE CONTENT--------');
+			const content = data?.data || 'No response from demo endpoint.';
 
 			const aiMessage: Message = {
 				role: 'assistant',

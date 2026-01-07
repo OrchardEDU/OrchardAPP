@@ -1,21 +1,18 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { Ollama } from 'ollama';
 
-export class Generator {
-	constructor(qdrantUrl = null) {
+export class RagOperator {
+	constructor(generator = null) {
+		// Handle all Qdrant-related environment variables
 		this.collectionName = process.env.QDRANT_COLLECTION_NAME;
-		if (!this.collectionName) {
-			throw new Error('QDRANT_COLLECTION_NAME must be set in .env file');
-		}
-
 		const apiKey = process.env.QDRANT_API_KEY;
-		if (!apiKey) {
-			throw new Error('QDRANT_API_KEY must be set in .env file');
-		}
-
 		const qdrantClusterUrl = process.env.QDRANT_CLUSTER_URL;
-		if (!qdrantClusterUrl) {
-			throw new Error('QDRANT_CLUSTER_URL must be set in .env file');
+		this._pointIdCounter = parseInt(process.env.QDRANT_COUNT || '0', 10);
+
+		// Check if Qdrant is configured
+		if (!this.collectionName || !apiKey || !qdrantClusterUrl) {
+			throw new Error(
+				'Qdrant not configured. Required env vars: QDRANT_COLLECTION_NAME, QDRANT_API_KEY, QDRANT_CLUSTER_URL'
+			);
 		}
 
 		this.client = new QdrantClient({
@@ -23,16 +20,39 @@ export class Generator {
 			apiKey: apiKey,
 		});
 
-		const ollamaHost = process.env.PORT_OLLAMA || 'http://localhost:11434';
-		this.ollama = new Ollama({ host: ollamaHost });
+		// Generator instance for embeddings (optional - can be set later)
+		this.generator = generator;
 
 		this.embeddingModel = 'mxbai-embed-large';
 		this.vectorSize = 1024;
 		this._collectionVerified = false;
-		this._pointIdCounter = parseInt(process.env.QDRANT_COUNT || '0', 10);
 		console.log(
-			`RAG Generator initialized with Qdrant (starting point ID: ${this._pointIdCounter})`
+			`RAG Operator initialized with Qdrant (collection: ${this.collectionName}, starting point ID: ${this._pointIdCounter})`
 		);
+	}
+
+	/**
+	 * Set the generator instance for embeddings
+	 * @param {Generator} generator - Generator instance
+	 */
+	setGenerator(generator) {
+		this.generator = generator;
+	}
+
+	/**
+	 * Check if RAG Operator is running
+	 * @returns {Promise<boolean>} True if RAG operator is running
+	 */
+	async isRunning() {
+		try {
+			await this._ensureCollection();
+			// Try a simple operation to verify connection
+			await this.client.getCollection(this.collectionName);
+			return true;
+		} catch (error) {
+			console.error('[RAG Operator] Not running:', error.message);
+			return false;
+		}
 	}
 
 	async _ensureCollection() {
@@ -51,18 +71,22 @@ export class Generator {
 	}
 
 	async _getEmbedding(text) {
-		try {
-			const response = await this.ollama.embeddings({
-				model: this.embeddingModel,
-				prompt: text,
-			});
-			return response.embedding;
-		} catch (error) {
-			console.error('Error getting embedding:', error);
-			throw new Error(`Failed to get embedding: ${error.message}`);
+		if (!this.generator) {
+			throw new Error(
+				'Generator not set. Call setGenerator() first or pass generator to constructor.'
+			);
 		}
+		return await this.generator.getEmbedding(text, this.embeddingModel);
 	}
 
+	/**
+	 * Search Qdrant for similar vectors
+	 * @param {string} queryText - Text to search for
+	 * @param {number} limit - Maximum number of results
+	 * @param {string|null} userId - Optional user ID filter
+	 * @param {string|null} subjectId - Optional subject ID filter
+	 * @returns {Promise<Array>} Search results
+	 */
 	async search(queryText, limit = 5, userId = null, subjectId = null) {
 		await this._ensureCollection();
 		const queryVector = await this._getEmbedding(queryText);
@@ -97,6 +121,14 @@ export class Generator {
 		return results;
 	}
 
+	/**
+	 * Retrieve context chunks from Qdrant
+	 * @param {string} queryText - Text to search for
+	 * @param {number} limit - Maximum number of context chunks
+	 * @param {string|null} userId - Optional user ID filter
+	 * @param {string|null} subjectId - Optional subject ID filter
+	 * @returns {Promise<Array<string>>} Array of context text chunks
+	 */
 	async retrieveContext(queryText, limit = 5, userId = null, subjectId = null) {
 		const results = await this.search(queryText, limit, userId, subjectId);
 		const contextChunks = [];
@@ -109,55 +141,6 @@ export class Generator {
 			`[Qdrant] Successfully retrieved ${contextChunks.length} context chunks from Qdrant`
 		);
 		return contextChunks;
-	}
-
-	async generateQuestionWithContext(queryText, userId = null, subjectId = null, limit = 5) {
-		try {
-			console.log(`[RAG] Retrieving context for query: "${queryText}"`);
-			const contextChunks = await this.retrieveContext(queryText, limit, userId, subjectId);
-			console.log(`[RAG] Retrieved ${contextChunks.length} context chunks`);
-
-			const context = contextChunks.join('\n\n');
-			console.log(`[RAG] Context length: ${context.length} characters`);
-
-			const prompt = context
-				? `Generate a thoughtful, educational question that would be appropriate for students based on the following topic: "${queryText}"
-
-Use the following context to inform your question:
-${context}
-
-The question should:
-- Be clear and well-formulated
-- Test understanding of the topic
-- Be appropriate for educational purposes
-- Be engaging and thought-provoking
-- Relate to the provided context when relevant
-
-Generate the question now:`
-				: `Generate a thoughtful, educational question that would be appropriate for students based on the following topic: "${queryText}"
-
-The question should:
-- Be clear and well-formulated
-- Test understanding of the topic
-- Be appropriate for educational purposes
-- Be engaging and thought-provoking
-
-Generate the question now:`;
-
-			const response = await this.ollama.chat({
-				model: 'llama3',
-				messages: [{ role: 'user', content: prompt }],
-			});
-
-			const generatedQuestion =
-				response.message?.content ||
-				response.choices?.[0]?.message?.content ||
-				'No question generated';
-			return generatedQuestion;
-		} catch (error) {
-			console.error('Error generating question with context:', error);
-			throw error;
-		}
 	}
 
 	_chunkText(text, chunkSize = 500, overlap = 50) {
@@ -189,6 +172,15 @@ Generate the question now:`;
 		return chunks.filter((chunk) => chunk.length > 0);
 	}
 
+	/**
+	 * Add a document to Qdrant
+	 * @param {string} fileId - Unique file identifier
+	 * @param {string} text - Document text content
+	 * @param {string} filename - Original filename
+	 * @param {string|null} userId - Optional user ID
+	 * @param {string|null} subjectId - Optional subject ID
+	 * @returns {Promise<number>} Number of chunks added
+	 */
 	async addDocument(fileId, text, filename, userId = null, subjectId = null) {
 		try {
 			await this._ensureCollection();
@@ -237,6 +229,11 @@ Generate the question now:`;
 		}
 	}
 
+	/**
+	 * Delete a document from Qdrant
+	 * @param {string} fileId - File identifier to delete
+	 * @returns {Promise<boolean>} Success status
+	 */
 	async deleteDocument(fileId) {
 		try {
 			await this._ensureCollection();

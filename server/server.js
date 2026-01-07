@@ -1,6 +1,5 @@
 import express from 'express';
 import next from 'next';
-import { Ollama } from 'ollama';
 import path from 'path';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -11,7 +10,8 @@ import { body, validationResult } from 'express-validator';
 import multer from 'multer';
 import fs from 'fs';
 import crypto from 'crypto';
-import { Generator } from './ragGenerator.js';
+import { Generator } from './generator.js';
+import { RagOperator } from './ragoperator.js';
 
 dotenv.config();
 
@@ -20,9 +20,6 @@ const __dirname = dirname(__filename);
 
 const PORT = process.env.PORT || 8086;
 const IP = process.env.IP || 'localhost';
-
-const PORT_OLLAMA = process.env.PORT_OLLAMA;
-const ollama = new Ollama({ host: PORT_OLLAMA });
 // PostgreSQL connection configuration
 const postgresConfig = {
 	host: process.env.POSTGRES_HOST || 'localhost',
@@ -98,35 +95,45 @@ const nextApp = next({
 });
 const handle = nextApp.getRequestHandler();
 
-// Initialize RAG Generator (will be set up before server starts)
-let ragGenerator = null;
+// Initialize Generator and RAG Operator (will be set up before server starts)
+let generator = null;
+let ragoperator = null;
 
-const initializeRAG = async () => {
+const initializeServices = async () => {
+	// Initialize Generator (Ollama) - let it handle its own env vars
 	try {
-		if (
-			process.env.QDRANT_COLLECTION_NAME &&
-			process.env.QDRANT_API_KEY &&
-			process.env.QDRANT_CLUSTER_URL
-		) {
-			ragGenerator = new Generator();
-			// Verify collection exists (async operation)
-			await ragGenerator._ensureCollection();
-			console.log('RAG Generator initialized with Qdrant');
-		} else {
-			console.log(
-				'Qdrant not configured - RAG features disabled. Using basic question generation.'
-			);
+		generator = new Generator();
+		const isRunning = await generator.isRunning();
+		if (!isRunning) {
+			console.warn('[Generator] Not running, but continuing...');
 		}
+		console.log('Generator initialized');
 	} catch (error) {
-		console.warn('Failed to initialize RAG Generator:', error.message);
-		console.log('Falling back to basic question generation without RAG.');
-		ragGenerator = null; // Ensure it's null if initialization fails
+		console.error('Failed to initialize Generator:', error.message);
+		throw error; // Generator is required
+	}
+
+	// Initialize RAG Operator - let it handle its own env vars
+	try {
+		ragoperator = new RagOperator(generator);
+		// Set generator for embeddings
+		ragoperator.setGenerator(generator);
+		// Check if it's running
+		const isRunning = await ragoperator.isRunning();
+		if (!isRunning) {
+			console.warn('[RAG Operator] Not running, but continuing...');
+		}
+		console.log('RAG Operator initialized');
+	} catch (error) {
+		console.warn('Failed to initialize RAG Operator:', error.message);
+		console.log('RAG features disabled. Using basic question generation.');
+		ragoperator = null; // Ensure it's null if initialization fails
 	}
 };
 
 nextApp.prepare().then(async () => {
-	// Initialize RAG Generator before setting up Express routes
-	await initializeRAG();
+	// Initialize Generator and RAG Operator before setting up Express routes
+	await initializeServices();
 
 	console.log('\n=== Server Starting ===');
 	const expressApp = express();
@@ -190,8 +197,8 @@ nextApp.prepare().then(async () => {
 				.trim()
 				.notEmpty()
 				.withMessage('Prompt is required')
-				.isLength({ min: 1, max: 10000 })
-				.withMessage('Prompt must be between 1 and 10000 characters')
+				.isLength({ min: 1, max: 1000 })
+				.withMessage('Prompt must be between 1 and 1000 characters')
 				.customSanitizer((value) =>
 					// Strip non-printable control chars but keep normal text/newlines
 					value.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '')
@@ -203,7 +210,8 @@ nextApp.prepare().then(async () => {
 			if (!errors.isEmpty()) {
 				return res.status(400).json({
 					success: false,
-					errors: errors.array(),
+					message: 'ERROR: Validation failed',
+					data: null,
 				});
 			}
 
@@ -215,7 +223,8 @@ nextApp.prepare().then(async () => {
 			if (!validateDemoPassword(password)) {
 				return res.status(401).json({
 					success: false,
-					message: 'Invalid password',
+					message: 'ERROR',
+					data: null,
 				});
 			}
 
@@ -224,7 +233,7 @@ nextApp.prepare().then(async () => {
 				// Call the demo function which uses RAG (Qdrant + Ollama) if available
 				const ollamaResponse = await demo(prompt);
 
-				// Extract the generated question from the response
+				// Extract the generated question from the response (supports structured output)
 				const generatedQuestion =
 					ollamaResponse?.message?.content ||
 					ollamaResponse?.choices?.[0]?.message?.content ||
@@ -236,85 +245,15 @@ nextApp.prepare().then(async () => {
 
 				res.json({
 					success: true,
-					message: 'Question generated successfully',
-					data: {
-						prompt,
-						question: generatedQuestion,
-						ollamaResponse,
-					},
+					message: 'Successfully generated',
+					data: generatedQuestion,
 				});
 			} catch (error) {
 				console.error('Error in demo endpoint:', error);
 				res.status(500).json({
 					success: false,
-					message: 'Internal server error',
-				});
-			}
-		}
-	);
-
-	// Demo question generation endpoint
-	expressApp.post(
-		'/api/demo/question',
-		[
-			body('password')
-				.trim()
-				.notEmpty()
-				.withMessage('Password is required')
-				.isLength({ min: 1, max: 500 })
-				.withMessage('Password must be between 1 and 500 characters'),
-			body('prompt')
-				.trim()
-				.notEmpty()
-				.withMessage('Prompt is required')
-				.isLength({ min: 1, max: 10000 })
-				.withMessage('Prompt must be between 1 and 10000 characters')
-				.customSanitizer((value) => value.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '')),
-		],
-		async (req, res) => {
-			// Check for validation errors
-			const errors = validationResult(req);
-			if (!errors.isEmpty()) {
-				return res.status(400).json({
-					success: false,
-					errors: errors.array(),
-				});
-			}
-
-			// Get validated + sanitized inputs
-			const password = String(req.body.password || '').trim();
-			const prompt = String(req.body.prompt || '');
-
-			// Validate password against DEMO_PWD
-			if (!validateDemoPassword(password)) {
-				return res.status(401).json({
-					success: false,
-					message: 'Invalid password',
-				});
-			}
-
-			try {
-				// Call the demo Ollama function to generate a question
-				const ollamaResponse = await demo(prompt);
-				console.log('RESPONSE:::::::::::::');
-				console.log(ollamaResponse);
-				res.json({
-					success: true,
-					message: 'Question generated successfully',
-					data: {
-						prompt,
-						question:
-							ollamaResponse?.message?.content ||
-							ollamaResponse?.choices?.[0]?.message?.content ||
-							'No question generated',
-						ollamaResponse,
-					},
-				});
-			} catch (error) {
-				console.error('Error in demo question endpoint:', error);
-				res.status(500).json({
-					success: false,
-					message: 'Internal server error',
+					message: 'ERROR',
+					data: null,
 				});
 			}
 		}
@@ -383,8 +322,8 @@ nextApp.prepare().then(async () => {
 				const filename = req.file.originalname;
 				const filePath = req.file.path;
 
-				// If RAG generator is available, process and upload to Qdrant
-				if (ragGenerator) {
+				// If RAG operator is available, process and upload to Qdrant
+				if (ragoperator) {
 					try {
 						// Read file content (for now, handle text files)
 						const fileExtension = path.extname(filename).toLowerCase();
@@ -403,7 +342,7 @@ nextApp.prepare().then(async () => {
 
 						// Upload to Qdrant if we have text content
 						if (fileText) {
-							const chunksUploaded = await ragGenerator.addDocument(
+							const chunksUploaded = await ragoperator.addDocument(
 								fileId,
 								fileText,
 								filename
@@ -468,10 +407,10 @@ nextApp.prepare().then(async () => {
 		try {
 			const filePath = path.join(__dirname, 'uploads', fileId);
 
-			// Delete from Qdrant if RAG generator is available
-			if (ragGenerator) {
+			// Delete from Qdrant if RAG operator is available
+			if (ragoperator) {
 				try {
-					await ragGenerator.deleteDocument(fileId);
+					await ragoperator.deleteDocument(fileId);
 					console.log(`[Delete] Removed ${fileId} from Qdrant`);
 				} catch (ragError) {
 					console.error('[Delete] Error removing from Qdrant:', ragError);
@@ -509,44 +448,33 @@ nextApp.prepare().then(async () => {
 	const listener = expressApp.listen(PORT, IP, () => {
 		console.log(`\nServer running on http://${IP}:${PORT}`);
 		console.log(`Visit: http://${IP}:${PORT}`);
-		console.log(`RAG Generator: ${ragGenerator ? 'Enabled' : 'Disabled'}\n`);
+		console.log(`Generator: ${generator ? 'Enabled' : 'Disabled'}`);
+		console.log(`RAG Operator: ${ragoperator ? 'Enabled' : 'Disabled'}\n`);
 	});
 });
 
-// test ollama backend calls
-const test = async () => {
-	const response = await ollama.chat({
-		model: 'llama3',
-		messages: [
-			{ role: 'user', content: 'Why is the sky blue?' },
-			{ role: 'assistant', content: 'It is not blue. It only appears blue' },
-			{ role: 'user', content: 'Are you sure? check and tell me why' },
-		],
-	});
-	console.log('Ollama response\n:');
-	console.log(response);
-};
-// test();
-
-// RAG Generator is initialized above in initializeRAG() function, called during server startup
-
-// Demo Ollama call - generates a good question based on the prompt
-// Uses RAG if available, otherwise falls back to basic generation
+// Demo function - generates a good question based on the prompt
+// Uses RAG if available: requests context from ragOperator, then sends to generator
+// Otherwise falls back to basic generation with generator only
 const demo = async (prompt, userId = null, subjectId = null) => {
+	if (!generator) {
+		throw new Error('Generator not initialized');
+	}
+
 	// Try to use RAG if available
-	if (ragGenerator) {
+	if (ragoperator) {
 		try {
-			const question = await ragGenerator.generateQuestionWithContext(
-				prompt,
-				userId,
-				subjectId,
-				5
+			console.log(`[Demo] Retrieving RAG context for prompt: "${prompt}"`);
+			// Request context from ragoperator
+			const contextChunks = await ragoperator.retrieveContext(prompt, 5, userId, subjectId);
+			const context = contextChunks.join('\n\n');
+			console.log(
+				`[Demo] Retrieved ${contextChunks.length} context chunks (${context.length} characters)`
 			);
-			return {
-				message: {
-					content: question,
-				},
-			};
+
+			// Send context to generator for processing
+			const response = await generator.generateQuestion(prompt, context);
+			return response;
 		} catch (error) {
 			console.error('RAG generation failed, falling back to basic generation:', error);
 			// Fall through to basic generation
@@ -554,26 +482,8 @@ const demo = async (prompt, userId = null, subjectId = null) => {
 	}
 
 	// Fallback to basic question generation without RAG
-	const query = `Based on the following topic or context: "${prompt}"
-
-Please generate a thoughtful, educational question that would be appropriate for students. The question should:
-- Be clear and well-formulated
-- Test understanding of the topic
-- Be appropriate for educational purposes
-- Be engaging and thought-provoking
-
-Generate the question now:`;
-
-	const response = await ollama.chat({
-		model: 'llama3',
-		messages: [{ role: 'user', content: query }],
-	});
-
-	const generatedQuestion =
-		response.message?.content ||
-		response.choices?.[0]?.message?.content ||
-		'No question generated';
-	console.log(`[Demo] Generated question for prompt "${prompt}": ${generatedQuestion}`);
+	console.log(`[Demo] Generating question without RAG context for prompt: "${prompt}"`);
+	const response = await generator.generateQuestion(prompt);
 	return response;
 };
 
