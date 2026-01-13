@@ -88,6 +88,35 @@
 	font-style: italic;
 }
 
+.clear-data-section {
+	margin-top: auto;
+	padding-top: 20px;
+	border-top: 1px solid #dee2e6;
+}
+
+.clear-all-btn {
+	width: 100%;
+	padding: 12px;
+	background-color: #dc3545;
+	color: white;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 0.9rem;
+	font-weight: 500;
+	transition: background-color 0.2s;
+}
+
+.clear-all-btn:hover:not(:disabled) {
+	background-color: #c82333;
+}
+
+.clear-all-btn:disabled {
+	background-color: #ccc;
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
 /* Main Chat */
 .chat-interface {
 	flex: 1;

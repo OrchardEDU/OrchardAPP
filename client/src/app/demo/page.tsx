@@ -23,6 +23,7 @@ export default function DemoPage() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
 	const [uploadingFile, setUploadingFile] = useState<string | null>(null);
+	const [clearingData, setClearingData] = useState(false);
 	const chatEndRef = useRef<HTMLDivElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -311,6 +312,107 @@ export default function DemoPage() {
 		}
 	};
 
+	const handleClearAllData = async () => {
+		if (!password.trim()) {
+			alert('Please enter the demo password to clear all data.');
+			return;
+		}
+
+		// Confirm before clearing
+		const confirmed = window.confirm(
+			'Are you sure you want to clear all data? This will delete all uploaded files and remove everything from the knowledge base. This action cannot be undone.'
+		);
+		if (!confirmed) {
+			return;
+		}
+
+		setClearingData(true);
+
+		try {
+			const apiBase =
+				process.env.NEXT_PUBLIC_API_BASE_URL ||
+				(typeof window !== 'undefined' ? window.location.origin : '');
+
+			const response = await fetch(
+				`${apiBase}/api/demo/clear-all?password=${encodeURIComponent(password)}`,
+				{
+					method: 'DELETE',
+				}
+			);
+
+			// Handle non-OK responses first
+			if (!response.ok) {
+				if (response.status === 404) {
+					alert('API endpoint not found. Make sure the server is running.');
+					return;
+				}
+
+				// Try to parse JSON error response
+				const contentType = response.headers.get('content-type');
+				if (contentType && contentType.includes('application/json')) {
+					try {
+						const errorData = await response.json();
+						if (response.status === 401) {
+							alert(
+								errorData.message ||
+									'Invalid password. Please check your password and try again.'
+							);
+						} else {
+							alert(
+								errorData.message ||
+									`Error: ${response.status} ${response.statusText}`
+							);
+						}
+						return;
+					} catch {
+						// If JSON parsing fails, show generic error
+						alert(`Error ${response.status}: ${response.statusText}`);
+						return;
+					}
+				} else {
+					// HTML or other non-JSON response
+					if (response.status === 401) {
+						alert('Invalid password. Please check your password and try again.');
+					} else {
+						alert(`Error ${response.status}: ${response.statusText}`);
+					}
+					return;
+				}
+			}
+
+			// Parse successful response
+			let data;
+			try {
+				data = await response.json();
+			} catch (error) {
+				alert('Failed to parse server response. Please try again.');
+				return;
+			}
+
+			if (!data.success) {
+				alert(data.message || 'Failed to clear all data. Please try again.');
+				return;
+			}
+
+			// Clear uploaded files from state
+			setUploadedFiles([]);
+			alert(
+				`All data cleared successfully! Deleted ${data.data?.filesDeleted || 0} files${
+					data.data?.qdrantCleared ? ' and cleared Qdrant database' : ''
+				}.`
+			);
+		} catch (error) {
+			console.error('Clear all data error:', error);
+			alert(
+				error instanceof Error
+					? error.message
+					: 'Failed to clear all data. Please try again.'
+			);
+		} finally {
+			setClearingData(false);
+		}
+	};
+
 	return (
 		<div className="demo-container">
 			{/* Sidebar for RAG Context */}
@@ -352,6 +454,16 @@ export default function DemoPage() {
 							</div>
 						))
 					)}
+				</div>
+				<div className="clear-data-section">
+					<button
+						className="clear-all-btn"
+						onClick={handleClearAllData}
+						disabled={clearingData}
+						title="Clear all uploaded files and knowledge base data"
+					>
+						{clearingData ? 'Clearing...' : '🗑️ Clear All Data'}
+					</button>
 				</div>
 			</aside>
 

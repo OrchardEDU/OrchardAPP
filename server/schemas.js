@@ -22,9 +22,10 @@ export const demoOutputJsonSchema = {
 			description: 'The generated question',
 		},
 		relevancy: {
-			type: 'number',
+			type: 'string',
+			enum: ['not relevant', 'somewhat relevant', 'relevant', 'very relevant'],
 			description:
-				'The relevancy of the context inputted to the prompt & following question, where 1 is least relevant and 10 is most relevant',
+				'The relevancy of the context inputted to the prompt & following, where 1 is least relevant and 10 is most relevant',
 		},
 		// Add more fields as needed
 	},

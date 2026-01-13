@@ -10,6 +10,7 @@ import { body, validationResult } from 'express-validator';
 import multer from 'multer';
 import fs from 'fs';
 import crypto from 'crypto';
+import pdfParse from 'pdf-parse';
 import { Generator } from './generator.js';
 import { RagOperator } from './ragoperator.js';
 
@@ -325,16 +326,31 @@ nextApp.prepare().then(async () => {
 				// If RAG operator is available, process and upload to Qdrant
 				if (ragoperator) {
 					try {
-						// Read file content (for now, handle text files)
+						// Read file content based on file type
 						const fileExtension = path.extname(filename).toLowerCase();
 						let fileText = '';
 
 						if (fileExtension === '.txt' || fileExtension === '.md') {
 							// Read as text
 							fileText = fs.readFileSync(filePath, 'utf-8');
+						} else if (fileExtension === '.pdf') {
+							// Parse PDF file
+							try {
+								const dataBuffer = fs.readFileSync(filePath);
+								const pdfData = await pdfParse(dataBuffer);
+								fileText = pdfData.text;
+								console.log(
+									`[Upload] Extracted ${fileText.length} characters from PDF: ${filename}`
+								);
+							} catch (pdfError) {
+								console.error(
+									`[Upload] Error parsing PDF ${filename}:`,
+									pdfError.message
+								);
+								// Continue without text extraction - file is still saved
+							}
 						} else {
-							// For other file types (PDF, DOC, etc.), we'd need a parser
-							// For now, skip Qdrant upload for unsupported types
+							// For other file types (DOC, DOCX, etc.), we'd need additional parsers
 							console.log(
 								`[Upload] File type ${fileExtension} not yet supported for Qdrant upload`
 							);
@@ -433,6 +449,75 @@ nextApp.prepare().then(async () => {
 			}
 		} catch (error) {
 			console.error('Error deleting file:', error);
+			res.status(500).json({
+				success: false,
+				message: 'Internal server error',
+			});
+		}
+	});
+
+	// Clear all data endpoint for demo
+	expressApp.delete('/api/demo/clear-all', async (req, res) => {
+		// DELETE requests use query parameters, not body
+		const password = req.query.password;
+
+		if (!password || typeof password !== 'string' || !password.trim()) {
+			return res.status(400).json({
+				success: false,
+				message: 'Password is required',
+			});
+		}
+
+		// Validate password against DEMO_PWD
+		if (!validateDemoPassword(password)) {
+			return res.status(401).json({
+				success: false,
+				message: 'Invalid password',
+			});
+		}
+
+		try {
+			const uploadsDir = path.join(__dirname, 'uploads');
+			let filesDeleted = 0;
+			let qdrantCleared = false;
+
+			// Clear all files from uploads folder
+			if (fs.existsSync(uploadsDir)) {
+				const files = fs.readdirSync(uploadsDir);
+				for (const file of files) {
+					const filePath = path.join(uploadsDir, file);
+					try {
+						fs.unlinkSync(filePath);
+						filesDeleted++;
+					} catch (fileError) {
+						console.error(`[Clear All] Error deleting file ${file}:`, fileError);
+					}
+				}
+				console.log(`[Clear All] Deleted ${filesDeleted} files from uploads folder`);
+			}
+
+			// Clear all data from Qdrant if RAG operator is available
+			if (ragoperator) {
+				try {
+					await ragoperator.clearAllData();
+					qdrantCleared = true;
+					console.log('[Clear All] Cleared all data from Qdrant');
+				} catch (ragError) {
+					console.error('[Clear All] Error clearing Qdrant:', ragError);
+					// Continue even if Qdrant clearing fails
+				}
+			}
+
+			res.json({
+				success: true,
+				message: 'All data cleared successfully',
+				data: {
+					filesDeleted,
+					qdrantCleared,
+				},
+			});
+		} catch (error) {
+			console.error('Error clearing all data:', error);
 			res.status(500).json({
 				success: false,
 				message: 'Internal server error',

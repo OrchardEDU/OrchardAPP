@@ -253,4 +253,55 @@ export class RagOperator {
 			throw error;
 		}
 	}
+
+	/**
+	 * Clear all data from Qdrant collection
+	 * @returns {Promise<boolean>} Success status
+	 */
+	async clearAllData() {
+		try {
+			await this._ensureCollection();
+			console.log(`[Qdrant] Clearing all data from collection: ${this.collectionName}...`);
+
+			// Scroll through all points to get their IDs, then delete them
+			const pointIds = [];
+			let offset = null;
+			let hasMore = true;
+
+			while (hasMore) {
+				const scrollResult = await this.client.scroll(this.collectionName, {
+					limit: 100,
+					offset: offset,
+					with_payload: false,
+					with_vectors: false,
+				});
+
+				if (scrollResult.points && scrollResult.points.length > 0) {
+					pointIds.push(...scrollResult.points.map((point) => point.id));
+					offset = scrollResult.next_page_offset;
+					hasMore = offset !== null;
+				} else {
+					hasMore = false;
+				}
+			}
+
+			if (pointIds.length > 0) {
+				// Delete all points by their IDs
+				await this.client.delete(this.collectionName, {
+					wait: true,
+					points: pointIds,
+				});
+				console.log(
+					`[Qdrant] Successfully deleted ${pointIds.length} points from collection: ${this.collectionName}`
+				);
+			} else {
+				console.log(`[Qdrant] No points found in collection: ${this.collectionName}`);
+			}
+
+			return true;
+		} catch (error) {
+			console.error(`[RAG] Error clearing all data:`, error);
+			throw error;
+		}
+	}
 }
