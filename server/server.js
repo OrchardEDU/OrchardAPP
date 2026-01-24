@@ -11,6 +11,7 @@ import multer from 'multer';
 import fs from 'fs';
 import crypto from 'crypto';
 import pdfParse from 'pdf-parse';
+import mammoth from 'mammoth';
 import { Generator } from './generator.js';
 import { RagOperator } from './ragoperator.js';
 
@@ -346,6 +347,22 @@ nextApp.prepare().then(async () => {
 								console.error(
 									`[Upload] Error parsing PDF ${filename}:`,
 									pdfError.message
+								);
+								// Continue without text extraction - file is still saved
+							}
+						} else if (fileExtension === '.docx') {
+							// Parse DOCX file
+							try {
+								const dataBuffer = fs.readFileSync(filePath);
+								const result = await mammoth.extractRawText({ buffer: dataBuffer });
+								fileText = result.value || '';
+								console.log(
+									`[Upload] Extracted ${fileText.length} characters from DOCX: ${filename}`
+								);
+							} catch (docxError) {
+								console.error(
+									`[Upload] Error parsing DOCX ${filename}:`,
+									docxError.message
 								);
 								// Continue without text extraction - file is still saved
 							}

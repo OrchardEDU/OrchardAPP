@@ -6,7 +6,9 @@ export class RagOperator {
 		this.collectionName = process.env.QDRANT_COLLECTION_NAME;
 		const apiKey = process.env.QDRANT_API_KEY;
 		const qdrantClusterUrl = process.env.QDRANT_CLUSTER_URL;
-		this._pointIdCounter = parseInt(process.env.QDRANT_COUNT || '0', 10);
+		// Will be initialized lazily from Qdrant so we don't rely on env vars
+		this._pointIdCounter = 0;
+		this._pointCounterInitialized = false;
 
 		// Check if Qdrant is configured
 		if (!this.collectionName || !apiKey || !qdrantClusterUrl) {
@@ -27,7 +29,7 @@ export class RagOperator {
 		this.vectorSize = 1024;
 		this._collectionVerified = false;
 		console.log(
-			`RAG Operator initialized with Qdrant (collection: ${this.collectionName}, starting point ID: ${this._pointIdCounter})`
+			`RAG Operator initialized with Qdrant (collection: ${this.collectionName}). Point IDs will be initialized from existing data.`
 		);
 	}
 
@@ -77,6 +79,50 @@ export class RagOperator {
 			);
 		}
 		return await this.generator.getEmbedding(text, this.embeddingModel);
+	}
+
+	/**
+	 * Ensure the point ID counter is initialized from Qdrant
+	 * so we append new IDs after existing points instead of
+	 * relying on an environment variable.
+	 */
+	async _ensurePointCounter() {
+		if (this._pointCounterInitialized) return;
+
+		await this._ensureCollection();
+
+		let maxId = -1;
+		let offset = null;
+		let hasMore = true;
+
+		while (hasMore) {
+			const scrollResult = await this.client.scroll(this.collectionName, {
+				limit: 100,
+				offset: offset,
+				with_payload: false,
+				with_vectors: false,
+			});
+
+			if (scrollResult.points && scrollResult.points.length > 0) {
+				for (const point of scrollResult.points) {
+					// Only consider numeric IDs; Qdrant supports other types
+					const idNum = typeof point.id === 'number' ? point.id : Number(point.id);
+					if (!Number.isNaN(idNum) && idNum > maxId) {
+						maxId = idNum;
+					}
+				}
+				offset = scrollResult.next_page_offset;
+				hasMore = offset !== null;
+			} else {
+				hasMore = false;
+			}
+		}
+
+		this._pointIdCounter = maxId >= 0 ? maxId + 1 : 0;
+		this._pointCounterInitialized = true;
+		console.log(
+			`[Qdrant] Initialized point ID counter from collection ${this.collectionName}: starting at ${this._pointIdCounter}`
+		);
 	}
 
 	/**
@@ -184,6 +230,7 @@ export class RagOperator {
 	async addDocument(fileId, text, filename, userId = null, subjectId = null) {
 		try {
 			await this._ensureCollection();
+			await this._ensurePointCounter();
 			console.log(`[RAG] Processing document: ${filename} (${text.length} characters)`);
 
 			const chunks = this._chunkText(text, 500, 50);
