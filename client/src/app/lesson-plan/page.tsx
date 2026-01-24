@@ -1,5 +1,5 @@
-import LessonPlanPage from '@/components/LessonPlanPage'
+import LessonPlanPage from '@/components/LessonPlanPage';
 
 export default function Page() {
-  return <LessonPlanPage />
+	return <LessonPlanPage />;
 }

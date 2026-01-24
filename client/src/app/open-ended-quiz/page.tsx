@@ -1,5 +1,5 @@
-import OpenEndedQuizPage from '@/components/OpenEndedQuizPage'
+import OpenEndedQuizPage from '@/components/OpenEndedQuizPage';
 
 export default function Page() {
-  return <OpenEndedQuizPage />
+	return <OpenEndedQuizPage />;
 }

@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
-  images: {
-    domains: [],
-  },
-}
+	output: 'standalone',
+	images: {
+		domains: [],
+	},
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
