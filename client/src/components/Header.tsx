@@ -17,31 +17,8 @@ const Header = () => {
 		return () => window.removeEventListener('scroll', handleScroll);
 	}, []);
 
-<<<<<<< HEAD
-  return (
-    <header className={`header ${scrolled ? 'scrolled' : ''}`}>
-      <div className="container header-container">
-        <div className="logo">
-          <Image src="/logo.png" alt="Orchard Logo" width={40} height={40} />
-          <span>Orchard</span>
-        </div>
-        <nav>
-          <ul>
-            <li><a href="#features">Features</a></li>
-            <li><a href="#how-it-works">How it Works</a></li>
-          </ul>
-        </nav>
-        <div className="header-actions">
-          <a href="mailto:support@orchardedu.com" className="btn btn-primary btn-sm">Get Updates</a>
-        </div>
-      </div>
-    </header>
-  )
-}
-=======
 	// Select logo based on theme
 	const logoSrc = theme === 'dark' ? '/orchardedulogowhite.png' : '/orchardedulogo.png';
->>>>>>> dev/prototype
 
 	return (
 		<header className={`header ${scrolled ? 'scrolled' : ''}`}>
