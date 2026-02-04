@@ -1,10 +1,11 @@
 .demo-container {
 	display: flex;
-	min-height: 100vh;
-	height: 100vh;
+	min-height: calc(100vh - 80px); /* Account for fixed header */
+	height: calc(100vh - 80px); /* Fit on screen with footer just offscreen */
 	background-color: #f8f9fa;
 	font-family: 'Inter', sans-serif;
 	overflow: hidden;
+	/* No margin-top needed - .main-content already has padding-top: 80px */
 }
 
 /* Sidebar */

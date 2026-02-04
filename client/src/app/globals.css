@@ -54,6 +54,22 @@ body {
 	color: var(--text-primary, var(--color-text));
 	line-height: 1.6;
 	-webkit-font-smoothing: antialiased;
+	display: flex;
+	flex-direction: column;
+}
+
+.layout-wrapper {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+.main-content {
+	flex: 1;
+	padding-top: 80px; /* Space for fixed header - ensures content doesn't scroll behind header */
+	padding-bottom: 4rem; /* Space above footer to prevent content from being covered */
+	background-color: var(--bg-primary, var(--color-light)); /* Match body background for seamless transition */
+	/* Allow content to grow naturally - footer will be pushed down by flexbox */
 }
 
 /* Landing page specific styles */
@@ -148,9 +164,11 @@ img {
 	background-color: var(--bg-primary);
 }
 
-.main-content {
+/* Dashboard-specific main-content styling (overrides base for dashboard pages) */
+.app .main-content {
 	flex: 1;
 	padding: 1rem;
+	padding-top: calc(80px + 1rem); /* Header height + padding */
 	overflow: hidden;
 	background-color: var(--bg-secondary);
 	transition: all 0.3s ease;
@@ -2402,7 +2420,7 @@ img {
 	min-height: 80vh;
 	display: flex;
 	align-items: center;
-	margin-top: 80px; /* Account for fixed navbar */
+	/* margin-top removed - spacing handled by .main-content padding-top */
 }
 
 .hero-content {

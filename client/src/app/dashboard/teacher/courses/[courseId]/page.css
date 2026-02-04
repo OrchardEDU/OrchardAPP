@@ -1,0 +1,30 @@
+.course-page {
+	padding: 2rem;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.course-page h1 {
+	font-size: 2rem;
+	margin-bottom: 1rem;
+}
+
+.course-page p {
+	margin-bottom: 1.5rem;
+	color: #666;
+}
+
+.navigation {
+	margin-top: 2rem;
+	display: flex;
+	gap: 1rem;
+}
+
+.navigation a {
+	color: #16a34a;
+	text-decoration: none;
+}
+
+.navigation a:hover {
+	text-decoration: underline;
+}

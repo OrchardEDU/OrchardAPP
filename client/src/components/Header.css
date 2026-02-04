@@ -4,20 +4,32 @@
 	left: 0;
 	width: 100%;
 	z-index: 1000;
-	background-color: rgba(255, 255, 255, 0.8);
-	backdrop-filter: blur(10px);
-	-webkit-backdrop-filter: blur(10px);
+	background-color: var(--bg-primary, #ffffff);
 	transition:
 		background-color 0.3s ease,
 		box-shadow 0.3s ease;
 	padding: 1rem 0;
-	border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+	border-bottom: 1px solid var(--border-primary, rgba(0, 0, 0, 0.05));
+	box-shadow: var(--shadow-sm);
+}
+
+@media (prefers-color-scheme: dark) {
+	.header {
+		background-color: var(--bg-primary, #1a202c);
+		border-bottom-color: var(--border-primary, rgba(255, 255, 255, 0.1));
+	}
 }
 
 .header.scrolled {
-	background-color: rgba(255, 255, 255, 0.95);
-	box-shadow: var(--shadow-sm);
+	background-color: var(--bg-primary, #ffffff);
+	box-shadow: var(--shadow-md);
 	padding: 0.5rem 0;
+}
+
+@media (prefers-color-scheme: dark) {
+	.header.scrolled {
+		background-color: var(--bg-primary, #1a202c);
+	}
 }
 
 .header-container {
@@ -33,7 +45,8 @@
 	gap: 0.5rem;
 	font-weight: 800;
 	font-size: 1.5rem;
-	color: var(--color-dark);
+	color: var(--text-primary, var(--color-dark));
+	text-decoration: none;
 }
 
 .logo img {
@@ -57,11 +70,13 @@ nav ul {
 
 nav a {
 	font-weight: 500;
-	color: var(--color-text);
+	color: var(--text-primary, var(--color-text));
+	text-decoration: none;
+	transition: color 0.2s;
 }
 
 nav a:hover {
-	color: var(--color-primary);
+	color: var(--accent-primary, var(--color-primary));
 }
 
 .header-actions {

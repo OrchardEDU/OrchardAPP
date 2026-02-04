@@ -4,6 +4,8 @@ import './globals.css';
 import '../styles/theme.css';
 import ConditionalLayout from '@/components/ConditionalLayout';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -24,7 +26,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 		<html lang="en">
 			<body className={inter.className}>
 				<ThemeProvider>
-					<ConditionalLayout>{children}</ConditionalLayout>
+					<ConditionalLayout>
+						<div className="layout-wrapper">
+							<Header />
+							<main className="main-content">
+								{children}
+							</main>
+							<Footer />
+						</div>
+					</ConditionalLayout>
 				</ThemeProvider>
 			</body>
 		</html>

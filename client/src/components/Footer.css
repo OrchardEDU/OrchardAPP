@@ -1,7 +1,20 @@
 .footer {
-	background-color: var(--color-dark);
-	color: white;
+	background-color: var(--landing-footer-bg, var(--color-dark));
+	color: var(--text-primary, white);
 	padding: 4rem 0 2rem;
+	margin-top: auto;
+	position: relative;
+}
+
+.footer::before {
+	content: '';
+	position: absolute;
+	top: -4rem; /* Extend upward to cover main-content padding-bottom */
+	left: 0;
+	right: 0;
+	height: 4rem;
+	background-color: var(--landing-footer-bg, var(--color-dark));
+	z-index: -1;
 }
 
 .footer-content {
@@ -12,13 +25,34 @@
 	margin-bottom: 4rem;
 }
 
-.footer-brand h3 {
-	color: white;
+.footer-logo-link {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	text-decoration: none;
 	margin-bottom: 0.5rem;
 }
 
+.footer-logo {
+	height: 40px;
+	width: auto;
+}
+
+.footer-brand h3 {
+	color: #ffffff; /* Bright white for maximum visibility */
+	margin: 0;
+	font-size: 1.75rem; /* Slightly larger */
+	font-weight: 800;
+	text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+	transition: color 0.2s;
+}
+
+.footer-logo-link:hover .footer-brand h3 {
+	color: var(--color-primary, #d32f2f); /* Accent color on hover */
+}
+
 .footer-brand p {
-	color: #999;
+	color: var(--text-tertiary, #999);
 }
 
 .footer-links {
@@ -28,27 +62,29 @@
 }
 
 .link-group h4 {
-	color: white;
+	color: var(--text-primary, white);
 	font-size: 1.1rem;
 	margin-bottom: 1.5rem;
 }
 
 .link-group a {
 	display: block;
-	color: #999;
+	color: var(--text-tertiary, #999);
 	margin-bottom: 0.75rem;
 	font-size: 0.9rem;
+	text-decoration: none;
+	transition: color 0.2s;
 }
 
 .link-group a:hover {
-	color: white;
+	color: var(--text-primary, white);
 }
 
 .footer-bottom {
-	border-top: 1px solid #333;
+	border-top: 1px solid var(--border-primary, #333);
 	padding-top: 2rem;
 	text-align: center;
-	color: #666;
+	color: var(--text-tertiary, #666);
 	font-size: 0.9rem;
 }
 
