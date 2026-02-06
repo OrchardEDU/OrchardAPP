@@ -1,6 +1,23 @@
 /**
- * Input validation helpers
+ * Input validation & sanitization helpers
  */
+
+/**
+ * Safely normalize a string:
+ * - Coerce non-strings to empty
+ * - Trim whitespace
+ * - Truncate to a safe maximum length
+ */
+export function sanitizeString(value, maxLength = 255) {
+	if (typeof value !== 'string') return '';
+	let normalized = value.trim();
+	if (normalized.length > maxLength) {
+		normalized = normalized.slice(0, maxLength);
+	}
+	// Optionally strip control characters
+	normalized = normalized.replace(/[\x00-\x1F\x7F]/g, '');
+	return normalized;
+}
 
 /**
  * Validate email format

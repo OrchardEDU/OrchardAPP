@@ -3,11 +3,11 @@ import path from 'path';
 import fs from 'fs';
 import crypto from 'crypto';
 import { body, validationResult } from 'express-validator';
-import multer from 'multer';
 import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import { Generator } from '../generator.js';
 import { RagOperator } from '../ragoperator.js';
+import { createUploadMiddleware } from '../utils/upload.js';
 
 const router = express.Router();
 
@@ -115,39 +115,7 @@ const demo = async (prompt, userId = null, subjectId = null) => {
 };
 
 // Configure multer for file uploads
-const storage = multer.diskStorage({
-	destination: (req, file, cb) => {
-		const uploadDir = path.join(process.cwd(), 'server', 'uploads');
-		if (!fs.existsSync(uploadDir)) {
-			fs.mkdirSync(uploadDir, { recursive: true });
-		}
-		cb(null, uploadDir);
-	},
-	filename: (req, file, cb) => {
-		const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-		cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-	},
-});
-
-const upload = multer({
-	storage: storage,
-	limits: {
-		fileSize: 10 * 1024 * 1024, // 10MB limit
-	},
-	fileFilter: (req, file, cb) => {
-		// Allow common document types
-		const allowedTypes = /\.(pdf|doc|docx|txt|md)$/i;
-		if (allowedTypes.test(file.originalname)) {
-			cb(null, true);
-		} else {
-			cb(
-				new Error(
-					'Invalid file type. Only PDF, DOC, DOCX, TXT, and MD files are allowed.'
-				)
-			);
-		}
-	},
-});
+const upload = createUploadMiddleware();
 
 /**
  * POST /api/demo

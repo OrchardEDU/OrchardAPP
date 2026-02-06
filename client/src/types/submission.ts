@@ -1,8 +1,7 @@
 export interface SubmissionAnswer {
-	questionId: string;
+	questionIndex: number;
 	answer: string;
-	isCorrect?: boolean; // if auto-gradable
-	points?: number;
+	pointsAwarded?: number;
 }
 
 export interface Submission {

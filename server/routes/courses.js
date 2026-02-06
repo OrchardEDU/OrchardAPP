@@ -49,6 +49,106 @@ router.get('/', async (req, res) => {
 });
 
 /**
+ * GET /api/courses/:courseId/students
+ * Get enrolled students for a course (owner only)
+ */
+router.get('/:courseId/students', requireRole('teacher'), async (req, res) => {
+	try {
+		const { courseId } = req.params;
+		const userId = req.session.userId;
+
+		if (!isValidUUID(courseId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid course ID',
+			});
+		}
+
+		// Check ownership
+		const isOwner = await courseQueries.isCourseOwner(userId, courseId);
+		if (!isOwner) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		// Get enrolled students
+		const students = await courseQueries.getEnrolledStudents(courseId);
+
+		// Format students to match frontend expectations
+		const formattedStudents = students.map(student => ({
+			id: student.id,
+			name: student.name,
+			email: student.email,
+			enrolledAt: student.enrolled_at.toISOString(),
+		}));
+
+		res.json({
+			success: true,
+			data: {
+				students: formattedStudents,
+			},
+		});
+	} catch (error) {
+		console.error('Get students error:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+});
+
+/**
+ * DELETE /api/courses/:courseId/students/:studentId
+ * Remove a student from a course (owner only)
+ */
+router.delete('/:courseId/students/:studentId', requireRole('teacher'), async (req, res) => {
+	try {
+		const { courseId, studentId } = req.params;
+		const userId = req.session.userId;
+
+		if (!isValidUUID(courseId) || !isValidUUID(studentId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid course ID or student ID',
+			});
+		}
+
+		// Check ownership
+		const isOwner = await courseQueries.isCourseOwner(userId, courseId);
+		if (!isOwner) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		// Remove student
+		const removed = await courseQueries.removeStudent(courseId, studentId);
+		if (!removed) {
+			return res.status(404).json({
+				success: false,
+				message: 'Student not found in course',
+			});
+		}
+
+		res.json({
+			success: true,
+			data: {
+				id: removed.id,
+			},
+		});
+	} catch (error) {
+		console.error('Remove student error:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+});
+
+/**
  * GET /api/courses/:courseId
  * Get a specific course
  */
@@ -214,7 +314,6 @@ router.put('/:courseId', async (req, res) => {
 
 		// Get teacher name
 		const teacher = await userQueries.getUserById(course.teacher_id);
-
 		// Format course to match frontend expectations
 		const formattedCourse = {
 			id: course.id,
@@ -234,6 +333,56 @@ router.put('/:courseId', async (req, res) => {
 		});
 	} catch (error) {
 		console.error('Update course error:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+});
+
+
+/**
+ * DELETE /api/courses/:courseId
+ * Delete a course (owner only, teachers)
+ */
+router.delete('/:courseId', requireRole('teacher'), async (req, res) => {
+	try {
+		const { courseId } = req.params;
+		const userId = req.session.userId;
+
+		if (!isValidUUID(courseId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid course ID',
+			});
+		}
+
+		// Check ownership
+		const isOwner = await courseQueries.isCourseOwner(userId, courseId);
+		if (!isOwner) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		// Delete course
+		const deleted = await courseQueries.deleteCourse(courseId);
+		if (!deleted) {
+			return res.status(404).json({
+				success: false,
+				message: 'Course not found',
+			});
+		}
+
+		return res.json({
+			success: true,
+			data: {
+				id: deleted.id,
+			},
+		});
+	} catch (error) {
+		console.error('Delete course error:', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',

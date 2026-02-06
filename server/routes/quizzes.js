@@ -68,7 +68,12 @@ router.get('/:courseId/quizzes', validateCourseAccess, async (req, res) => {
 			description: quiz.description || '',
 			published: quiz.published,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
-			questions: [],
+			questions: Array.isArray(quiz.questions)
+				? quiz.questions.map(q => ({
+						question: q.question,
+						points: q.points,
+				  }))
+				: [],
 			createdAt: quiz.created_at.toISOString(),
 			questionCount: parseInt(quiz.question_count) || 0,
 			...(role === 'teacher' && { submissionCount: parseInt(quiz.submission_count) || 0 }),
@@ -125,12 +130,8 @@ router.get('/:courseId/quizzes/:quizId', validateCourseAccess, async (req, res) 
 			published: quiz.published,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
 			questions: (quiz.questions || []).map(q => ({
-				id: q.id,
-				type: q.type,
 				question: q.question,
-				options: q.options || null,
-				correctAnswer: role === 'teacher' ? q.correct_answer : null,
-				points: parseInt(q.points) || 1,
+				points: parseInt(q.points, 10) || 0,
 			})),
 			createdAt: quiz.created_at.toISOString(),
 			...(quiz.hasSubmission !== undefined && { hasSubmission: quiz.hasSubmission }),
@@ -175,37 +176,19 @@ router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), 
 			});
 		}
 
-		// Validate questions if provided
+		// Validate questions if provided (simple open-ended questions: text + points)
 		if (questions && Array.isArray(questions)) {
 			for (const q of questions) {
-				if (!q.type || !['multiple-choice', 'open-ended'].includes(q.type)) {
-					return res.status(400).json({
-						success: false,
-						message: 'Invalid question type',
-					});
-				}
 				if (!q.question || typeof q.question !== 'string' || q.question.trim().length === 0) {
 					return res.status(400).json({
 						success: false,
 						message: 'Question text is required',
 					});
 				}
-				if (q.type === 'multiple-choice' && (!q.options || !Array.isArray(q.options) || q.options.length < 2)) {
+				if (q.points === undefined || typeof q.points !== 'number' || q.points < 1) {
 					return res.status(400).json({
 						success: false,
-						message: 'Multiple choice questions must have at least 2 options',
-					});
-				}
-				if (!q.correctAnswer || typeof q.correctAnswer !== 'string') {
-					return res.status(400).json({
-						success: false,
-						message: 'Correct answer is required',
-					});
-				}
-				if (!q.points || typeof q.points !== 'number' || q.points < 1) {
-					return res.status(400).json({
-						success: false,
-						message: 'Points must be at least 1',
+						message: 'Points must be a number greater than or equal to 1',
 					});
 				}
 			}
@@ -229,12 +212,8 @@ router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), 
 			published: quiz.published,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
 			questions: (quiz.questions || []).map(q => ({
-				id: q.id,
-				type: q.type,
 				question: q.question,
-				options: q.options || null,
-				correctAnswer: q.correct_answer,
-				points: parseInt(q.points) || 1,
+				points: parseInt(q.points, 10) || 0,
 			})),
 			createdAt: quiz.created_at.toISOString(),
 		};
@@ -278,37 +257,19 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 			});
 		}
 
-		// Validate questions if provided
+		// Validate questions if provided (simple open-ended questions: text + points)
 		if (questions && Array.isArray(questions)) {
 			for (const q of questions) {
-				if (!q.type || !['multiple-choice', 'open-ended'].includes(q.type)) {
-					return res.status(400).json({
-						success: false,
-						message: 'Invalid question type',
-					});
-				}
 				if (!q.question || typeof q.question !== 'string' || q.question.trim().length === 0) {
 					return res.status(400).json({
 						success: false,
 						message: 'Question text is required',
 					});
 				}
-				if (q.type === 'multiple-choice' && (!q.options || !Array.isArray(q.options) || q.options.length < 2)) {
+				if (q.points === undefined || typeof q.points !== 'number' || q.points < 1) {
 					return res.status(400).json({
 						success: false,
-						message: 'Multiple choice questions must have at least 2 options',
-					});
-				}
-				if (!q.correctAnswer || typeof q.correctAnswer !== 'string') {
-					return res.status(400).json({
-						success: false,
-						message: 'Correct answer is required',
-					});
-				}
-				if (!q.points || typeof q.points !== 'number' || q.points < 1) {
-					return res.status(400).json({
-						success: false,
-						message: 'Points must be at least 1',
+						message: 'Points must be a number greater than or equal to 1',
 					});
 				}
 			}
@@ -339,12 +300,8 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 			published: quiz.published,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
 			questions: (quiz.questions || []).map(q => ({
-				id: q.id,
-				type: q.type,
 				question: q.question,
-				options: q.options || null,
-				correctAnswer: q.correct_answer,
-				points: parseInt(q.points) || 1,
+				points: parseInt(q.points, 10) || 0,
 			})),
 			createdAt: quiz.created_at.toISOString(),
 		};
@@ -454,12 +411,12 @@ router.post('/:courseId/quizzes/:quizId/submit', validateCourseAccess, requireRo
 			});
 		}
 
-		// Validate answers format
+		// Validate answers format: questionIndex (number) + answer (string)
 		for (const answer of answers) {
-			if (!answer.questionId || !isValidUUID(answer.questionId)) {
+			if (typeof answer.questionIndex !== 'number' || answer.questionIndex < 0) {
 				return res.status(400).json({
 					success: false,
-					message: 'Invalid question ID in answers',
+					message: 'Each answer must include a non-negative questionIndex number',
 				});
 			}
 			if (typeof answer.answer !== 'string') {
@@ -479,7 +436,7 @@ router.post('/:courseId/quizzes/:quizId/submit', validateCourseAccess, requireRo
 			});
 		}
 
-		// Create submission
+		// Create or overwrite submission
 		const submission = await submissionQueries.createSubmission(quizId, studentId, answers);
 
 		// Format submission to match frontend expectations
@@ -490,10 +447,9 @@ router.post('/:courseId/quizzes/:quizId/submit', validateCourseAccess, requireRo
 			studentName: submission.student_name,
 			studentEmail: submission.student_email,
 			answers: (submission.answers || []).map(a => ({
-				questionId: a.question_id,
+				questionIndex: a.question_index,
 				answer: a.answer,
-				isCorrect: a.is_correct,
-				points: parseFloat(a.points) || 0,
+				pointsAwarded: parseFloat(a.points_awarded) || 0,
 			})),
 			score: parseFloat(submission.score) || 0,
 			maxScore: parseFloat(submission.max_score) || 0,

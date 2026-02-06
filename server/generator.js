@@ -1,6 +1,6 @@
 import { Ollama } from 'ollama';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { demoOutputJsonSchema } from './schemas.js';
+import { demoOutputJsonSchema, questionGenerationOutputSchema } from './schemas.js';
 
 export class Generator {
 	constructor() {
@@ -178,6 +178,101 @@ export class Generator {
 			};
 		} catch (error) {
 			console.error('Error generating question:', error);
+			throw error;
+		}
+	}
+
+	/**
+	 * Generate multiple questions using Ollama or Gemini with optional context
+	 * @param {string} topic - The topic for question generation
+	 * @param {number} numQuestions - Number of questions to generate (1-20)
+	 * @param {string} context - Optional RAG context to include
+	 * @returns {Promise<Array<{question: string}>>} Array of generated questions
+	 */
+	async generateQuestions(topic, numQuestions, context = null) {
+		try {
+			// TODO: Replace with actual system prompt
+			const systemPrompt = 'TODO: Add system prompt for question generation';
+			
+			const query = context
+				? `${systemPrompt}
+
+Generate ${numQuestions} thoughtful, educational questions that would be appropriate for students based on the following topic: "${topic}"
+
+Use the following context to inform your questions:
+${context}
+
+Each question should:
+- Be clear and well-formulated
+- Test understanding of the topic
+- Be appropriate for educational purposes
+- Be engaging and thought-provoking
+- Relate to the provided context when relevant
+- Be distinct from the other questions
+
+Generate ${numQuestions} questions now. Respond with a JSON object matching this schema: ${JSON.stringify(questionGenerationOutputSchema)}`
+				: `${systemPrompt}
+
+Generate ${numQuestions} thoughtful, educational questions that would be appropriate for students based on the following topic: "${topic}"
+
+Each question should:
+- Be clear and well-formulated
+- Test understanding of the topic
+- Be appropriate for educational purposes
+- Be engaging and thought-provoking
+- Be distinct from the other questions
+
+Generate ${numQuestions} questions now. Respond with a JSON object matching this schema: ${JSON.stringify(questionGenerationOutputSchema)}`;
+
+			let response;
+			let responseContent;
+
+			if (this.useLocal) {
+				// Use Ollama
+				console.log('Using Ollama for question generation');
+				response = await this.ollama.chat({
+					model: this.model,
+					messages: [{ role: 'user', content: query }],
+					format: questionGenerationOutputSchema,
+				});
+				console.log('OLLAMA RESPONSE:\n', response);
+				
+				if (!response || !response.message || !response.message.content) {
+					console.error('[Generator] Ollama failed to generate questions');
+					return [];
+				}
+				responseContent = response.message.content;
+			} else {
+				// Use Gemini
+				console.log('Using Gemini for question generation');
+				const model = this.genAI.getGenerativeModel({ 
+					model: this.model,
+					generationConfig: {
+						responseMimeType: 'application/json',
+						responseSchema: questionGenerationOutputSchema,
+					},
+				});
+				const result = await model.generateContent(query);
+				responseContent = result.response.text();
+				console.log('GEMINI RESPONSE:\n', responseContent);
+			}
+
+			// Parse structured output
+			let structuredOutput;
+			try {
+				// Parse JSON response
+				structuredOutput = JSON.parse(responseContent);
+			} catch (error) {
+				console.error('[Generator] Failed to parse JSON output:', error);
+				return [];
+			}
+
+			// Extract questions array
+			const questions = structuredOutput.questions || [];
+			console.log(`[Generator] Generated ${questions.length} questions`);
+			return questions;
+		} catch (error) {
+			console.error('Error generating questions:', error);
 			throw error;
 		}
 	}

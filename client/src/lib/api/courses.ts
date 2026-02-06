@@ -41,4 +41,22 @@ export const coursesApi = {
 		}
 		return null;
 	},
+
+	async deleteCourse(courseId: string): Promise<boolean> {
+		const response = await apiClient.delete<{ id: string }>(`/api/courses/${courseId}`);
+		return !!(response.success && response.data?.id);
+	},
+
+	async getCourseStudents(courseId: string): Promise<Array<{ id: string; name: string; email: string; enrolledAt: string }>> {
+		const response = await apiClient.get<{ students: Array<{ id: string; name: string; email: string; enrolledAt: string }> }>(`/api/courses/${courseId}/students`);
+		if (response.success && response.data?.students) {
+			return response.data.students;
+		}
+		return [];
+	},
+
+	async removeStudent(courseId: string, studentId: string): Promise<boolean> {
+		const response = await apiClient.delete<{ id: string }>(`/api/courses/${courseId}/students/${studentId}`);
+		return !!(response.success && response.data?.id);
+	},
 };

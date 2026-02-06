@@ -3,7 +3,7 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 export class RagOperator {
 	constructor(generator = null) {
 		// Handle all Qdrant-related environment variables
-		this.collectionName = process.env.QDRANT_COLLECTION_NAME;
+		this.collectionName = process.env.QDRANT_COLLECTION_NAME || 'test-1';
 		const apiKey = process.env.QDRANT_API_KEY;
 		const qdrantClusterUrl = process.env.QDRANT_CLUSTER_URL;
 		// Will be initialized lazily from Qdrant so we don't rely on env vars
@@ -64,11 +64,82 @@ export class RagOperator {
 			if (!collection) {
 				throw new Error(`Collection ${this.collectionName} does not exist in Qdrant`);
 			}
+			
+			// Ensure indexes exist for filtering
+			await this._ensureIndexes();
+			
 			this._collectionVerified = true;
 		} catch (error) {
 			throw new Error(
 				`Collection ${this.collectionName} does not exist in Qdrant: ${error.message}`
 			);
+		}
+	}
+
+	async _ensureIndexes() {
+		try {
+			// Create index for user-id (UUID type - matches your manual setup)
+			try {
+				await this.client.createPayloadIndex(this.collectionName, {
+					field_name: 'user-id',
+					field_schema: 'uuid',
+				});
+				console.log('[Qdrant] Created index for user-id (uuid)');
+			} catch (error) {
+				// Index might already exist, which is fine
+				const errorMsg = error.message || error.status?.error || '';
+				if (!errorMsg.includes('already exists') && !errorMsg.includes('Already exists')) {
+					console.warn('[Qdrant] Could not create user-id index:', errorMsg);
+				}
+			}
+
+			// Create index for subject-id (UUID type - matches your manual setup)
+			try {
+				await this.client.createPayloadIndex(this.collectionName, {
+					field_name: 'subject-id',
+					field_schema: 'uuid',
+				});
+				console.log('[Qdrant] Created index for subject-id (uuid)');
+			} catch (error) {
+				// Index might already exist, which is fine
+				const errorMsg = error.message || error.status?.error || '';
+				if (!errorMsg.includes('already exists') && !errorMsg.includes('Already exists')) {
+					console.warn('[Qdrant] Could not create subject-id index:', errorMsg);
+				}
+			}
+
+			// Create index for file-id (keyword type for exact matching)
+			try {
+				await this.client.createPayloadIndex(this.collectionName, {
+					field_name: 'file-id',
+					field_schema: 'keyword',
+				});
+				console.log('[Qdrant] Created index for file-id (keyword)');
+			} catch (error) {
+				// Index might already exist, which is fine
+				const errorMsg = error.message || error.status?.error || '';
+				if (!errorMsg.includes('already exists') && !errorMsg.includes('Already exists')) {
+					console.warn('[Qdrant] Could not create file-id index:', errorMsg);
+				}
+			}
+
+			// Create index for filename (keyword type - matches your manual setup)
+			try {
+				await this.client.createPayloadIndex(this.collectionName, {
+					field_name: 'filename',
+					field_schema: 'keyword',
+				});
+				console.log('[Qdrant] Created index for filename (keyword)');
+			} catch (error) {
+				// Index might already exist, which is fine
+				const errorMsg = error.message || error.status?.error || '';
+				if (!errorMsg.includes('already exists') && !errorMsg.includes('Already exists')) {
+					console.warn('[Qdrant] Could not create filename index:', errorMsg);
+				}
+			}
+		} catch (error) {
+			console.error('[Qdrant] Error ensuring indexes:', error);
+			// Don't throw - indexes might already exist or collection might not support it
 		}
 	}
 
@@ -297,6 +368,74 @@ export class RagOperator {
 			return true;
 		} catch (error) {
 			console.error(`[RAG] Error deleting document ${fileId}:`, error);
+			throw error;
+		}
+	}
+
+	/**
+	 * List unique documents for a course/user
+	 * @param {string|null} userId - Optional user ID filter
+	 * @param {string|null} subjectId - Optional subject ID filter (courseId)
+	 * @returns {Promise<Array<{fileId: string, filename: string}>>} Array of unique documents
+	 */
+	async listDocuments(userId = null, subjectId = null) {
+		try {
+			await this._ensureCollection();
+			
+			const filter = {
+				must: [],
+			};
+
+			if (userId) {
+				filter.must.push({ key: 'user-id', match: { value: userId } });
+			}
+			if (subjectId) {
+				filter.must.push({ key: 'subject-id', match: { value: subjectId } });
+			}
+
+			// Scroll through all matching points to get unique file-ids
+			const fileMap = new Map();
+			let offset = null;
+			let hasMore = true;
+
+			while (hasMore) {
+				const scrollRequest = {
+					limit: 100,
+					offset: offset,
+					with_payload: true,
+					with_vectors: false,
+				};
+
+				if (filter.must.length > 0) {
+					scrollRequest.filter = filter;
+				}
+
+				const scrollResult = await this.client.scroll(this.collectionName, scrollRequest);
+
+				if (scrollResult.points && scrollResult.points.length > 0) {
+					for (const point of scrollResult.points) {
+						const fileId = point.payload?.['file-id'];
+						const filename = point.payload?.filename;
+						
+						if (fileId && !fileMap.has(fileId)) {
+							fileMap.set(fileId, {
+								fileId: fileId,
+								filename: filename || fileId,
+							});
+						}
+					}
+					offset = scrollResult.next_page_offset;
+					hasMore = offset !== null;
+				} else {
+					hasMore = false;
+				}
+			}
+
+			const documents = Array.from(fileMap.values());
+			console.log(`[Qdrant] Found ${documents.length} unique documents`);
+			return documents;
+		} catch (error) {
+			console.error(`[RAG] Error listing documents:`, error);
 			throw error;
 		}
 	}

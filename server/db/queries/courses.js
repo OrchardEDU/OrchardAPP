@@ -177,4 +177,46 @@ export async function enrollStudent(courseId, studentId) {
 		[courseId, studentId]
 	);
 	return result.rows[0];
+
+}
+/**
+ * Delete course (owner only - ownership is checked in route layer)
+ */
+export async function deleteCourse(courseId) {
+	const result = await pool.query(
+		`DELETE FROM courses
+		 WHERE id = $1
+		 RETURNING id`,
+		[courseId]
+	);
+	return result.rows[0] || null;
+}
+
+/**
+ * Get enrolled students for a course
+ */
+export async function getEnrolledStudents(courseId) {
+	const result = await pool.query(
+		`SELECT 
+			u.id, u.name, u.email, e.enrolled_at
+		FROM enrollments e
+		JOIN users u ON e.student_id = u.id
+		WHERE e.course_id = $1
+		ORDER BY e.enrolled_at ASC`,
+		[courseId]
+	);
+	return result.rows;
+}
+
+/**
+ * Remove student from course (unenroll)
+ */
+export async function removeStudent(courseId, studentId) {
+	const result = await pool.query(
+		`DELETE FROM enrollments
+		 WHERE course_id = $1 AND student_id = $2
+		 RETURNING id`,
+		[courseId, studentId]
+	);
+	return result.rows[0] || null;
 }

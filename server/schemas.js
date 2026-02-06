@@ -31,3 +31,26 @@ export const demoOutputJsonSchema = {
 	},
 	required: ['question', 'relevancy'],
 };
+
+// JSON Schema for question generation output (multiple questions)
+// TODO: Replace with actual schema definition
+export const questionGenerationOutputSchema = {
+	type: 'object',
+	properties: {
+		questions: {
+			type: 'array',
+			items: {
+				type: 'object',
+				properties: {
+					question: {
+						type: 'string',
+						description: 'The generated question text',
+					},
+				},
+				required: ['question'],
+			},
+			description: 'Array of generated questions',
+		},
+	},
+	required: ['questions'],
+};

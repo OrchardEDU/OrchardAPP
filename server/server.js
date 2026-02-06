@@ -15,9 +15,10 @@ import authRoutes from './routes/auth.js';
 import courseRoutes from './routes/courses.js';
 import quizRoutes from './routes/quizzes.js';
 import demoRoutes from './routes/demo.js';
+import aiRoutes from './routes/ai.js';
 
 // Import middleware
-import { requestLogger } from './middleware/logger.js';
+import { createRequestLogger } from './middleware/logger.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -27,6 +28,7 @@ const __dirname = dirname(__filename);
 
 const PORT = process.env.PORT || 8086;
 const IP = process.env.IP || 'localhost';
+const ENABLE_FRONTEND_LOGGING = false;
 
 // Configure Next.js to serve the built client app
 const dev = process.env.NODE_ENV !== 'production';
@@ -42,7 +44,7 @@ nextApp.prepare().then(async () => {
 	const expressApp = express();
 
 	// Middleware to parse JSON bodies
-	expressApp.use(express.json());
+	expressApp.use(express.json({ limit: '1mb' }));
 	expressApp.use(express.urlencoded({ extended: true }));
 
 	// Configure session store
@@ -69,13 +71,14 @@ nextApp.prepare().then(async () => {
 	);
 
 	// Request logging middleware (after session, before routes)
-	expressApp.use(requestLogger);
+	expressApp.use(createRequestLogger(ENABLE_FRONTEND_LOGGING));
 
 	// API routes
 	expressApp.use('/api/auth', authRoutes);
 	expressApp.use('/api/courses', courseRoutes);
 	expressApp.use('/api/courses', quizRoutes); // Quiz routes handle /:courseId/quizzes internally
 	expressApp.use('/api/demo', demoRoutes);
+	expressApp.use('/api/ai', aiRoutes);
 
 	// Example backend API route (keep for compatibility)
 	expressApp.get('/api/hello', (req, res) => {
@@ -94,7 +97,7 @@ nextApp.prepare().then(async () => {
 		console.log(`\nServer running on http://${IP}:${PORT}`);
 		console.log(`Visit: http://${IP}:${PORT}`);
 		console.log(`Session store: PostgreSQL`);
-		console.log(`Request logging: Enabled\n`);
+		console.log(`Request logging: ${ENABLE_FRONTEND_LOGGING ? 'Enabled' : 'Disabled'}\n`);
 	});
 });
 

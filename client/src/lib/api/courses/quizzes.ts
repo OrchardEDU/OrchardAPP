@@ -25,10 +25,7 @@ export const quizzesApi = {
 		published: boolean;
 		dueDate: string | null;
 		questions: Array<{
-			type: 'multiple-choice' | 'open-ended';
 			question: string;
-			options?: string[] | null;
-			correctAnswer: string;
 			points: number;
 		}>;
 	}): Promise<Quiz | null> {
@@ -45,10 +42,7 @@ export const quizzesApi = {
 		published?: boolean;
 		dueDate?: string | null;
 		questions?: Array<{
-			type: 'multiple-choice' | 'open-ended';
 			question: string;
-			options?: string[] | null;
-			correctAnswer: string;
 			points: number;
 		}>;
 	}): Promise<Quiz | null> {
@@ -67,7 +61,7 @@ export const quizzesApi = {
 		return [];
 	},
 
-	async submitQuiz(courseId: string, quizId: string, answers: Array<{ questionId: string; answer: string }>): Promise<Submission | null> {
+	async submitQuiz(courseId: string, quizId: string, answers: Array<{ questionIndex: number; answer: string }>): Promise<Submission | null> {
 		const response = await apiClient.post<{ submission: Submission }>(`/api/courses/${courseId}/quizzes/${quizId}/submit`, { answers });
 		if (response.success && response.data?.submission) {
 			return response.data.submission;

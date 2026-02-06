@@ -8,12 +8,11 @@ export async function getQuizzesForCourse(courseId, userId, role) {
 		// Teachers see all quizzes
 		const result = await pool.query(
 			`SELECT 
-				q.id, q.course_id, q.title, q.description, q.published, q.due_date,
+				q.id, q.course_id, q.title, q.description, q.published, q.due_date, q.questions_json,
 				q.created_at, q.updated_at,
-				COUNT(DISTINCT qu.id) as question_count,
+				COALESCE(jsonb_array_length(q.questions_json), 0) as question_count,
 				COUNT(DISTINCT s.id) as submission_count
 			FROM quizzes q
-			LEFT JOIN questions qu ON q.id = qu.quiz_id
 			LEFT JOIN submissions s ON q.id = s.quiz_id
 			WHERE q.course_id = $1
 			GROUP BY q.id
@@ -25,12 +24,11 @@ export async function getQuizzesForCourse(courseId, userId, role) {
 		// Students only see published quizzes
 		const result = await pool.query(
 			`SELECT 
-				q.id, q.course_id, q.title, q.description, q.published, q.due_date,
+				q.id, q.course_id, q.title, q.description, q.published, q.due_date, q.questions_json,
 				q.created_at, q.updated_at,
-				COUNT(DISTINCT qu.id) as question_count,
+				COALESCE(jsonb_array_length(q.questions_json), 0) as question_count,
 				EXISTS(SELECT 1 FROM submissions WHERE quiz_id = q.id AND student_id = $2) as has_submission
 			FROM quizzes q
-			LEFT JOIN questions qu ON q.id = qu.quiz_id
 			WHERE q.course_id = $1 AND q.published = true
 			GROUP BY q.id
 			ORDER BY q.created_at DESC`,
@@ -55,21 +53,16 @@ export async function getQuizById(quizId, userId, role) {
 	}
 	
 	const quiz = quizResult.rows[0];
-	
-	// Get questions
-	const questionsResult = await pool.query(
-		'SELECT * FROM questions WHERE quiz_id = $1 ORDER BY order_index ASC',
-		[quizId]
-	);
-	
-	// Hide correct answers for students
-	if (role === 'student') {
-		questionsResult.rows.forEach(q => {
-			q.correct_answer = null;
-		});
-	}
-	
-	quiz.questions = questionsResult.rows;
+
+	// Questions are stored as JSONB on the quiz
+	const rawQuestions = Array.isArray(quiz.questions_json) ? quiz.questions_json : [];
+	const normalizedQuestions = rawQuestions.map((q, index) => ({
+		question: typeof q.question === 'string' ? q.question : '',
+		points: typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0,
+		orderIndex: typeof q.orderIndex === 'number' ? q.orderIndex : index,
+	}));
+
+	quiz.questions = normalizedQuestions;
 	
 	// Check submission status for students
 	if (role === 'student') {
@@ -93,26 +86,22 @@ export async function createQuiz(courseId, title, description, published, dueDat
 		await client.query('BEGIN');
 		
 		// Insert quiz
+		const normalizedQuestions = Array.isArray(questions)
+			? questions.map((q, index) => ({
+					question: typeof q.question === 'string' ? q.question : '',
+					points: typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0,
+					orderIndex: index,
+			  }))
+			: [];
+
 		const quizResult = await client.query(
-			`INSERT INTO quizzes (course_id, title, description, published, due_date)
-			 VALUES ($1, $2, $3, $4, $5)
+			`INSERT INTO quizzes (course_id, title, description, published, due_date, questions_json)
+			 VALUES ($1, $2, $3, $4, $5, $6)
 			 RETURNING *`,
-			[courseId, title, description, published, dueDate]
+			[courseId, title, description, published, dueDate, JSON.stringify(normalizedQuestions)]
 		);
 		
 		const quiz = quizResult.rows[0];
-		
-		// Insert questions
-		if (questions && questions.length > 0) {
-			for (let i = 0; i < questions.length; i++) {
-				const q = questions[i];
-				await client.query(
-					`INSERT INTO questions (quiz_id, type, question, options, correct_answer, points, order_index)
-					 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-					[quiz.id, q.type, q.question, JSON.stringify(q.options || null), q.correctAnswer, q.points, i]
-				);
-			}
-		}
 		
 		await client.query('COMMIT');
 		
@@ -136,36 +125,30 @@ export async function updateQuiz(quizId, title, description, published, dueDate,
 		await client.query('BEGIN');
 		
 		// Update quiz
+		const normalizedQuestions = Array.isArray(questions)
+			? questions.map((q, index) => ({
+					question: typeof q.question === 'string' ? q.question : '',
+					points: typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0,
+					orderIndex: index,
+			  }))
+			: null;
+
 		const quizResult = await client.query(
 			`UPDATE quizzes 
 			 SET title = COALESCE($1, title),
 			     description = COALESCE($2, description),
 			     published = COALESCE($3, published),
 			     due_date = COALESCE($4, due_date),
+			     questions_json = COALESCE($5, questions_json),
 			     updated_at = CURRENT_TIMESTAMP
-			 WHERE id = $5
+			 WHERE id = $6
 			 RETURNING *`,
-			[title, description, published, dueDate, quizId]
+			[title, description, published, dueDate, normalizedQuestions ? JSON.stringify(normalizedQuestions) : null, quizId]
 		);
 		
 		if (quizResult.rows.length === 0) {
 			await client.query('ROLLBACK');
 			return null;
-		}
-		
-		// Delete existing questions
-		await client.query('DELETE FROM questions WHERE quiz_id = $1', [quizId]);
-		
-		// Insert new questions
-		if (questions && questions.length > 0) {
-			for (let i = 0; i < questions.length; i++) {
-				const q = questions[i];
-				await client.query(
-					`INSERT INTO questions (quiz_id, type, question, options, correct_answer, points, order_index)
-					 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-					[quizId, q.type, q.question, JSON.stringify(q.options || null), q.correctAnswer, q.points, i]
-				);
-			}
 		}
 		
 		await client.query('COMMIT');
@@ -199,10 +182,6 @@ export async function canSubmitQuiz(quizId, studentId) {
 	
 	if (!quiz.published) {
 		return { canSubmit: false, reason: 'Quiz is not published' };
-	}
-	
-	if (quiz.has_submission) {
-		return { canSubmit: false, reason: 'Already submitted' };
 	}
 	
 	if (quiz.due_date) {

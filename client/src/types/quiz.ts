@@ -1,10 +1,7 @@
 export interface QuizQuestion {
-	id: string;
-	type: 'multiple-choice' | 'open-ended';
 	question: string;
-	options?: string[] | null; // only for multiple-choice
-	correctAnswer?: string | null; // only for teachers
 	points: number;
+	orderIndex?: number;
 }
 
 export interface Quiz {

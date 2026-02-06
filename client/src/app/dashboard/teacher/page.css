@@ -4,27 +4,210 @@
 	margin: 0 auto;
 }
 
+.dashboard-header-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
 .dashboard-page h1 {
 	font-size: 2rem;
-	margin-bottom: 1rem;
+	margin-bottom: 0.5rem;
 }
 
 .dashboard-page p {
-	margin-bottom: 1.5rem;
+	margin: 0;
 	color: #666;
 }
 
-.navigation {
-	margin-top: 2rem;
+.dashboard-actions {
 	display: flex;
-	gap: 1rem;
+	gap: 0.75rem;
+	flex-wrap: wrap;
 }
 
-.navigation a {
+.primary-action-btn,
+.secondary-action-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.6rem 1.2rem;
+	border-radius: 999px;
+	font-size: 0.9rem;
+	font-weight: 500;
+	text-decoration: none;
+	border: 1px solid transparent;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+		box-shadow 0.2s ease;
+}
+
+.primary-action-btn {
+	background-color: #16a34a;
+	color: #ffffff;
+	box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+}
+
+.primary-action-btn:hover {
+	background-color: #15803d;
+}
+
+.secondary-action-btn {
+	background-color: transparent;
+	color: #16a34a;
+	border-color: #16a34a;
+}
+
+.secondary-action-btn:hover {
+	background-color: rgba(22, 163, 74, 0.06);
+}
+
+.status-text {
+	margin-top: 1rem;
+	color: #4b5563;
+}
+
+.status-text.error-text {
+	color: #b91c1c;
+}
+
+.empty-state {
+	margin-top: 2rem;
+	padding: 2rem;
+	border-radius: 1rem;
+	border: 1px dashed #d1d5db;
+	background-color: #f9fafb;
+	text-align: center;
+}
+
+.empty-state-text {
+	margin-bottom: 1rem;
+	color: #4b5563;
+}
+
+.create-card {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.75rem 1.5rem;
+	border-radius: 999px;
+	border: 1px dashed #16a34a;
 	color: #16a34a;
 	text-decoration: none;
+	font-weight: 500;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
-.navigation a:hover {
-	text-decoration: underline;
+.create-card:hover {
+	background-color: rgba(22, 163, 74, 0.06);
+	border-style: solid;
+}
+
+.create-icon {
+	font-size: 1.25rem;
+}
+
+.courses-grid {
+	margin-top: 2rem;
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 1.5rem;
+}
+
+@media (max-width: 1024px) {
+	.courses-grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
+
+@media (max-width: 640px) {
+	.dashboard-header-row {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.courses-grid {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+.course-card {
+	background-color: #ffffff;
+	border-radius: 1rem;
+	border: 1px solid #e5e7eb;
+	padding: 1.25rem 1.5rem;
+	box-shadow: 0 4px 10px rgba(15, 23, 42, 0.03);
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.course-card:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+	border-color: #d1d5db;
+}
+
+.course-card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 0.75rem;
+}
+
+.course-title {
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #111827;
+	margin: 0;
+}
+
+.course-delete-btn {
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	font-size: 1rem;
+	line-height: 1;
+	color: #9ca3af;
+	padding: 0.15rem;
+	border-radius: 999px;
+	transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+.course-delete-btn:hover {
+	background-color: #fee2e2;
+	color: #b91c1c;
+	transform: scale(1.05);
+}
+
+.course-delete-btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+	background-color: transparent;
+}
+
+.course-description {
+	margin: 0;
+	color: #4b5563;
+	font-size: 0.95rem;
+}
+
+.course-meta {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	font-size: 0.85rem;
+	color: #6b7280;
+}
+
+.course-join-code code {
+	background-color: #f3f4f6;
+	border-radius: 999px;
+	padding: 0.15rem 0.5rem;
+	font-size: 0.8rem;
 }
