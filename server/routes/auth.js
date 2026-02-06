@@ -186,15 +186,27 @@ router.post('/login', async (req, res) => {
 		}
 
 		// Create session
+		// Explicitly save session to ensure cookie is set with correct attributes
 		req.session.userId = user.id;
 		req.session.role = user.role;
+		
+		// Save session explicitly to ensure it's persisted and cookie is set
+		req.session.save((err) => {
+			if (err) {
+				console.error('Session save error on login:', err);
+				return res.status(500).json({
+					success: false,
+					message: 'Internal server error',
+				});
+			}
 
-		// Return user data (without password)
-		res.json({
-			success: true,
-			data: {
-				user: sanitizeUser(user),
-			},
+			// Return user data (without password)
+			res.json({
+				success: true,
+				data: {
+					user: sanitizeUser(user),
+				},
+			});
 		});
 	} catch (error) {
 		console.error('Login error:', error);
@@ -248,6 +260,15 @@ router.get('/me', async (req, res) => {
  * Logout user
  */
 router.post('/logout', (req, res) => {
+	// Clear cookie first (before destroying session) to ensure it's removed
+	// Clear with all possible configurations to handle both secure and non-secure cookies
+	res.clearCookie('connect.sid', {
+		httpOnly: true,
+		secure: false, // Clear both secure and non-secure versions
+		sameSite: 'lax',
+		path: '/',
+	});
+	
 	req.session.destroy((err) => {
 		if (err) {
 			console.error('Logout error:', err);
@@ -257,7 +278,14 @@ router.post('/logout', (req, res) => {
 			});
 		}
 
-		res.clearCookie('connect.sid');
+		// Also clear with secure: true in case cookie was set as secure
+		res.clearCookie('connect.sid', {
+			httpOnly: true,
+			secure: true,
+			sameSite: 'lax',
+			path: '/',
+		});
+
 		res.json({
 			success: true,
 			message: 'Logged out successfully',

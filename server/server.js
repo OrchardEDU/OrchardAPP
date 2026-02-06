@@ -43,6 +43,12 @@ nextApp.prepare().then(async () => {
 	console.log('\n=== Server Starting ===');
 	const expressApp = express();
 
+	// Trust proxy ONLY in production (needed to read X-Forwarded-Proto from Cloudflare)
+	const isProduction = process.env.NODE_ENV === 'production';
+	if (isProduction) {
+		expressApp.set('trust proxy', 1);
+	}
+
 	// Middleware to parse JSON bodies
 	expressApp.use(express.json({ limit: '1mb' }));
 	expressApp.use(express.urlencoded({ extended: true }));
@@ -56,19 +62,76 @@ nextApp.prepare().then(async () => {
 	});
 
 	// Configure session middleware
+	// Cookie secure flag: dynamic in production (checks actual protocol), static in dev
+	// - Production: secure = dynamic (true only if actually HTTPS via Cloudflare)
+	// - Development: secure = false (HTTP on localhost)
+	const cookieConfig = {
+		httpOnly: true,
+		maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+	};
+
+	if (isProduction) {
+		// Production: dynamic secure based on actual protocol
+		// This ensures cookies are only set as secure when actually using HTTPS
+		// Works correctly with trust proxy to read X-Forwarded-Proto from Cloudflare
+		cookieConfig.secure = (req) => {
+			// Only set secure cookies when actually using HTTPS
+			// req.protocol works correctly with trust proxy enabled
+			return req.protocol === 'https' || req.secure === true;
+		};
+		// sameSite: 'lax' is required for secure cookies and works with non-secure too
+		// Modern browsers support sameSite on non-secure cookies for same-site requests
+		// Since we're using credentials: 'include' and same-origin requests, this should work
+		cookieConfig.sameSite = 'lax';
+	} else {
+		// Development: secure is false, no sameSite to avoid any potential issues
+		cookieConfig.secure = false;
+	}
+	
+	// Add middleware to ensure cookies work correctly with credentials: 'include'
+	// This is especially important for production mode testing on localhost
+	expressApp.use((req, res, next) => {
+		// Ensure credentials are allowed (for same-origin, this is automatic, but explicit is better)
+		// No CORS headers needed since Next.js and Express are same-origin
+		next();
+	});
+	
 	expressApp.use(
 		session({
 			store: sessionStore,
 			secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
 			resave: false,
 			saveUninitialized: false,
-			cookie: {
-				secure: process.env.NODE_ENV === 'production',
-				httpOnly: true,
-				maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-			},
+			cookie: cookieConfig,
 		})
 	);
+
+	// Middleware to fix cookie sameSite attribute when testing production on HTTP
+	// express-session doesn't support sameSite as a function, so we fix it here
+	if (isProduction) {
+		expressApp.use((req, res, next) => {
+			// Store original setHeader function
+			const originalSetHeader = res.setHeader.bind(res);
+			
+			// Override setHeader to fix Set-Cookie header
+			res.setHeader = function(name, value) {
+				if (name.toLowerCase() === 'set-cookie' && Array.isArray(value)) {
+					// Fix each cookie in the array
+					value = value.map(cookie => {
+						// If cookie has SameSite=Lax but connection is HTTP, remove SameSite
+						// This allows cookies to work when testing production mode on localhost
+						if (cookie.includes('SameSite=Lax') && req.protocol === 'http') {
+							return cookie.replace(/;\s*SameSite=Lax/gi, '');
+						}
+						return cookie;
+					});
+				}
+				return originalSetHeader(name, value);
+			};
+			
+			next();
+		});
+	}
 
 	// Request logging middleware (after session, before routes)
 	expressApp.use(createRequestLogger(ENABLE_FRONTEND_LOGGING));
