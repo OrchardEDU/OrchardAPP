@@ -157,13 +157,18 @@ export async function getSubmissionById(submissionId) {
 	// Get answers
 	const answersResult = await pool.query(
 		`SELECT 
-			sa.question_id, sa.answer, sa.is_correct, sa.points
+			sa.question_index, sa.answer, sa.points_awarded
 		FROM submission_answers sa
-		WHERE sa.submission_id = $1`,
+		WHERE sa.submission_id = $1
+		ORDER BY sa.question_index ASC`,
 		[submission.id]
 	);
 	
-	submission.answers = answersResult.rows;
+	submission.answers = answersResult.rows.map(row => ({
+		question_index: row.question_index,
+		answer: row.answer,
+		points_awarded: parseFloat(row.points_awarded) || 0,
+	}));
 	
 	return submission;
 }
