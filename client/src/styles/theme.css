@@ -1,93 +1,97 @@
 /* Theme Variables */
 :root {
-  /* Light Mode Colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8fafc;
-  --bg-tertiary: #f1f5f9;
-  --bg-accent: #e2e8f0;
-  
-  --text-primary: #1a202c;
-  --text-secondary: #4a5568;
-  --text-tertiary: #718096;
-  --text-muted: #a0aec0;
-  
-  --border-primary: #e2e8f0;
-  --border-secondary: #cbd5e0;
-  --border-accent: #a0aec0;
-  
-  --accent-primary: #4299e1;
-  --accent-secondary: #3182ce;
-  --accent-success: #38a169;
-  --accent-warning: #d69e2e;
-  --accent-error: #e53e3e;
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  
-  /* Chatbot Colors */
-  --chatbot-bg: #2d3748;
-  --chatbot-text: #e2e8f0;
-  --chatbot-border: #4a5568;
-  --chatbot-accent: #4299e1;
-  --chatbot-input-bg: #1a202c;
-  --chatbot-message-bg: #4a5568;
-  --chatbot-user-message-bg: #4299e1;
-  
-  /* Landing Page Colors */
-  --landing-bg: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  --landing-hero-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --landing-stats-bg: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-  --landing-cta-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --landing-footer-bg: #1f2937;
+	/* Light Mode Colors */
+	--bg-primary: #ffffff;
+	--bg-secondary: #f8fafc;
+	--bg-tertiary: #f1f5f9;
+	--bg-accent: #e2e8f0;
+
+	--text-primary: #1a202c;
+	--text-secondary: #4a5568;
+	--text-tertiary: #718096;
+	--text-muted: #a0aec0;
+
+	--border-primary: #e2e8f0;
+	--border-secondary: #cbd5e0;
+	--border-accent: #a0aec0;
+
+	--accent-primary: #4299e1;
+	--accent-secondary: #3182ce;
+	--accent-success: #38a169;
+	--accent-warning: #d69e2e;
+	--accent-error: #e53e3e;
+
+	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+	--shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+	/* Chatbot Colors */
+	--chatbot-bg: #2d3748;
+	--chatbot-text: #e2e8f0;
+	--chatbot-border: #4a5568;
+	--chatbot-accent: #4299e1;
+	--chatbot-input-bg: #1a202c;
+	--chatbot-message-bg: #4a5568;
+	--chatbot-user-message-bg: #4299e1;
+
+	/* Landing Page Colors */
+	--landing-bg: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+	--landing-hero-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	--landing-stats-bg: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+	--landing-cta-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	--landing-footer-bg: #1f2937;
 }
 
 /* Dark Mode Colors */
-[data-theme="dark"] {
-  --bg-primary: #1a202c;
-  --bg-secondary: #2d3748;
-  --bg-tertiary: #4a5568;
-  --bg-accent: #718096;
-  
-  --text-primary: #f7fafc;
-  --text-secondary: #e2e8f0;
-  --text-tertiary: #cbd5e0;
-  --text-muted: #a0aec0;
-  
-  --border-primary: #4a5568;
-  --border-secondary: #718096;
-  --border-accent: #a0aec0;
-  
-  --accent-primary: #63b3ed;
-  --accent-secondary: #4299e1;
-  --accent-success: #68d391;
-  --accent-warning: #f6e05e;
-  --accent-error: #fc8181;
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-  
-  /* Chatbot Colors (Dark Mode) */
-  --chatbot-bg: #1a202c;
-  --chatbot-text: #e2e8f0;
-  --chatbot-border: #4a5568;
-  --chatbot-accent: #63b3ed;
-  --chatbot-input-bg: #2d3748;
-  --chatbot-message-bg: #4a5568;
-  --chatbot-user-message-bg: #4299e1;
-  
-  /* Landing Page Colors (Dark Mode) */
-  --landing-bg: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-  --landing-hero-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --landing-stats-bg: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-  --landing-cta-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --landing-footer-bg: #1a202c;
+[data-theme='dark'] {
+	--bg-primary: #1a202c;
+	--bg-secondary: #2d3748;
+	--bg-tertiary: #4a5568;
+	--bg-accent: #718096;
+
+	--text-primary: #f7fafc;
+	--text-secondary: #e2e8f0;
+	--text-tertiary: #cbd5e0;
+	--text-muted: #a0aec0;
+
+	--border-primary: #4a5568;
+	--border-secondary: #718096;
+	--border-accent: #a0aec0;
+
+	--accent-primary: #63b3ed;
+	--accent-secondary: #4299e1;
+	--accent-success: #68d391;
+	--accent-warning: #f6e05e;
+	--accent-error: #fc8181;
+
+	--shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+	--shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+	--shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+	--shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+
+	/* Chatbot Colors (Dark Mode) */
+	--chatbot-bg: #1a202c;
+	--chatbot-text: #e2e8f0;
+	--chatbot-border: #4a5568;
+	--chatbot-accent: #63b3ed;
+	--chatbot-input-bg: #2d3748;
+	--chatbot-message-bg: #4a5568;
+	--chatbot-user-message-bg: #4299e1;
+
+	/* Landing Page Colors (Dark Mode) */
+	--landing-bg: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+	--landing-hero-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	--landing-stats-bg: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+	--landing-cta-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	--landing-footer-bg: #1a202c;
 }
 
 /* Smooth transitions for all themeable elements */
 * {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+	transition:
+		background-color 0.3s ease,
+		color 0.3s ease,
+		border-color 0.3s ease,
+		box-shadow 0.3s ease;
 }

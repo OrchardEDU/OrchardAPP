@@ -40,3 +40,6 @@ client/node_modules
 server/node_modules
 client/build
 .next/
+
+uploads/
+.vscode/

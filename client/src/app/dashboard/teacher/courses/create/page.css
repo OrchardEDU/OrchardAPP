@@ -1,0 +1,134 @@
+.create-course-page {
+	padding: 2rem;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.create-course-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.create-course-page h1 {
+	font-size: 2rem;
+	margin-bottom: 0.5rem;
+}
+
+.create-course-page p {
+	margin: 0;
+	color: #666;
+}
+
+.create-course-actions {
+	display: flex;
+	gap: 0.75rem;
+}
+
+.secondary-action-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.6rem 1.2rem;
+	border-radius: 999px;
+	font-size: 0.9rem;
+	font-weight: 500;
+	text-decoration: none;
+	border: 1px solid #16a34a;
+	color: #16a34a;
+	background-color: transparent;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.secondary-action-btn:hover {
+	background-color: rgba(22, 163, 74, 0.06);
+}
+
+.create-course-form {
+	margin-top: 1.5rem;
+	max-width: 640px;
+	padding: 1.75rem 2rem;
+	border-radius: 1rem;
+	border: 1px solid #e5e7eb;
+	background-color: #ffffff;
+	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.form-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin-bottom: 1.25rem;
+}
+
+.form-label {
+	font-size: 0.9rem;
+	color: #374151;
+	font-weight: 500;
+}
+
+.required {
+	color: #b91c1c;
+	margin-left: 0.15rem;
+}
+
+.form-input,
+.form-textarea {
+	border-radius: 0.5rem;
+	border: 1px solid #d1d5db;
+	padding: 0.7rem 0.85rem;
+	font-size: 0.95rem;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+	outline: none;
+	border-color: #16a34a;
+	box-shadow: 0 0 0 1px rgba(22, 163, 74, 0.25);
+}
+
+.form-textarea {
+	resize: vertical;
+	min-height: 120px;
+}
+
+.form-error {
+	margin-top: 0.25rem;
+	margin-bottom: 0.5rem;
+	font-size: 0.9rem;
+	color: #b91c1c;
+}
+
+.form-actions {
+	margin-top: 0.75rem;
+	display: flex;
+	justify-content: flex-end;
+}
+
+.primary-action-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.7rem 1.5rem;
+	border-radius: 999px;
+	font-size: 0.9rem;
+	font-weight: 500;
+	text-decoration: none;
+	border: none;
+	background-color: #16a34a;
+	color: #ffffff;
+	cursor: pointer;
+	box-shadow: 0 2px 6px rgba(22, 163, 74, 0.25);
+	transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.primary-action-btn:hover {
+	background-color: #15803d;
+}
+
+.primary-action-btn:disabled {
+	opacity: 0.7;
+	cursor: default;
+}
