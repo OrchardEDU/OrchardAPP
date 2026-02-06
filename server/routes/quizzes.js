@@ -354,10 +354,9 @@ router.get('/:courseId/quizzes/:quizId/submissions', validateCourseAccess, requi
 			studentName: submission.student_name,
 			studentEmail: submission.student_email,
 			answers: (submission.answers || []).map(a => ({
-				questionId: a.question_id,
+				questionIndex: a.question_index,
 				answer: a.answer,
-				isCorrect: a.is_correct,
-				points: parseFloat(a.points) || 0,
+				pointsAwarded: parseFloat(a.points_awarded) || 0,
 			})),
 			score: parseFloat(submission.score) || 0,
 			maxScore: parseFloat(submission.max_score) || 0,
