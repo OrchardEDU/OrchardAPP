@@ -13,5 +13,12 @@ export interface Submission {
 	answers: SubmissionAnswer[];
 	score: number;
 	maxScore: number;
+	isGraded?: boolean;
 	submittedAt: string;
+	quizTitle?: string;
+	quizQuestions?: Array<{
+		question: string;
+		points: number;
+		orderIndex: number;
+	}>;
 }

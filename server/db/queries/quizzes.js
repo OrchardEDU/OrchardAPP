@@ -53,6 +53,11 @@ export async function getQuizById(quizId, userId, role) {
 	}
 	
 	const quiz = quizResult.rows[0];
+	
+	// For students, return null if quiz is unpublished (visibility control)
+	if (role === 'student' && !quiz.published) {
+		return null;
+	}
 
 	// Questions are stored as JSONB on the quiz
 	const rawQuestions = Array.isArray(quiz.questions_json) ? quiz.questions_json : [];
@@ -123,6 +128,57 @@ export async function updateQuiz(quizId, title, description, published, dueDate,
 	
 	try {
 		await client.query('BEGIN');
+		
+		// First, check if quiz exists and is published
+		const existingQuizResult = await client.query(
+			'SELECT published, questions_json FROM quizzes WHERE id = $1',
+			[quizId]
+		);
+		
+		if (existingQuizResult.rows.length === 0) {
+			await client.query('ROLLBACK');
+			return null;
+		}
+		
+		const existingQuiz = existingQuizResult.rows[0];
+		
+		// Reject updates if quiz is already published
+		if (existingQuiz.published) {
+			await client.query('ROLLBACK');
+			throw new Error('Cannot edit a published quiz');
+		}
+		
+		// Check if questions are being changed
+		const questionsChanged = questions !== undefined && questions !== null;
+		let shouldDeleteSubmissions = false;
+		
+		if (questionsChanged) {
+			// Compare old and new questions to see if they changed
+			const oldQuestions = Array.isArray(existingQuiz.questions_json) 
+				? existingQuiz.questions_json 
+				: [];
+			const newQuestions = Array.isArray(questions) ? questions : [];
+			
+			// Simple comparison: if lengths differ or content differs, delete submissions
+			if (oldQuestions.length !== newQuestions.length) {
+				shouldDeleteSubmissions = true;
+			} else {
+				// Compare question text and points
+				for (let i = 0; i < oldQuestions.length; i++) {
+					const oldQ = oldQuestions[i];
+					const newQ = newQuestions[i];
+					if (oldQ.question !== newQ.question || oldQ.points !== newQ.points) {
+						shouldDeleteSubmissions = true;
+						break;
+					}
+				}
+			}
+		}
+		
+		// Delete submissions if questions changed
+		if (shouldDeleteSubmissions) {
+			await submissionQueries.deleteSubmissionsForQuiz(quizId);
+		}
 		
 		// Update quiz
 		const normalizedQuestions = Array.isArray(questions)

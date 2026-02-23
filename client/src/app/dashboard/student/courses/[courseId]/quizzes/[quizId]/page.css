@@ -199,3 +199,30 @@
 	opacity: 0.7;
 	cursor: default;
 }
+
+.graded-question-card {
+	background-color: #f9fafb;
+}
+
+.graded-answer-section {
+	margin-top: 1rem;
+}
+
+.graded-answer-label {
+	display: block;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: #374151;
+	margin-bottom: 0.5rem;
+}
+
+.graded-answer-text {
+	padding: 0.75rem;
+	background-color: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.5rem;
+	color: #111827;
+	line-height: 1.5;
+	min-height: 3rem;
+	white-space: pre-wrap;
+}

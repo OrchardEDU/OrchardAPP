@@ -68,4 +68,28 @@ export const quizzesApi = {
 		}
 		return null;
 	},
+
+	async getSubmissionDetail(courseId: string, quizId: string, submissionId: string): Promise<Submission | null> {
+		const response = await apiClient.get<{ submission: Submission }>(`/api/courses/${courseId}/quizzes/${quizId}/submissions/${submissionId}`);
+		if (response.success && response.data?.submission) {
+			return response.data.submission;
+		}
+		return null;
+	},
+
+	async gradeSubmission(courseId: string, quizId: string, submissionId: string, answers: Array<{ questionIndex: number; pointsAwarded: number }>): Promise<Submission | null> {
+		const response = await apiClient.post<{ submission: Submission }>(`/api/courses/${courseId}/quizzes/${quizId}/submissions/${submissionId}/grade`, { answers });
+		if (response.success && response.data?.submission) {
+			return response.data.submission;
+		}
+		return null;
+	},
+
+	async getMySubmission(courseId: string, quizId: string): Promise<Submission | null> {
+		const response = await apiClient.get<{ submission: Submission | null }>(`/api/courses/${courseId}/quizzes/${quizId}/my-submission`);
+		if (response.success && response.data?.submission !== undefined) {
+			return response.data.submission;
+		}
+		return null;
+	},
 };

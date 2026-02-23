@@ -257,6 +257,22 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 			});
 		}
 
+		// Check if quiz exists and is published - reject updates to published quizzes
+		const existingQuiz = await quizQueries.getQuizById(quizId, null, 'teacher');
+		if (!existingQuiz) {
+			return res.status(404).json({
+				success: false,
+				message: 'Quiz not found',
+			});
+		}
+
+		if (existingQuiz.published) {
+			return res.status(400).json({
+				success: false,
+				message: 'Cannot edit a published quiz',
+			});
+		}
+
 		// Validate questions if provided (simple open-ended questions: text + points)
 		if (questions && Array.isArray(questions)) {
 			for (const q of questions) {
@@ -360,6 +376,7 @@ router.get('/:courseId/quizzes/:quizId/submissions', validateCourseAccess, requi
 			})),
 			score: parseFloat(submission.score) || 0,
 			maxScore: parseFloat(submission.max_score) || 0,
+			isGraded: submission.is_graded || false,
 			submittedAt: submission.submitted_at.toISOString(),
 		}));
 
@@ -463,6 +480,245 @@ router.post('/:courseId/quizzes/:quizId/submit', validateCourseAccess, requireRo
 		});
 	} catch (error) {
 		console.error('Submit quiz error:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+});
+
+/**
+ * GET /api/courses/:courseId/quizzes/:quizId/submissions/:submissionId
+ * Get detailed submission with quiz questions (teachers only)
+ */
+router.get('/:courseId/quizzes/:quizId/submissions/:submissionId', validateCourseAccess, requireRole('teacher'), async (req, res) => {
+	try {
+		const { submissionId } = req.params;
+
+		// Check ownership
+		if (!req.courseAccess.isOwner) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		if (!isValidUUID(submissionId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid submission ID',
+			});
+		}
+
+		const submission = await submissionQueries.getSubmissionById(submissionId);
+
+		if (!submission) {
+			return res.status(404).json({
+				success: false,
+				message: 'Submission not found',
+			});
+		}
+
+		// Format submission to match frontend expectations
+		const formattedSubmission = {
+			id: submission.id,
+			quizId: submission.quiz_id,
+			studentId: submission.student_id,
+			studentName: submission.student_name,
+			studentEmail: submission.student_email,
+			answers: (submission.answers || []).map(a => ({
+				questionIndex: a.question_index,
+				answer: a.answer,
+				pointsAwarded: parseFloat(a.points_awarded) || 0,
+			})),
+			score: parseFloat(submission.score) || 0,
+			maxScore: parseFloat(submission.max_score) || 0,
+			isGraded: submission.is_graded || false,
+			submittedAt: submission.submitted_at.toISOString(),
+			quizTitle: submission.quiz_title,
+			quizQuestions: (submission.quiz_questions || []).map(q => ({
+				question: q.question,
+				points: q.points,
+				orderIndex: q.orderIndex,
+			})),
+		};
+
+		res.json({
+			success: true,
+			data: {
+				submission: formattedSubmission,
+			},
+		});
+	} catch (error) {
+		console.error('Get submission detail error:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+});
+
+/**
+ * POST /api/courses/:courseId/quizzes/:quizId/submissions/:submissionId/grade
+ * Grade a submission (teachers only)
+ */
+router.post('/:courseId/quizzes/:quizId/submissions/:submissionId/grade', validateCourseAccess, requireRole('teacher'), async (req, res) => {
+	try {
+		const { submissionId } = req.params;
+		const { answers } = req.body;
+
+		// Check ownership
+		if (!req.courseAccess.isOwner) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		if (!isValidUUID(submissionId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid submission ID',
+			});
+		}
+
+		if (!answers || !Array.isArray(answers)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Answers array is required',
+			});
+		}
+
+		// Validate answers format
+		for (const answer of answers) {
+			if (typeof answer.questionIndex !== 'number' || answer.questionIndex < 0) {
+				return res.status(400).json({
+					success: false,
+					message: 'Each answer must include a non-negative questionIndex number',
+				});
+			}
+			if (answer.pointsAwarded === undefined || typeof answer.pointsAwarded !== 'number' || answer.pointsAwarded < 0) {
+				return res.status(400).json({
+					success: false,
+					message: 'Each answer must include a non-negative pointsAwarded number',
+				});
+			}
+		}
+
+		const gradedSubmission = await submissionQueries.gradeSubmission(submissionId, answers);
+
+		if (!gradedSubmission) {
+			return res.status(404).json({
+				success: false,
+				message: 'Submission not found',
+			});
+		}
+
+		// Format submission to match frontend expectations
+		const formattedSubmission = {
+			id: gradedSubmission.id,
+			quizId: gradedSubmission.quiz_id,
+			studentId: gradedSubmission.student_id,
+			studentName: gradedSubmission.student_name,
+			studentEmail: gradedSubmission.student_email,
+			answers: (gradedSubmission.answers || []).map(a => ({
+				questionIndex: a.question_index,
+				answer: a.answer,
+				pointsAwarded: parseFloat(a.points_awarded) || 0,
+			})),
+			score: parseFloat(gradedSubmission.score) || 0,
+			maxScore: parseFloat(gradedSubmission.max_score) || 0,
+			isGraded: gradedSubmission.is_graded || false,
+			submittedAt: gradedSubmission.submitted_at.toISOString(),
+			quizTitle: gradedSubmission.quiz_title,
+			quizQuestions: (gradedSubmission.quiz_questions || []).map(q => ({
+				question: q.question,
+				points: q.points,
+				orderIndex: q.orderIndex,
+			})),
+		};
+
+		res.json({
+			success: true,
+			data: {
+				submission: formattedSubmission,
+			},
+		});
+	} catch (error) {
+		console.error('Grade submission error:', error);
+		res.status(500).json({
+			success: false,
+			message: error.message || 'Internal server error',
+		});
+	}
+});
+
+/**
+ * GET /api/courses/:courseId/quizzes/:quizId/my-submission
+ * Get student's own submission (students only, only if graded)
+ */
+router.get('/:courseId/quizzes/:quizId/my-submission', validateCourseAccess, requireRole('student'), async (req, res) => {
+	try {
+		const { quizId } = req.params;
+		const studentId = req.session.userId;
+
+		// Check enrollment
+		if (!req.courseAccess.isEnrolled) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		if (!isValidUUID(quizId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid quiz ID',
+			});
+		}
+
+		const submission = await submissionQueries.getStudentSubmission(quizId, studentId);
+
+		// Returns null if not graded (visibility control)
+		if (!submission) {
+			return res.json({
+				success: true,
+				data: {
+					submission: null,
+				},
+			});
+		}
+
+		// Format submission to match frontend expectations
+		const formattedSubmission = {
+			id: submission.id,
+			quizId: submission.quiz_id,
+			studentId: submission.student_id,
+			answers: (submission.answers || []).map(a => ({
+				questionIndex: a.question_index,
+				answer: a.answer,
+				pointsAwarded: parseFloat(a.points_awarded) || 0,
+			})),
+			score: parseFloat(submission.score) || 0,
+			maxScore: parseFloat(submission.max_score) || 0,
+			isGraded: submission.is_graded || false,
+			submittedAt: submission.submitted_at.toISOString(),
+			quizTitle: submission.quiz_title,
+			quizQuestions: (submission.quiz_questions || []).map(q => ({
+				question: q.question,
+				points: q.points,
+				orderIndex: q.orderIndex,
+			})),
+		};
+
+		res.json({
+			success: true,
+			data: {
+				submission: formattedSubmission,
+			},
+		});
+	} catch (error) {
+		console.error('Get my submission error:', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
