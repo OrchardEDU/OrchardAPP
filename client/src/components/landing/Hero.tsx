@@ -10,8 +10,8 @@ const Hero = () => {
 			<div className="container hero-container">
 				<div className="hero-content">
 					<h1 className="hero-title">
-						Transform Your Teaching Materials into{' '}
-						<span className="highlight">Unlimited Practice</span>
+						Giving every classroom{' '}
+						<span className="highlight">an extra teacher</span>
 					</h1>
 					<p className="hero-subtitle">
 						Upload your lecture slides and test banks. Orchard&apos;s AI generates
