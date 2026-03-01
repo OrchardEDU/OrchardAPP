@@ -1,4 +1,5 @@
 import { pool } from '../connection.js';
+import * as submissionQueries from './submissions.js';
 
 /**
  * Get quizzes for a course

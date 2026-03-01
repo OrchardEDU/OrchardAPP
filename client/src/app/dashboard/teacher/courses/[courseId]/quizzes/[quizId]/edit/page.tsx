@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { quizzesApi } from '@/lib/api/courses/quizzes';
 import { aiApi } from '@/lib/api/ai';
 import { Quiz, QuizQuestionType } from '@/types/quiz';
-import '../create/page.css';
+import '../../create/page.css';
 
 export default function EditQuizPage() {
 	const params = useParams();
