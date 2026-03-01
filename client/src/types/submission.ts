@@ -19,6 +19,11 @@ export interface Submission {
 	quizQuestions?: Array<{
 		question: string;
 		points: number;
+		type?: 'open-response' | 'multiple-choice' | 'short-answer';
+		options?: string[];
+		correctAnswer?: number;
+		wordLimit?: number;
+		charLimit?: number;
 		orderIndex: number;
 	}>;
 }

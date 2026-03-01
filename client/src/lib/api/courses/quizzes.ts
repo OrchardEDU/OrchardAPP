@@ -27,6 +27,11 @@ export const quizzesApi = {
 		questions: Array<{
 			question: string;
 			points: number;
+			type?: 'open-response' | 'multiple-choice' | 'short-answer';
+			options?: string[];
+			correctAnswer?: number;
+			wordLimit?: number;
+			charLimit?: number;
 		}>;
 	}): Promise<Quiz | null> {
 		const response = await apiClient.post<{ quiz: Quiz }>(`/api/courses/${courseId}/quizzes`, data);
@@ -44,6 +49,11 @@ export const quizzesApi = {
 		questions?: Array<{
 			question: string;
 			points: number;
+			type?: 'open-response' | 'multiple-choice' | 'short-answer';
+			options?: string[];
+			correctAnswer?: number;
+			wordLimit?: number;
+			charLimit?: number;
 		}>;
 	}): Promise<Quiz | null> {
 		const response = await apiClient.put<{ quiz: Quiz }>(`/api/courses/${courseId}/quizzes/${quizId}`, data);

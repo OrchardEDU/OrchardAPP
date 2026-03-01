@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { quizzesApi } from '@/lib/api/courses/quizzes';
 import { aiApi } from '@/lib/api/ai';
-import { Quiz } from '@/types/quiz';
+import { Quiz, QuizQuestionType } from '@/types/quiz';
 import '../create/page.css';
 
 export default function EditQuizPage() {
@@ -23,9 +23,17 @@ export default function EditQuizPage() {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
+	type LimitType = 'words' | 'chars' | null;
+
 	type NewQuestion = {
 		question: string;
 		points: number;
+		type: QuizQuestionType;
+		options?: string[];
+		correctAnswer?: number;
+		wordLimit?: number;
+		charLimit?: number;
+		limitType?: LimitType;
 	};
 
 	const [questions, setQuestions] = useState<NewQuestion[]>([]);
@@ -74,10 +82,18 @@ export default function EditQuizPage() {
 
 				// Load questions from quiz data
 				if (quizData.questions && Array.isArray(quizData.questions)) {
-					setQuestions(quizData.questions.map(q => ({
-						question: q.question || '',
-						points: q.points || 1,
-					})));
+					setQuestions(
+						quizData.questions.map(q => ({
+							question: q.question || '',
+							points: q.points || 1,
+							type: q.type || 'open-response',
+							options: q.options,
+							correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : undefined,
+							wordLimit: q.wordLimit,
+							charLimit: q.charLimit,
+							limitType: q.wordLimit ? 'words' : q.charLimit ? 'chars' : null,
+						}))
+					);
 				}
 			} catch (err) {
 				console.error('Failed to load quiz', err);
@@ -90,17 +106,46 @@ export default function EditQuizPage() {
 		loadQuiz();
 	}, [courseId, quizId, router]);
 
-	const handleAddQuestion = () => {
-		setQuestions(prev => [...prev, { question: '', points: 1 }]);
+	const createEmptyQuestion = (): NewQuestion => ({
+		question: '',
+		points: 1,
+		type: 'open-response',
+	});
+
+	const ensureMultipleChoiceDefaults = (question: NewQuestion): NewQuestion => {
+		const options = question.options && question.options.length >= 2
+			? question.options
+			: ['', ''];
+		const correctAnswer =
+			typeof question.correctAnswer === 'number' &&
+			question.correctAnswer >= 0 &&
+			question.correctAnswer < options.length
+				? question.correctAnswer
+				: 0;
+
+		return {
+			...question,
+			options,
+			correctAnswer,
+		};
 	};
 
-	const handleUpdateQuestion = (index: number, field: keyof NewQuestion, value: string) => {
+	const handleAddQuestion = () => {
+		setQuestions(prev => [...prev, createEmptyQuestion()]);
+	};
+
+	const handleUpdateQuestion = (index: number, field: keyof NewQuestion, value: string | number) => {
 		setQuestions(prev =>
 			prev.map((q, i) =>
 				i === index
 					? {
 							...q,
-							[field]: field === 'points' ? Number(value) || 0 : value,
+							[field]:
+								field === 'points'
+									? Number(value) || 0
+									: field === 'correctAnswer'
+									? Number(value)
+									: value,
 					  }
 					: q
 			)
@@ -109,6 +154,119 @@ export default function EditQuizPage() {
 
 	const handleDeleteQuestion = (index: number) => {
 		setQuestions(prev => prev.filter((_, i) => i !== index));
+	};
+
+	const handleChangeQuestionType = (index: number, nextType: QuizQuestionType) => {
+		setQuestions(prev =>
+			prev.map((q, i) => {
+				if (i !== index) return q;
+
+				if (nextType === 'multiple-choice') {
+					return ensureMultipleChoiceDefaults({
+						...q,
+						type: nextType,
+					});
+				}
+
+				if (nextType === 'short-answer') {
+					return {
+						...q,
+						type: nextType,
+					};
+				}
+
+				// open-response
+				return {
+					...q,
+					type: nextType,
+					options: undefined,
+					correctAnswer: undefined,
+					wordLimit: undefined,
+					charLimit: undefined,
+					limitType: undefined,
+				};
+			})
+		);
+	};
+
+	const handleAddOption = (questionIndex: number) => {
+		setQuestions(prev =>
+			prev.map((q, i) =>
+				i === questionIndex
+					? {
+							...ensureMultipleChoiceDefaults(q),
+							options: [...(q.options || ['', '']), ''],
+					  }
+					: q
+			)
+		);
+	};
+
+	const handleUpdateOption = (questionIndex: number, optionIndex: number, value: string) => {
+		setQuestions(prev =>
+			prev.map((q, i) => {
+				if (i !== questionIndex) return q;
+				const base = ensureMultipleChoiceDefaults(q);
+				const options = [...(base.options || ['', ''])];
+				options[optionIndex] = value;
+				return {
+					...base,
+					options,
+				};
+			})
+		);
+	};
+
+	const handleRemoveOption = (questionIndex: number, optionIndex: number) => {
+		setQuestions(prev =>
+			prev.map((q, i) => {
+				if (i !== questionIndex) return q;
+				const base = ensureMultipleChoiceDefaults(q);
+				if (!base.options || base.options.length <= 2) {
+					return base;
+				}
+				const options = base.options.filter((_, idx) => idx !== optionIndex);
+				let correctAnswer = base.correctAnswer ?? 0;
+				if (optionIndex === correctAnswer) {
+					correctAnswer = 0;
+				} else if (optionIndex < correctAnswer) {
+					correctAnswer = correctAnswer - 1;
+				}
+				return {
+					...base,
+					options,
+					correctAnswer,
+				};
+			})
+		);
+	};
+
+	const handleSetCorrectOption = (questionIndex: number, optionIndex: number) => {
+		setQuestions(prev =>
+			prev.map((q, i) =>
+				i === questionIndex
+					? {
+							...ensureMultipleChoiceDefaults(q),
+							correctAnswer: optionIndex,
+					  }
+					: q
+			)
+		);
+	};
+
+	const handleChangeLimitType = (index: number, limitType: LimitType) => {
+		setQuestions(prev =>
+			prev.map((q, i) =>
+				i === index
+					? {
+							...q,
+							limitType,
+							wordLimit: limitType === 'words' ? q.wordLimit : undefined,
+							charLimit: limitType === 'chars' ? q.charLimit : undefined,
+					  }
+					: q
+			)
+		);
 	};
 
 	const handleGenerateQuestions = async () => {
@@ -133,9 +291,10 @@ export default function EditQuizPage() {
 			}
 
 			// Add generated questions to the questions list with default points of 1
-			const newQuestions = generatedQuestions.map(q => ({
+			const newQuestions: NewQuestion[] = generatedQuestions.map(q => ({
 				question: q.question,
 				points: 1,
+				type: 'open-response',
 			}));
 
 			setQuestions(prev => [...prev, ...newQuestions]);
@@ -168,6 +327,22 @@ export default function EditQuizPage() {
 			return;
 		}
 
+		// Basic validation for multiple-choice questions
+		for (const q of questions) {
+			if (q.type === 'multiple-choice') {
+				const options = (q.options || []).map(o => o.trim()).filter(o => o.length > 0);
+				if (options.length < 2) {
+					setError('Multiple choice questions must have at least two answer options.');
+					return;
+				}
+				const correctIndex = q.correctAnswer ?? 0;
+				if (correctIndex < 0 || correctIndex >= options.length) {
+					setError('Please select a valid correct answer for each multiple choice question.');
+					return;
+				}
+			}
+		}
+
 		try {
 			setIsSubmitting(true);
 			const updatedQuiz = await quizzesApi.updateQuiz(courseId, quizId, {
@@ -175,10 +350,30 @@ export default function EditQuizPage() {
 				description: description.trim(),
 				published,
 				dueDate: dueDate ? new Date(dueDate).toISOString() : null,
-				questions: questions.map(q => ({
-					question: q.question.trim(),
-					points: q.points || 0,
-				})),
+				questions: questions.map(q => {
+					const base = {
+						question: q.question.trim(),
+						points: q.points || 0,
+						type: q.type,
+					} as any;
+
+					if (q.type === 'multiple-choice') {
+						const options = (q.options || []).map(o => o.trim()).filter(o => o.length > 0);
+						base.options = options;
+						base.correctAnswer = q.correctAnswer ?? 0;
+					}
+
+					if (q.type === 'short-answer') {
+						if (q.limitType === 'words' && q.wordLimit) {
+							base.wordLimit = q.wordLimit;
+						}
+						if (q.limitType === 'chars' && q.charLimit) {
+							base.charLimit = q.charLimit;
+						}
+					}
+
+					return base;
+				}),
 			});
 
 			if (!updatedQuiz) {
@@ -296,7 +491,7 @@ export default function EditQuizPage() {
 				<div className="questions-section">
 					<div className="questions-section-header">
 						<h2>Questions</h2>
-						<p>Add open-ended questions with point values. Question numbers are assigned automatically.</p>
+						<p>Add questions with point values. Question numbers are assigned automatically.</p>
 					</div>
 
 					{questions.length === 0 && (
@@ -321,28 +516,165 @@ export default function EditQuizPage() {
 										Delete question
 									</button>
 								</div>
-								<div className="question-card-body">
-									<div className="form-field">
-										<label className="form-label">Question text</label>
-										<textarea
-											value={q.question}
-											onChange={e => handleUpdateQuestion(index, 'question', e.target.value)}
-											className="form-textarea"
-											placeholder="Enter the question students should answer"
-											rows={3}
-										/>
+									<div className="question-card-body">
+										<div className="question-meta-row">
+											<div className="form-field question-type-field">
+												<label className="form-label">Question type</label>
+												<select
+													className="form-input"
+													value={q.type}
+													onChange={e =>
+														handleChangeQuestionType(index, e.target.value as QuizQuestionType)
+													}
+												>
+													<option value="open-response">Open response</option>
+													<option value="multiple-choice">Multiple choice</option>
+													<option value="short-answer">Short answer</option>
+												</select>
+											</div>
+											<div className="form-field question-points-field">
+												<label className="form-label">Points</label>
+												<input
+													type="number"
+													min={1}
+													value={q.points}
+													onChange={e => handleUpdateQuestion(index, 'points', e.target.value)}
+													className="form-input"
+												/>
+											</div>
+										</div>
+
+										<div className="form-field">
+											<label className="form-label">Question text</label>
+											<textarea
+												value={q.question}
+												onChange={e => handleUpdateQuestion(index, 'question', e.target.value)}
+												className="form-textarea"
+												placeholder="Enter the question students should answer"
+												rows={3}
+											/>
+										</div>
+
+										{q.type === 'multiple-choice' && (
+											<div className="form-field">
+												<label className="form-label">Answer options</label>
+												<div className="mc-options-list">
+													{(q.options && q.options.length ? q.options : ['', '']).map(
+														(option, optionIndex) => (
+															<div
+																key={optionIndex}
+																className={`mc-option-card${
+																	q.correctAnswer === optionIndex
+																		? ' mc-option-card-correct'
+																		: ''
+																}`}
+																onClick={() => handleSetCorrectOption(index, optionIndex)}
+															>
+																<div className="mc-option-main">
+																	<span className="mc-option-label">
+																		Option {optionIndex + 1}
+																	</span>
+																	<input
+																		type="text"
+																		className="form-input mc-option-input"
+																		value={option}
+																		onChange={e =>
+																			handleUpdateOption(index, optionIndex, e.target.value)
+																		}
+																		placeholder="Option text"
+																		onClick={e => e.stopPropagation()}
+																	/>
+																</div>
+																<div className="mc-option-actions">
+																	<span className="mc-option-correct-indicator">
+																		{q.correctAnswer === optionIndex
+																			? 'Correct answer'
+																			: 'Mark correct'}
+																	</span>
+																	<button
+																		type="button"
+																		className="mc-option-delete-btn"
+																		onClick={e => {
+																			e.stopPropagation();
+																			handleRemoveOption(index, optionIndex);
+																		}}
+																		disabled={
+																			(q.options && q.options.length <= 2) ||
+																			!q.options ||
+																			q.options.length <= 2
+																		}
+																	>
+																		Remove
+																	</button>
+																</div>
+															</div>
+														)
+													)}
+												</div>
+												<button
+													type="button"
+													className="add-option-btn"
+													onClick={() => handleAddOption(index)}
+												>
+													Add option
+												</button>
+											</div>
+										)}
+
+										{q.type === 'short-answer' && (
+											<div className="form-field short-answer-limits">
+												<label className="form-label">Answer length limit (optional)</label>
+												<div className="short-answer-limit-row">
+													<select
+														className="form-input short-answer-limit-type"
+														value={q.limitType || ''}
+														onChange={e =>
+															handleChangeLimitType(
+																index,
+																e.target.value ? (e.target.value as LimitType) : null
+															)
+														}
+													>
+														<option value="">No limit</option>
+														<option value="chars">Character limit</option>
+														<option value="words">Word limit</option>
+													</select>
+													{q.limitType === 'chars' && (
+														<input
+															type="number"
+															min={1}
+															className="form-input short-answer-limit-input"
+															placeholder="e.g. 100"
+															value={q.charLimit ?? ''}
+															onChange={e =>
+																handleUpdateQuestion(
+																	index,
+																	'charLimit',
+																	e.target.value ? Number(e.target.value) : 0
+																)
+															}
+														/>
+													)}
+													{q.limitType === 'words' && (
+														<input
+															type="number"
+															min={1}
+															className="form-input short-answer-limit-input"
+															placeholder="e.g. 25"
+															value={q.wordLimit ?? ''}
+															onChange={e =>
+																handleUpdateQuestion(
+																	index,
+																	'wordLimit',
+																	e.target.value ? Number(e.target.value) : 0
+																)
+															}
+														/>
+													)}
+												</div>
+											</div>
+										)}
 									</div>
-									<div className="form-field question-points-field">
-										<label className="form-label">Points</label>
-										<input
-											type="number"
-											min={1}
-											value={q.points}
-											onChange={e => handleUpdateQuestion(index, 'points', e.target.value)}
-											className="form-input"
-										/>
-									</div>
-								</div>
 							</div>
 						))}
 

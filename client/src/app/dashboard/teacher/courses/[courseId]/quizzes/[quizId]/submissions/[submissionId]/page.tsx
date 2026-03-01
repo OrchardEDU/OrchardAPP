@@ -177,9 +177,10 @@ export default function SubmissionGradingPage() {
 
 			<div className="grading-body">
 				<div className="grading-questions">
-					{submission.quizQuestions.map((question, index) => {
+					{submission.quizQuestions.map((question: any, index: number) => {
 						const answer = submission.answers.find(a => a.questionIndex === index);
 						const currentPoints = pointsAwarded[index] ?? (answer?.pointsAwarded || 0);
+						const type = question.type || 'open-response';
 
 						return (
 							<div key={index} className="grading-question-card">
@@ -192,12 +193,64 @@ export default function SubmissionGradingPage() {
 								<div className="grading-question-text">
 									{question.question}
 								</div>
-								<div className="grading-answer-section">
-									<label className="grading-answer-label">Student's Answer:</label>
-									<div className="grading-answer-text">
-										{answer?.answer || 'No answer provided'}
-									</div>
+								<div className="grading-question-type">
+									{type === 'multiple-choice' && <span>Multiple choice (auto-graded)</span>}
+									{type === 'short-answer' && <span>Short answer</span>}
+									{type === 'open-response' && <span>Open response</span>}
 								</div>
+								{type === 'multiple-choice' && question.options ? (
+									<div className="grading-mc-section">
+										<label className="grading-answer-label">Answer Options:</label>
+										<div className="grading-mc-options">
+											{question.options.map((option: string, optIndex: number) => {
+												const studentAnswerIndex = answer?.answer ? parseInt(answer.answer, 10) : null;
+												const isSelected = studentAnswerIndex === optIndex;
+												const isCorrect = question.correctAnswer === optIndex;
+												
+												return (
+													<div
+														key={optIndex}
+														className={`grading-mc-option ${
+															isSelected && isCorrect
+																? 'grading-mc-option-correct'
+																: isSelected
+																? 'grading-mc-option-incorrect'
+																: isCorrect
+																? 'grading-mc-option-correct-unselected'
+																: ''
+														}`}
+													>
+														<div className="grading-mc-option-content">
+															<span className="grading-mc-option-label">
+																{String.fromCharCode(65 + optIndex)}.
+															</span>
+															<span className="grading-mc-option-text">{option}</span>
+														</div>
+														<div className="grading-mc-option-badges">
+															{isCorrect && (
+																<span className="grading-mc-badge grading-mc-badge-correct">
+																	Correct Answer
+																</span>
+															)}
+															{isSelected && (
+																<span className="grading-mc-badge grading-mc-badge-selected">
+																	Student Selected
+																</span>
+															)}
+														</div>
+													</div>
+												);
+											})}
+										</div>
+									</div>
+								) : (
+									<div className="grading-answer-section">
+										<label className="grading-answer-label">Student's Answer:</label>
+										<div className="grading-answer-text">
+											{answer?.answer || 'No answer provided'}
+										</div>
+									</div>
+								)}
 								<div className="grading-points-input">
 									<label htmlFor={`points-${index}`} className="grading-points-label">
 										Points Awarded:

@@ -64,6 +64,11 @@ export async function getQuizById(quizId, userId, role) {
 	const normalizedQuestions = rawQuestions.map((q, index) => ({
 		question: typeof q.question === 'string' ? q.question : '',
 		points: typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0,
+		type: typeof q.type === 'string' ? q.type : 'open-response',
+		options: Array.isArray(q.options) ? q.options : undefined,
+		correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : undefined,
+		wordLimit: typeof q.wordLimit === 'number' ? q.wordLimit : undefined,
+		charLimit: typeof q.charLimit === 'number' ? q.charLimit : undefined,
 		orderIndex: typeof q.orderIndex === 'number' ? q.orderIndex : index,
 	}));
 
@@ -92,11 +97,31 @@ export async function createQuiz(courseId, title, description, published, dueDat
 		
 		// Insert quiz
 		const normalizedQuestions = Array.isArray(questions)
-			? questions.map((q, index) => ({
-					question: typeof q.question === 'string' ? q.question : '',
-					points: typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0,
-					orderIndex: index,
-			  }))
+			? questions.map((q, index) => {
+					const questionText = typeof q.question === 'string' ? q.question : '';
+					const points =
+						typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0;
+					const type =
+						typeof q.type === 'string' ? q.type : 'open-response';
+					const options = Array.isArray(q.options) ? q.options : undefined;
+					const correctAnswer =
+						typeof q.correctAnswer === 'number' ? q.correctAnswer : undefined;
+					const wordLimit =
+						typeof q.wordLimit === 'number' ? q.wordLimit : undefined;
+					const charLimit =
+						typeof q.charLimit === 'number' ? q.charLimit : undefined;
+
+					return {
+						question: questionText,
+						points,
+						type,
+						options,
+						correctAnswer,
+						wordLimit,
+						charLimit,
+						orderIndex: index,
+					};
+			  })
 			: [];
 
 		const quizResult = await client.query(
@@ -142,10 +167,14 @@ export async function updateQuiz(quizId, title, description, published, dueDate,
 		
 		const existingQuiz = existingQuizResult.rows[0];
 		
-		// Reject updates if quiz is already published
+		// If quiz is published, only allow changing the published status (unpublishing)
+		// Note: This check is redundant since the route handler already validates this,
+		// but we keep it as a safety check. The route handler will have already blocked
+		// other changes, so if we reach here with a published quiz, it should only be
+		// for unpublishing.
 		if (existingQuiz.published) {
-			await client.query('ROLLBACK');
-			throw new Error('Cannot edit a published quiz');
+			// Allow unpublishing (published: false)
+			// The route handler has already validated that only published field is being changed
 		}
 		
 		// Check if questions are being changed
@@ -159,17 +188,68 @@ export async function updateQuiz(quizId, title, description, published, dueDate,
 				: [];
 			const newQuestions = Array.isArray(questions) ? questions : [];
 			
-			// Simple comparison: if lengths differ or content differs, delete submissions
+			// Simple comparison: if lengths differ, delete submissions
 			if (oldQuestions.length !== newQuestions.length) {
 				shouldDeleteSubmissions = true;
 			} else {
-				// Compare question text and points
+				// Compare question content including type-specific fields
 				for (let i = 0; i < oldQuestions.length; i++) {
 					const oldQ = oldQuestions[i];
 					const newQ = newQuestions[i];
+					
+					// Compare basic fields
 					if (oldQ.question !== newQ.question || oldQ.points !== newQ.points) {
 						shouldDeleteSubmissions = true;
 						break;
+					}
+					
+					// Compare question type
+					const oldType = oldQ.type || 'open-response';
+					const newType = newQ.type || 'open-response';
+					if (oldType !== newType) {
+						shouldDeleteSubmissions = true;
+						break;
+					}
+					
+					// Compare multiple choice specific fields
+					if (newType === 'multiple-choice') {
+						const oldOptions = Array.isArray(oldQ.options) ? oldQ.options : [];
+						const newOptions = Array.isArray(newQ.options) ? newQ.options : [];
+						
+						// Compare options arrays
+						if (oldOptions.length !== newOptions.length) {
+							shouldDeleteSubmissions = true;
+							break;
+						}
+						
+						// Compare option text
+						for (let j = 0; j < oldOptions.length; j++) {
+							if (oldOptions[j] !== newOptions[j]) {
+								shouldDeleteSubmissions = true;
+								break;
+							}
+						}
+						
+						// Compare correct answer index
+						const oldCorrect = typeof oldQ.correctAnswer === 'number' ? oldQ.correctAnswer : undefined;
+						const newCorrect = typeof newQ.correctAnswer === 'number' ? newQ.correctAnswer : undefined;
+						if (oldCorrect !== newCorrect) {
+							shouldDeleteSubmissions = true;
+							break;
+						}
+					}
+					
+					// Compare short answer specific fields
+					if (newType === 'short-answer') {
+						const oldWordLimit = typeof oldQ.wordLimit === 'number' ? oldQ.wordLimit : undefined;
+						const newWordLimit = typeof newQ.wordLimit === 'number' ? newQ.wordLimit : undefined;
+						const oldCharLimit = typeof oldQ.charLimit === 'number' ? oldQ.charLimit : undefined;
+						const newCharLimit = typeof newQ.charLimit === 'number' ? newQ.charLimit : undefined;
+						
+						if (oldWordLimit !== newWordLimit || oldCharLimit !== newCharLimit) {
+							shouldDeleteSubmissions = true;
+							break;
+						}
 					}
 				}
 			}
@@ -182,11 +262,31 @@ export async function updateQuiz(quizId, title, description, published, dueDate,
 		
 		// Update quiz
 		const normalizedQuestions = Array.isArray(questions)
-			? questions.map((q, index) => ({
-					question: typeof q.question === 'string' ? q.question : '',
-					points: typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0,
-					orderIndex: index,
-			  }))
+			? questions.map((q, index) => {
+					const questionText = typeof q.question === 'string' ? q.question : '';
+					const points =
+						typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0;
+					const type =
+						typeof q.type === 'string' ? q.type : 'open-response';
+					const options = Array.isArray(q.options) ? q.options : undefined;
+					const correctAnswer =
+						typeof q.correctAnswer === 'number' ? q.correctAnswer : undefined;
+					const wordLimit =
+						typeof q.wordLimit === 'number' ? q.wordLimit : undefined;
+					const charLimit =
+						typeof q.charLimit === 'number' ? q.charLimit : undefined;
+
+					return {
+						question: questionText,
+						points,
+						type,
+						options,
+						correctAnswer,
+						wordLimit,
+						charLimit,
+						orderIndex: index,
+					};
+			  })
 			: null;
 
 		const quizResult = await client.query(

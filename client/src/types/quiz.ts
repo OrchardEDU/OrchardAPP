@@ -1,6 +1,13 @@
+export type QuizQuestionType = 'open-response' | 'multiple-choice' | 'short-answer';
+
 export interface QuizQuestion {
 	question: string;
 	points: number;
+	type?: QuizQuestionType;
+	options?: string[];
+	correctAnswer?: number;
+	wordLimit?: number;
+	charLimit?: number;
 	orderIndex?: number;
 }
 

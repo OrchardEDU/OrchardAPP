@@ -106,8 +106,24 @@
 .grading-question-text {
 	font-size: 1rem;
 	color: #111827;
-	margin-bottom: 1rem;
+	margin-bottom: 0.75rem;
 	line-height: 1.6;
+}
+
+.grading-question-type {
+	margin-bottom: 1rem;
+}
+
+.grading-question-type span {
+	display: inline-block;
+	padding: 0.25rem 0.625rem;
+	border-radius: 0.375rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+	background-color: #f3f4f6;
+	color: #6b7280;
 }
 
 .grading-answer-section {
@@ -131,6 +147,96 @@
 	line-height: 1.5;
 	min-height: 3rem;
 	white-space: pre-wrap;
+}
+
+.grading-mc-section {
+	margin-bottom: 1rem;
+}
+
+.grading-mc-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-top: 0.5rem;
+}
+
+.grading-mc-option {
+	padding: 0.875rem 1rem;
+	border: 2px solid #e5e7eb;
+	border-radius: 0.5rem;
+	background-color: #ffffff;
+	transition: all 0.2s ease;
+}
+
+.grading-mc-option-correct {
+	border-color: #16a34a;
+	background-color: #ecfdf3;
+}
+
+.grading-mc-option-incorrect {
+	border-color: #dc2626;
+	background-color: #fef2f2;
+}
+
+.grading-mc-option-correct-unselected {
+	border-color: #16a34a;
+	border-style: dashed;
+	background-color: #f0fdf4;
+}
+
+.grading-mc-option-content {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+}
+
+.grading-mc-option-label {
+	font-weight: 600;
+	color: #6b7280;
+	min-width: 1.5rem;
+}
+
+.grading-mc-option-correct .grading-mc-option-label,
+.grading-mc-option-correct-unselected .grading-mc-option-label {
+	color: #16a34a;
+}
+
+.grading-mc-option-incorrect .grading-mc-option-label {
+	color: #dc2626;
+}
+
+.grading-mc-option-text {
+	flex: 1;
+	color: #111827;
+	line-height: 1.5;
+}
+
+.grading-mc-option-badges {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.grading-mc-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.625rem;
+	border-radius: 0.375rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+}
+
+.grading-mc-badge-correct {
+	background-color: #16a34a;
+	color: #ffffff;
+}
+
+.grading-mc-badge-selected {
+	background-color: #3b82f6;
+	color: #ffffff;
 }
 
 .grading-points-input {

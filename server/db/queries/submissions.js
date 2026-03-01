@@ -65,9 +65,9 @@ export async function createSubmission(quizId, studentId, answers) {
 			const pts = typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0;
 			maxScore += pts;
 		});
-
-		// For now we don't auto-grade; score is 0 until manual grading exists
-		const totalScore = 0;
+		
+		// We'll compute totalScore after inserting answers (auto-grading multiple choice)
+		let totalScore = 0;
 
 		// Upsert submission: if one exists, overwrite it
 		const existingResult = await client.query(
@@ -111,15 +111,42 @@ export async function createSubmission(quizId, studentId, answers) {
 		const indexedAnswers = Array.isArray(answers) ? answers : [];
 
 		for (let i = 0; i < rawQuestions.length; i++) {
+			const question = rawQuestions[i] || {};
 			const match = indexedAnswers.find(a => a.questionIndex === i);
 			const answerText = match && typeof match.answer === 'string' ? match.answer : '';
+
+			const type = typeof question.type === 'string' ? question.type : 'open-response';
+			const pts = typeof question.points === 'number' ? question.points : parseInt(question.points, 10) || 0;
+
+			let pointsAwarded = 0;
+			if (type === 'multiple-choice') {
+				const correctIndex =
+					typeof question.correctAnswer === 'number' ? question.correctAnswer : 0;
+				const selectedIndex = answerText !== '' ? parseInt(answerText, 10) : NaN;
+				if (!Number.isNaN(selectedIndex) && selectedIndex === correctIndex) {
+					pointsAwarded = pts;
+				} else {
+					pointsAwarded = 0;
+				}
+			}
+
+			totalScore += pointsAwarded;
 
 			await client.query(
 				`INSERT INTO submission_answers (submission_id, question_index, answer, points_awarded)
 				 VALUES ($1, $2, $3, $4)`,
-				[submission.id, i, answerText, 0]
+				[submission.id, i, answerText, pointsAwarded]
 			);
 		}
+
+		// Update submission score, but leave is_graded = false for teacher review/override
+		await client.query(
+			`UPDATE submissions
+			 SET score = $1,
+			     max_score = $2
+			 WHERE id = $3`,
+			[totalScore, maxScore, submission.id]
+		);
 		
 		await client.query('COMMIT');
 		
@@ -220,6 +247,11 @@ export async function getSubmissionById(submissionId) {
 		submission.quiz_questions = rawQuestions.map((q, index) => ({
 			question: typeof q.question === 'string' ? q.question : '',
 			points: typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0,
+			type: typeof q.type === 'string' ? q.type : 'open-response',
+			options: Array.isArray(q.options) ? q.options : undefined,
+			correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : undefined,
+			wordLimit: typeof q.wordLimit === 'number' ? q.wordLimit : undefined,
+			charLimit: typeof q.charLimit === 'number' ? q.charLimit : undefined,
 			orderIndex: typeof q.orderIndex === 'number' ? q.orderIndex : index,
 		}));
 	}
@@ -364,6 +396,11 @@ export async function getStudentSubmission(quizId, studentId) {
 		submission.quiz_questions = rawQuestions.map((q, index) => ({
 			question: typeof q.question === 'string' ? q.question : '',
 			points: typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0,
+			type: typeof q.type === 'string' ? q.type : 'open-response',
+			options: Array.isArray(q.options) ? q.options : undefined,
+			correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : undefined,
+			wordLimit: typeof q.wordLimit === 'number' ? q.wordLimit : undefined,
+			charLimit: typeof q.charLimit === 'number' ? q.charLimit : undefined,
 			orderIndex: typeof q.orderIndex === 'number' ? q.orderIndex : index,
 		}));
 		submission.quiz_title = quizResult.rows[0].title;
