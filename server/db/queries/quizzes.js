@@ -28,10 +28,12 @@ export async function getQuizzesForCourse(courseId, userId, role) {
 				q.id, q.course_id, q.title, q.description, q.published, q.due_date, q.questions_json,
 				q.created_at, q.updated_at,
 				COALESCE(jsonb_array_length(q.questions_json), 0) as question_count,
-				EXISTS(SELECT 1 FROM submissions WHERE quiz_id = q.id AND student_id = $2) as has_submission
+				EXISTS(SELECT 1 FROM submissions WHERE quiz_id = q.id AND student_id = $2) as has_submission,
+				s.score, s.max_score, s.is_graded
 			FROM quizzes q
+			LEFT JOIN submissions s ON q.id = s.quiz_id AND s.student_id = $2
 			WHERE q.course_id = $1 AND q.published = true
-			GROUP BY q.id
+			GROUP BY q.id, s.score, s.max_score, s.is_graded
 			ORDER BY q.created_at DESC`,
 			[courseId, userId]
 		);

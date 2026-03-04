@@ -136,6 +136,11 @@ export default function StudentCoursePage() {
 													<span>{quiz.questionCount} question{quiz.questionCount !== 1 ? 's' : ''}</span>
 												)}
 												{quiz.hasSubmission && <span className="submission-indicator">Submitted</span>}
+												{quiz.isGraded && quiz.score !== undefined && quiz.maxScore !== undefined && (
+													<span className="grade-indicator">
+														Grade: {quiz.score} / {quiz.maxScore}
+													</span>
+												)}
 											</div>
 										</Link>
 									))

@@ -90,7 +90,14 @@ router.get('/:courseId/quizzes', validateCourseAccess, async (req, res) => {
 			createdAt: quiz.created_at.toISOString(),
 			questionCount: parseInt(quiz.question_count) || 0,
 			...(role === 'teacher' && { submissionCount: parseInt(quiz.submission_count) || 0 }),
-			...(role === 'student' && { hasSubmission: quiz.has_submission || false }),
+			...(role === 'student' && { 
+				hasSubmission: quiz.has_submission || false,
+				...(quiz.is_graded && {
+					score: parseFloat(quiz.score) || 0,
+					maxScore: parseFloat(quiz.max_score) || 0,
+					isGraded: quiz.is_graded || false,
+				}),
+			}),
 		}));
 
 		res.json({

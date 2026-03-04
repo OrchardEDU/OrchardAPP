@@ -186,6 +186,11 @@
 	font-weight: 500;
 }
 
+.grade-indicator {
+	color: #2563eb;
+	font-weight: 600;
+}
+
 .empty-state {
 	grid-column: 1 / -1;
 	text-align: center;
