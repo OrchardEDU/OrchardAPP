@@ -11,6 +11,22 @@ const router = express.Router({ mergeParams: true });
 router.use(requireAuth);
 
 /**
+ * Helper function to format a question with all type fields
+ */
+function formatQuestion(q) {
+	return {
+		question: q.question || '',
+		points: typeof q.points === 'number' ? q.points : parseInt(q.points, 10) || 0,
+		type: q.type || 'open-response',
+		options: Array.isArray(q.options) ? q.options : undefined,
+		correctAnswer: typeof q.correctAnswer === 'number' ? q.correctAnswer : undefined,
+		wordLimit: typeof q.wordLimit === 'number' ? q.wordLimit : undefined,
+		charLimit: typeof q.charLimit === 'number' ? q.charLimit : undefined,
+		orderIndex: typeof q.orderIndex === 'number' ? q.orderIndex : undefined,
+	};
+}
+
+/**
  * Middleware to validate course access
  */
 const validateCourseAccess = async (req, res, next) => {
@@ -68,11 +84,8 @@ router.get('/:courseId/quizzes', validateCourseAccess, async (req, res) => {
 			description: quiz.description || '',
 			published: quiz.published,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
-			questions: Array.isArray(quiz.questions)
-				? quiz.questions.map(q => ({
-						question: q.question,
-						points: q.points,
-				  }))
+			questions: Array.isArray(quiz.questions_json)
+				? quiz.questions_json.map(q => formatQuestion(q))
 				: [],
 			createdAt: quiz.created_at.toISOString(),
 			questionCount: parseInt(quiz.question_count) || 0,
@@ -129,10 +142,7 @@ router.get('/:courseId/quizzes/:quizId', validateCourseAccess, async (req, res) 
 			description: quiz.description || '',
 			published: quiz.published,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
-			questions: (quiz.questions || []).map(q => ({
-				question: q.question,
-				points: parseInt(q.points, 10) || 0,
-			})),
+			questions: (quiz.questions || []).map(q => formatQuestion(q)),
 			createdAt: quiz.created_at.toISOString(),
 			...(quiz.hasSubmission !== undefined && { hasSubmission: quiz.hasSubmission }),
 		};
@@ -176,7 +186,7 @@ router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), 
 			});
 		}
 
-		// Validate questions if provided (simple open-ended questions: text + points)
+		// Validate questions if provided
 		if (questions && Array.isArray(questions)) {
 			for (const q of questions) {
 				if (!q.question || typeof q.question !== 'string' || q.question.trim().length === 0) {
@@ -190,6 +200,43 @@ router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), 
 						success: false,
 						message: 'Points must be a number greater than or equal to 1',
 					});
+				}
+
+				const type = typeof q.type === 'string' ? q.type : 'open-response';
+
+				if (type === 'multiple-choice') {
+					if (!Array.isArray(q.options) || q.options.length < 2) {
+						return res.status(400).json({
+							success: false,
+							message: 'Multiple choice questions must have at least two options',
+						});
+					}
+					const correctIndex = q.correctAnswer ?? 0;
+					if (
+						typeof correctIndex !== 'number' ||
+						correctIndex < 0 ||
+						correctIndex >= q.options.length
+					) {
+						return res.status(400).json({
+							success: false,
+							message: 'Multiple choice questions must have a valid correctAnswer index',
+						});
+					}
+				}
+
+				if (type === 'short-answer') {
+					if (q.wordLimit !== undefined && (typeof q.wordLimit !== 'number' || q.wordLimit < 1)) {
+						return res.status(400).json({
+							success: false,
+							message: 'Short answer wordLimit must be a positive number when provided',
+						});
+					}
+					if (q.charLimit !== undefined && (typeof q.charLimit !== 'number' || q.charLimit < 1)) {
+						return res.status(400).json({
+							success: false,
+							message: 'Short answer charLimit must be a positive number when provided',
+						});
+					}
 				}
 			}
 		}
@@ -211,10 +258,7 @@ router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), 
 			description: quiz.description || '',
 			published: quiz.published,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
-			questions: (quiz.questions || []).map(q => ({
-				question: q.question,
-				points: parseInt(q.points, 10) || 0,
-			})),
+			questions: (quiz.questions || []).map(q => formatQuestion(q)),
 			createdAt: quiz.created_at.toISOString(),
 		};
 
@@ -257,7 +301,41 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 			});
 		}
 
-		// Validate questions if provided (simple open-ended questions: text + points)
+		// Check if quiz exists
+		const existingQuiz = await quizQueries.getQuizById(quizId, null, 'teacher');
+		if (!existingQuiz) {
+			return res.status(404).json({
+				success: false,
+				message: 'Quiz not found',
+			});
+		}
+
+		// If quiz is published, only allow changing the published status (unpublishing)
+		// Prevent editing questions, title, description, or dueDate
+		if (existingQuiz.published) {
+			// Check if any fields other than published are present in the request body
+			const requestKeys = Object.keys(req.body);
+			const hasOtherChanges = requestKeys.some(key => 
+				key !== 'published' && 
+				(key === 'title' || key === 'description' || key === 'dueDate' || key === 'questions')
+			);
+			
+			// If there are other changes, block them (even if also unpublishing)
+			if (hasOtherChanges) {
+				console.error(`Attempted to edit published quiz ${quizId}. Only unpublishing is allowed.`, {
+					requestKeys,
+					hasOtherChanges,
+					published,
+				});
+				return res.status(400).json({
+					success: false,
+					message: 'Cannot edit a published quiz. You can only unpublish it.',
+				});
+			}
+			// If only published status is being changed, allow it (unpublishing)
+		}
+
+		// Validate questions if provided
 		if (questions && Array.isArray(questions)) {
 			for (const q of questions) {
 				if (!q.question || typeof q.question !== 'string' || q.question.trim().length === 0) {
@@ -271,6 +349,43 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 						success: false,
 						message: 'Points must be a number greater than or equal to 1',
 					});
+				}
+
+				const type = typeof q.type === 'string' ? q.type : 'open-response';
+
+				if (type === 'multiple-choice') {
+					if (!Array.isArray(q.options) || q.options.length < 2) {
+						return res.status(400).json({
+							success: false,
+							message: 'Multiple choice questions must have at least two options',
+						});
+					}
+					const correctIndex = q.correctAnswer ?? 0;
+					if (
+						typeof correctIndex !== 'number' ||
+						correctIndex < 0 ||
+						correctIndex >= q.options.length
+					) {
+						return res.status(400).json({
+							success: false,
+							message: 'Multiple choice questions must have a valid correctAnswer index',
+						});
+					}
+				}
+
+				if (type === 'short-answer') {
+					if (q.wordLimit !== undefined && (typeof q.wordLimit !== 'number' || q.wordLimit < 1)) {
+						return res.status(400).json({
+							success: false,
+							message: 'Short answer wordLimit must be a positive number when provided',
+						});
+					}
+					if (q.charLimit !== undefined && (typeof q.charLimit !== 'number' || q.charLimit < 1)) {
+						return res.status(400).json({
+							success: false,
+							message: 'Short answer charLimit must be a positive number when provided',
+						});
+					}
 				}
 			}
 		}
@@ -302,6 +417,16 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 			questions: (quiz.questions || []).map(q => ({
 				question: q.question,
 				points: parseInt(q.points, 10) || 0,
+				type: q.type || 'open-response',
+				options: Array.isArray(q.options) ? q.options : undefined,
+				correctAnswer:
+					typeof q.correctAnswer === 'number' ? q.correctAnswer : undefined,
+				wordLimit:
+					typeof q.wordLimit === 'number' ? q.wordLimit : undefined,
+				charLimit:
+					typeof q.charLimit === 'number' ? q.charLimit : undefined,
+				orderIndex:
+					typeof q.orderIndex === 'number' ? q.orderIndex : undefined,
 			})),
 			createdAt: quiz.created_at.toISOString(),
 		};
@@ -314,6 +439,14 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 		});
 	} catch (error) {
 		console.error('Update quiz error:', error);
+		// If it's a known error (like "Cannot edit a published quiz"), return 400 with the message
+		if (error.message && error.message.includes('Cannot edit')) {
+			return res.status(400).json({
+				success: false,
+				message: error.message,
+			});
+		}
+		// Otherwise return 500 for unexpected errors
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
@@ -360,6 +493,7 @@ router.get('/:courseId/quizzes/:quizId/submissions', validateCourseAccess, requi
 			})),
 			score: parseFloat(submission.score) || 0,
 			maxScore: parseFloat(submission.max_score) || 0,
+			isGraded: submission.is_graded || false,
 			submittedAt: submission.submitted_at.toISOString(),
 		}));
 
@@ -452,7 +586,10 @@ router.post('/:courseId/quizzes/:quizId/submit', validateCourseAccess, requireRo
 			})),
 			score: parseFloat(submission.score) || 0,
 			maxScore: parseFloat(submission.max_score) || 0,
+			isGraded: submission.is_graded || false,
 			submittedAt: submission.submitted_at.toISOString(),
+			quizTitle: submission.quiz_title,
+			quizQuestions: (submission.quiz_questions || []).map(q => formatQuestion(q)),
 		};
 
 		res.json({
@@ -463,6 +600,237 @@ router.post('/:courseId/quizzes/:quizId/submit', validateCourseAccess, requireRo
 		});
 	} catch (error) {
 		console.error('Submit quiz error:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+});
+
+/**
+ * GET /api/courses/:courseId/quizzes/:quizId/submissions/:submissionId
+ * Get detailed submission with quiz questions (teachers only)
+ */
+router.get('/:courseId/quizzes/:quizId/submissions/:submissionId', validateCourseAccess, requireRole('teacher'), async (req, res) => {
+	try {
+		const { submissionId } = req.params;
+
+		// Check ownership
+		if (!req.courseAccess.isOwner) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		if (!isValidUUID(submissionId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid submission ID',
+			});
+		}
+
+		const submission = await submissionQueries.getSubmissionById(submissionId);
+
+		if (!submission) {
+			return res.status(404).json({
+				success: false,
+				message: 'Submission not found',
+			});
+		}
+
+		// Format submission to match frontend expectations
+		const formattedSubmission = {
+			id: submission.id,
+			quizId: submission.quiz_id,
+			studentId: submission.student_id,
+			studentName: submission.student_name,
+			studentEmail: submission.student_email,
+			answers: (submission.answers || []).map(a => ({
+				questionIndex: a.question_index,
+				answer: a.answer,
+				pointsAwarded: parseFloat(a.points_awarded) || 0,
+			})),
+			score: parseFloat(submission.score) || 0,
+			maxScore: parseFloat(submission.max_score) || 0,
+			isGraded: submission.is_graded || false,
+			submittedAt: submission.submitted_at.toISOString(),
+			quizTitle: submission.quiz_title,
+			quizQuestions: (submission.quiz_questions || []).map(q => formatQuestion(q)),
+		};
+
+		res.json({
+			success: true,
+			data: {
+				submission: formattedSubmission,
+			},
+		});
+	} catch (error) {
+		console.error('Get submission detail error:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+});
+
+/**
+ * POST /api/courses/:courseId/quizzes/:quizId/submissions/:submissionId/grade
+ * Grade a submission (teachers only)
+ */
+router.post('/:courseId/quizzes/:quizId/submissions/:submissionId/grade', validateCourseAccess, requireRole('teacher'), async (req, res) => {
+	try {
+		const { submissionId } = req.params;
+		const { answers } = req.body;
+
+		// Check ownership
+		if (!req.courseAccess.isOwner) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		if (!isValidUUID(submissionId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid submission ID',
+			});
+		}
+
+		if (!answers || !Array.isArray(answers)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Answers array is required',
+			});
+		}
+
+		// Validate answers format
+		for (const answer of answers) {
+			if (typeof answer.questionIndex !== 'number' || answer.questionIndex < 0) {
+				return res.status(400).json({
+					success: false,
+					message: 'Each answer must include a non-negative questionIndex number',
+				});
+			}
+			if (answer.pointsAwarded === undefined || typeof answer.pointsAwarded !== 'number' || answer.pointsAwarded < 0) {
+				return res.status(400).json({
+					success: false,
+					message: 'Each answer must include a non-negative pointsAwarded number',
+				});
+			}
+		}
+
+		const gradedSubmission = await submissionQueries.gradeSubmission(submissionId, answers);
+
+		if (!gradedSubmission) {
+			return res.status(404).json({
+				success: false,
+				message: 'Submission not found',
+			});
+		}
+
+		// Format submission to match frontend expectations
+		const formattedSubmission = {
+			id: gradedSubmission.id,
+			quizId: gradedSubmission.quiz_id,
+			studentId: gradedSubmission.student_id,
+			studentName: gradedSubmission.student_name,
+			studentEmail: gradedSubmission.student_email,
+			answers: (gradedSubmission.answers || []).map(a => ({
+				questionIndex: a.question_index,
+				answer: a.answer,
+				pointsAwarded: parseFloat(a.points_awarded) || 0,
+			})),
+			score: parseFloat(gradedSubmission.score) || 0,
+			maxScore: parseFloat(gradedSubmission.max_score) || 0,
+			isGraded: gradedSubmission.is_graded || false,
+			submittedAt: gradedSubmission.submitted_at.toISOString(),
+			quizTitle: gradedSubmission.quiz_title,
+			quizQuestions: (gradedSubmission.quiz_questions || []).map(q => ({
+				question: q.question,
+				points: q.points,
+				orderIndex: q.orderIndex,
+			})),
+		};
+
+		res.json({
+			success: true,
+			data: {
+				submission: formattedSubmission,
+			},
+		});
+	} catch (error) {
+		console.error('Grade submission error:', error);
+		res.status(500).json({
+			success: false,
+			message: error.message || 'Internal server error',
+		});
+	}
+});
+
+/**
+ * GET /api/courses/:courseId/quizzes/:quizId/my-submission
+ * Get student's own submission (students only, only if graded)
+ */
+router.get('/:courseId/quizzes/:quizId/my-submission', validateCourseAccess, requireRole('student'), async (req, res) => {
+	try {
+		const { quizId } = req.params;
+		const studentId = req.session.userId;
+
+		// Check enrollment
+		if (!req.courseAccess.isEnrolled) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		if (!isValidUUID(quizId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid quiz ID',
+			});
+		}
+
+		const submission = await submissionQueries.getStudentSubmission(quizId, studentId);
+
+		// Returns null if not graded (visibility control)
+		if (!submission) {
+			return res.json({
+				success: true,
+				data: {
+					submission: null,
+				},
+			});
+		}
+
+		// Format submission to match frontend expectations
+		const formattedSubmission = {
+			id: submission.id,
+			quizId: submission.quiz_id,
+			studentId: submission.student_id,
+			answers: (submission.answers || []).map(a => ({
+				questionIndex: a.question_index,
+				answer: a.answer,
+				pointsAwarded: parseFloat(a.points_awarded) || 0,
+			})),
+			score: parseFloat(submission.score) || 0,
+			maxScore: parseFloat(submission.max_score) || 0,
+			isGraded: submission.is_graded || false,
+			submittedAt: submission.submitted_at.toISOString(),
+			quizTitle: submission.quiz_title,
+			quizQuestions: (submission.quiz_questions || []).map(q => formatQuestion(q)),
+		};
+
+		res.json({
+			success: true,
+			data: {
+				submission: formattedSubmission,
+			},
+		});
+	} catch (error) {
+		console.error('Get my submission error:', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',

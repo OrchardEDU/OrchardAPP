@@ -69,6 +69,18 @@ export default function TeacherQuizPage() {
 		}
 	};
 
+	// Check URL params for view on mount
+	useEffect(() => {
+		if (quiz && quiz.published) {
+			const urlParams = new URLSearchParams(window.location.search);
+			if (urlParams.get('view') === 'submissions') {
+				setActiveView('submissions');
+				loadSubmissions();
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [quiz]);
+
 	return (
 		<div className="quiz-page">
 			<div className="quiz-header">
@@ -172,9 +184,11 @@ export default function TeacherQuizPage() {
 											</div>
 											<div className="quiz-submission-meta">
 												<span>
-													Score:{' '}
+													Status:{' '}
 													<strong>
-														{sub.score} / {sub.maxScore}
+														{sub.isGraded 
+															? `Graded (${sub.score} / ${sub.maxScore} pts)`
+															: 'Not graded'}
 													</strong>
 												</span>
 												<span>
@@ -183,6 +197,14 @@ export default function TeacherQuizPage() {
 														{new Date(sub.submittedAt).toLocaleString()}
 													</strong>
 												</span>
+											</div>
+											<div className="quiz-submission-actions">
+												<Link
+													href={`/dashboard/teacher/courses/${courseId}/quizzes/${quizId}/submissions/${sub.id}`}
+													className="grade-submission-btn"
+												>
+													{sub.isGraded ? 'Review' : 'Grade'}
+												</Link>
 											</div>
 										</li>
 									))}

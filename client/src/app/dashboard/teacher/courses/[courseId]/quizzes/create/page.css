@@ -233,8 +233,133 @@
 	gap: 0.75rem;
 }
 
+.question-meta-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	align-items: flex-end;
+}
+
+.question-type-field {
+	flex: 1;
+	min-width: 180px;
+}
+
 .question-points-field {
 	max-width: 160px;
+}
+
+.mc-options-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}
+
+.mc-option-card {
+	border-radius: 0.6rem;
+	border: 1px solid #e5e7eb;
+	background-color: #f9fafb;
+	padding: 0.6rem 0.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mc-option-card:hover {
+	border-color: #a7f3d0;
+	box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15);
+}
+
+.mc-option-card-correct {
+	border-color: #16a34a;
+	background-color: #ecfdf3;
+}
+
+.mc-option-main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.mc-option-label {
+	font-size: 0.8rem;
+	font-weight: 500;
+	color: #4b5563;
+}
+
+.mc-option-input {
+	width: 100%;
+}
+
+.mc-option-actions {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.8rem;
+	color: #4b5563;
+}
+
+.mc-option-correct-indicator {
+	font-weight: 500;
+	color: #16a34a;
+}
+
+.mc-option-delete-btn {
+	border: none;
+	background: none;
+	color: #b91c1c;
+	font-size: 0.8rem;
+	cursor: pointer;
+	padding: 0.2rem 0.4rem;
+	border-radius: 999px;
+}
+
+.mc-option-delete-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.mc-option-delete-btn:not(:disabled):hover {
+	background-color: rgba(185, 28, 28, 0.06);
+}
+
+.add-option-btn {
+	margin-top: 0.4rem;
+	padding: 0.4rem 0.8rem;
+	border-radius: 999px;
+	border: 1px dashed #16a34a;
+	background-color: #ecfdf3;
+	color: #166534;
+	font-size: 0.8rem;
+	font-weight: 500;
+	cursor: pointer;
+}
+
+.add-option-btn:hover {
+	background-color: #dcfce7;
+}
+
+.short-answer-limits {
+	margin-top: 0.5rem;
+}
+
+.short-answer-limit-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	align-items: center;
+}
+
+.short-answer-limit-type {
+	max-width: 200px;
+}
+
+.short-answer-limit-input {
+	max-width: 120px;
 }
 
 .add-question-card {

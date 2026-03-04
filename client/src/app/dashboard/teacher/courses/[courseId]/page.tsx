@@ -443,6 +443,14 @@ export default function TeacherCoursePage() {
 												>
 													{quiz.published ? 'Unpublish' : 'Publish'}
 												</button>
+												{!quiz.published && (
+													<Link
+														href={`/dashboard/teacher/courses/${courseId}/quizzes/${quiz.id}/edit`}
+														className="quiz-edit-btn"
+													>
+														Edit
+													</Link>
+												)}
 											</div>
 										))}
 										<Link href={`/dashboard/teacher/courses/${courseId}/quizzes/create`} className="create-quiz-card">

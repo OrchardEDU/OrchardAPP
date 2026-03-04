@@ -199,3 +199,170 @@
 	opacity: 0.7;
 	cursor: default;
 }
+
+.graded-question-card {
+	background-color: #f9fafb;
+}
+
+.graded-answer-section {
+	margin-top: 1rem;
+}
+
+.graded-answer-label {
+	display: block;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: #374151;
+	margin-bottom: 0.5rem;
+}
+
+.graded-answer-text {
+	padding: 0.75rem;
+	background-color: #ffffff;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.5rem;
+	color: #111827;
+	line-height: 1.5;
+	min-height: 3rem;
+	white-space: pre-wrap;
+}
+
+.graded-mc-section {
+	margin-top: 1rem;
+}
+
+.graded-mc-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-top: 0.5rem;
+}
+
+.graded-mc-option {
+	padding: 0.875rem 1rem;
+	border: 2px solid #e5e7eb;
+	border-radius: 0.5rem;
+	background-color: #ffffff;
+	transition: all 0.2s ease;
+}
+
+.graded-mc-option-correct {
+	border-color: #16a34a;
+	background-color: #ecfdf3;
+}
+
+.graded-mc-option-incorrect {
+	border-color: #dc2626;
+	background-color: #fef2f2;
+}
+
+.graded-mc-option-correct-unselected {
+	border-color: #16a34a;
+	border-style: dashed;
+	background-color: #f0fdf4;
+}
+
+.graded-mc-option-content {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+}
+
+.graded-mc-option-label {
+	font-weight: 600;
+	color: #6b7280;
+	min-width: 1.5rem;
+}
+
+.graded-mc-option-correct .graded-mc-option-label,
+.graded-mc-option-correct-unselected .graded-mc-option-label {
+	color: #16a34a;
+}
+
+.graded-mc-option-incorrect .graded-mc-option-label {
+	color: #dc2626;
+}
+
+.graded-mc-option-text {
+	flex: 1;
+	color: #111827;
+	line-height: 1.5;
+}
+
+.graded-mc-option-badges {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.graded-mc-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.625rem;
+	border-radius: 0.375rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+}
+
+.graded-mc-badge-correct {
+	background-color: #16a34a;
+	color: #ffffff;
+}
+
+.graded-mc-badge-selected {
+	background-color: #3b82f6;
+	color: #ffffff;
+}
+
+.student-mc-options-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+}
+
+.student-mc-option-card {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.2rem;
+	padding: 0.6rem 0.75rem;
+	border-radius: 0.6rem;
+	border: 1px solid #e5e7eb;
+	background-color: #f9fafb;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.student-mc-option-card:hover {
+	border-color: #bfdbfe;
+	box-shadow: 0 2px 4px rgba(59, 130, 246, 0.15);
+}
+
+.student-mc-option-card-selected {
+	border-color: #2563eb;
+	background-color: #eff6ff;
+}
+
+.student-mc-option-label {
+	font-size: 0.8rem;
+	font-weight: 500;
+	color: #4b5563;
+}
+
+.student-mc-option-text {
+	font-size: 0.9rem;
+	color: #111827;
+	text-align: left;
+}
+
+.short-answer-counter {
+	margin-top: 0.4rem;
+	display: flex;
+	gap: 0.75rem;
+	font-size: 0.8rem;
+	color: #6b7280;
+}

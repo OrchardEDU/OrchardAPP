@@ -1,0 +1,366 @@
+.grading-page {
+	padding: 2rem;
+	max-width: 1200px;
+	margin: 0 auto;
+	min-height: 100vh;
+}
+
+.grading-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 1.5rem;
+	margin-bottom: 2rem;
+}
+
+.grading-page h1 {
+	font-size: 2rem;
+	margin-bottom: 0.5rem;
+}
+
+.grading-subtitle {
+	margin: 0.25rem 0;
+	color: #4b5563;
+	font-size: 1rem;
+	font-weight: 500;
+}
+
+.grading-meta {
+	margin: 0.25rem 0 0;
+	color: #6b7280;
+	font-size: 0.9rem;
+}
+
+.grading-actions {
+	display: flex;
+	gap: 0.75rem;
+}
+
+.secondary-action-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.6rem 1.2rem;
+	border-radius: 999px;
+	font-size: 0.9rem;
+	font-weight: 500;
+	text-decoration: none;
+	border: 1px solid #16a34a;
+	color: #16a34a;
+	background-color: transparent;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.secondary-action-btn:hover {
+	background-color: rgba(22, 163, 74, 0.06);
+}
+
+.form-error {
+	color: #b91c1c;
+	margin-bottom: 1rem;
+	padding: 0.75rem;
+	background-color: #fef2f2;
+	border: 1px solid #fecaca;
+	border-radius: 0.5rem;
+}
+
+.grading-body {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+}
+
+.grading-questions {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+
+.grading-question-card {
+	border-radius: 1rem;
+	border: 1px solid #e5e7eb;
+	background-color: #ffffff;
+	padding: 1.5rem;
+	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.grading-question-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1rem;
+}
+
+.grading-question-header h3 {
+	margin: 0;
+	font-size: 1.1rem;
+	color: #111827;
+}
+
+.grading-question-points {
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: #16a34a;
+}
+
+.grading-question-text {
+	font-size: 1rem;
+	color: #111827;
+	margin-bottom: 0.75rem;
+	line-height: 1.6;
+}
+
+.grading-question-type {
+	margin-bottom: 1rem;
+}
+
+.grading-question-type span {
+	display: inline-block;
+	padding: 0.25rem 0.625rem;
+	border-radius: 0.375rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+	background-color: #f3f4f6;
+	color: #6b7280;
+}
+
+.grading-answer-section {
+	margin-bottom: 1rem;
+}
+
+.grading-answer-label {
+	display: block;
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: #374151;
+	margin-bottom: 0.5rem;
+}
+
+.grading-answer-text {
+	padding: 0.75rem;
+	background-color: #f9fafb;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.5rem;
+	color: #111827;
+	line-height: 1.5;
+	min-height: 3rem;
+	white-space: pre-wrap;
+}
+
+.grading-mc-section {
+	margin-bottom: 1rem;
+}
+
+.grading-mc-options {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	margin-top: 0.5rem;
+}
+
+.grading-mc-option {
+	padding: 0.875rem 1rem;
+	border: 2px solid #e5e7eb;
+	border-radius: 0.5rem;
+	background-color: #ffffff;
+	transition: all 0.2s ease;
+}
+
+.grading-mc-option-correct {
+	border-color: #16a34a;
+	background-color: #ecfdf3;
+}
+
+.grading-mc-option-incorrect {
+	border-color: #dc2626;
+	background-color: #fef2f2;
+}
+
+.grading-mc-option-correct-unselected {
+	border-color: #16a34a;
+	border-style: dashed;
+	background-color: #f0fdf4;
+}
+
+.grading-mc-option-content {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.75rem;
+}
+
+.grading-mc-option-label {
+	font-weight: 600;
+	color: #6b7280;
+	min-width: 1.5rem;
+}
+
+.grading-mc-option-correct .grading-mc-option-label,
+.grading-mc-option-correct-unselected .grading-mc-option-label {
+	color: #16a34a;
+}
+
+.grading-mc-option-incorrect .grading-mc-option-label {
+	color: #dc2626;
+}
+
+.grading-mc-option-text {
+	flex: 1;
+	color: #111827;
+	line-height: 1.5;
+}
+
+.grading-mc-option-badges {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.5rem;
+	flex-wrap: wrap;
+}
+
+.grading-mc-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 0.25rem 0.625rem;
+	border-radius: 0.375rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.025em;
+}
+
+.grading-mc-badge-correct {
+	background-color: #16a34a;
+	color: #ffffff;
+}
+
+.grading-mc-badge-selected {
+	background-color: #3b82f6;
+	color: #ffffff;
+}
+
+.grading-points-input {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-top: 0.75rem;
+}
+
+.grading-points-label {
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: #374151;
+}
+
+.grading-points-field {
+	width: 100px;
+	padding: 0.625rem 0.75rem;
+	border: 1px solid #d1d5db;
+	border-radius: 0.5rem;
+	font-size: 0.95rem;
+	text-align: center;
+	font-weight: 500;
+}
+
+.grading-points-field:focus {
+	outline: none;
+	border-color: #16a34a;
+	box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.1);
+}
+
+.grading-points-max {
+	font-size: 0.9rem;
+	color: #6b7280;
+}
+
+.grading-summary-card {
+	border-radius: 1rem;
+	border: 1px solid #e5e7eb;
+	background-color: #ffffff;
+	padding: 1.5rem;
+	box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.grading-summary-card h3 {
+	margin: 0 0 1rem;
+	font-size: 1.1rem;
+}
+
+.grading-summary-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.5rem 0;
+	font-size: 0.95rem;
+	color: #4b5563;
+}
+
+.grading-summary-row strong {
+	color: #111827;
+	font-weight: 600;
+}
+
+.grading-summary-total {
+	border-top: 2px solid #e5e7eb;
+	margin-top: 0.5rem;
+	padding-top: 0.75rem;
+	font-size: 1.1rem;
+	font-weight: 600;
+}
+
+.grading-summary-total strong {
+	color: #16a34a;
+	font-size: 1.2rem;
+}
+
+.grading-actions-footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 1rem;
+	padding: 1.5rem 0 0;
+	margin-top: 1rem;
+	border-top: 1px solid #e5e7eb;
+}
+
+.draft-btn {
+	padding: 0.75rem 1.5rem;
+	border-radius: 0.5rem;
+	font-size: 0.9rem;
+	font-weight: 500;
+	border: 1px solid #d1d5db;
+	background-color: #ffffff;
+	color: #374151;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.draft-btn:hover {
+	background-color: #f9fafb;
+	border-color: #9ca3af;
+}
+
+.draft-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.submit-grade-btn {
+	padding: 0.75rem 1.5rem;
+	border-radius: 0.5rem;
+	font-size: 0.9rem;
+	font-weight: 500;
+	border: none;
+	background-color: #16a34a;
+	color: white;
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.submit-grade-btn:hover {
+	background-color: #15803d;
+}
+
+.submit-grade-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}

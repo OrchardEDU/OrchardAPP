@@ -52,7 +52,7 @@
 }
 
 .footer-brand p {
-	color: var(--text-tertiary, #999);
+	color: #cbd5e0;
 }
 
 .footer-links {
@@ -62,14 +62,15 @@
 }
 
 .link-group h4 {
-	color: var(--text-primary, white);
+	color: #ffffff;
 	font-size: 1.1rem;
+	font-weight: 600;
 	margin-bottom: 1.5rem;
 }
 
 .link-group a {
 	display: block;
-	color: var(--text-tertiary, #999);
+	color: #e2e8f0;
 	margin-bottom: 0.75rem;
 	font-size: 0.9rem;
 	text-decoration: none;
@@ -77,14 +78,14 @@
 }
 
 .link-group a:hover {
-	color: var(--text-primary, white);
+	color: #ffffff;
 }
 
 .footer-bottom {
-	border-top: 1px solid var(--border-primary, #333);
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
 	padding-top: 2rem;
 	text-align: center;
-	color: var(--text-tertiary, #666);
+	color: #a0aec0;
 	font-size: 0.9rem;
 }
 

@@ -74,6 +74,7 @@ CREATE TABLE IF NOT EXISTS submissions (
     student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     score DECIMAL(10, 2) NOT NULL DEFAULT 0,
     max_score DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    is_graded BOOLEAN NOT NULL DEFAULT FALSE,
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(quiz_id, student_id)
 );

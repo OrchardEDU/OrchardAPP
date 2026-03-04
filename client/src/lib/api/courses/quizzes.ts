@@ -27,6 +27,11 @@ export const quizzesApi = {
 		questions: Array<{
 			question: string;
 			points: number;
+			type?: 'open-response' | 'multiple-choice' | 'short-answer';
+			options?: string[];
+			correctAnswer?: number;
+			wordLimit?: number;
+			charLimit?: number;
 		}>;
 	}): Promise<Quiz | null> {
 		const response = await apiClient.post<{ quiz: Quiz }>(`/api/courses/${courseId}/quizzes`, data);
@@ -44,6 +49,11 @@ export const quizzesApi = {
 		questions?: Array<{
 			question: string;
 			points: number;
+			type?: 'open-response' | 'multiple-choice' | 'short-answer';
+			options?: string[];
+			correctAnswer?: number;
+			wordLimit?: number;
+			charLimit?: number;
 		}>;
 	}): Promise<Quiz | null> {
 		const response = await apiClient.put<{ quiz: Quiz }>(`/api/courses/${courseId}/quizzes/${quizId}`, data);
@@ -64,6 +74,30 @@ export const quizzesApi = {
 	async submitQuiz(courseId: string, quizId: string, answers: Array<{ questionIndex: number; answer: string }>): Promise<Submission | null> {
 		const response = await apiClient.post<{ submission: Submission }>(`/api/courses/${courseId}/quizzes/${quizId}/submit`, { answers });
 		if (response.success && response.data?.submission) {
+			return response.data.submission;
+		}
+		return null;
+	},
+
+	async getSubmissionDetail(courseId: string, quizId: string, submissionId: string): Promise<Submission | null> {
+		const response = await apiClient.get<{ submission: Submission }>(`/api/courses/${courseId}/quizzes/${quizId}/submissions/${submissionId}`);
+		if (response.success && response.data?.submission) {
+			return response.data.submission;
+		}
+		return null;
+	},
+
+	async gradeSubmission(courseId: string, quizId: string, submissionId: string, answers: Array<{ questionIndex: number; pointsAwarded: number }>): Promise<Submission | null> {
+		const response = await apiClient.post<{ submission: Submission }>(`/api/courses/${courseId}/quizzes/${quizId}/submissions/${submissionId}/grade`, { answers });
+		if (response.success && response.data?.submission) {
+			return response.data.submission;
+		}
+		return null;
+	},
+
+	async getMySubmission(courseId: string, quizId: string): Promise<Submission | null> {
+		const response = await apiClient.get<{ submission: Submission | null }>(`/api/courses/${courseId}/quizzes/${quizId}/my-submission`);
+		if (response.success && response.data?.submission !== undefined) {
 			return response.data.submission;
 		}
 		return null;
