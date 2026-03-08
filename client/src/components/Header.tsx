@@ -93,7 +93,7 @@ const Header = () => {
 					) : user ? (
 						<>
 							<Link href={getDashboardUrl(user)} className="btn btn-secondary btn-sm">
-								Home
+								Dashboard
 							</Link>
 							<button onClick={handleLogout} className="btn btn-primary btn-sm">
 								Logout

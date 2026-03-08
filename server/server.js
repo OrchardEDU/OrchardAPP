@@ -1,6 +1,7 @@
 import express from 'express';
 import next from 'next';
 import path from 'path';
+import { parse } from 'url';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -151,9 +152,10 @@ nextApp.prepare().then(async () => {
 	// Error handling middleware (must be last)
 	expressApp.use(errorHandler);
 
-	// Let Next handle all other routes
-	expressApp.all(/.*/, (req, res) => {
-		return handle(req, res);
+	// Let Next handle all other routes - pass parsed URL for correct routing
+	expressApp.all('*', (req, res) => {
+		const parsedUrl = parse(req.originalUrl || req.url, true);
+		return handle(req, res, parsedUrl);
 	});
 
 	const listener = expressApp.listen(PORT, IP, () => {
