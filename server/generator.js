@@ -187,13 +187,53 @@ export class Generator {
 	 * @param {string} topic - The topic for question generation
 	 * @param {number} numQuestions - Number of questions to generate (1-20)
 	 * @param {string} context - Optional RAG context to include
+	 * @param {'open-response'|'multiple-choice'|'short-answer'} questionType - Desired question type
 	 * @returns {Promise<Array<{question: string}>>} Array of generated questions
 	 */
-	async generateQuestions(topic, numQuestions, context = null) {
+	async generateQuestions(
+		topic,
+		numQuestions,
+		context = null,
+		questionType = 'open-response'
+	) {
 		try {
-			// TODO: Replace with actual system prompt
-			const systemPrompt = 'TODO: Add system prompt for question generation';
-			
+			const baseSystemPrompt = `You are an AI assistant that generates high-quality quiz questions for students.
+
+General requirements for all questions:
+- Be clear and well-formulated
+- Test understanding of the topic
+- Be appropriate for educational purposes
+- Be engaging and age-appropriate
+- Questions must be distinct from one another
+
+The JSON you return MUST strictly follow the provided JSON schema, including field names and types.`;
+
+			let typeInstructions = '';
+			if (questionType === 'multiple-choice') {
+				typeInstructions = `
+For this request, you MUST generate ONLY multiple-choice questions.
+For each object in the "questions" array:
+- Set "type" to "multiple-choice"
+- Include a "correctOption" string that is the single correct answer
+- Include an "incorrectOptions" array with 3 concise, plausible but clearly incorrect options
+- Do NOT include "options" or "correctAnswerIndex" fields; those will be constructed on the backend
+- The incorrect options must be plausible but clearly incorrect for a well-prepared student.`;
+			} else if (questionType === 'short-answer') {
+				typeInstructions = `
+For this request, you MUST generate ONLY short-answer questions.
+For each object in the "questions" array:
+- Set "type" to "short-answer"
+- Do NOT include "options" or "correctAnswerIndex".`;
+			} else {
+				typeInstructions = `
+For this request, you MUST generate ONLY open-ended questions.
+For each object in the "questions" array:
+- Set "type" to "open-response"
+- Do NOT include "options" or "correctAnswerIndex".`;
+			}
+
+			const systemPrompt = `${baseSystemPrompt}\n\n${typeInstructions}`;
+
 			const query = context
 				? `${systemPrompt}
 
@@ -202,27 +242,16 @@ Generate ${numQuestions} thoughtful, educational questions that would be appropr
 Use the following context to inform your questions:
 ${context}
 
-Each question should:
-- Be clear and well-formulated
-- Test understanding of the topic
-- Be appropriate for educational purposes
-- Be engaging and thought-provoking
-- Relate to the provided context when relevant
-- Be distinct from the other questions
-
-Generate ${numQuestions} questions now. Respond with a JSON object matching this schema: ${JSON.stringify(questionGenerationOutputSchema)}`
+Generate ${numQuestions} questions now. Respond with a JSON object matching this schema: ${JSON.stringify(
+					questionGenerationOutputSchema
+				)}`
 				: `${systemPrompt}
 
 Generate ${numQuestions} thoughtful, educational questions that would be appropriate for students based on the following topic: "${topic}"
 
-Each question should:
-- Be clear and well-formulated
-- Test understanding of the topic
-- Be appropriate for educational purposes
-- Be engaging and thought-provoking
-- Be distinct from the other questions
-
-Generate ${numQuestions} questions now. Respond with a JSON object matching this schema: ${JSON.stringify(questionGenerationOutputSchema)}`;
+Generate ${numQuestions} questions now. Respond with a JSON object matching this schema: ${JSON.stringify(
+					questionGenerationOutputSchema
+				)}`;
 
 			let response;
 			let responseContent;
@@ -236,7 +265,7 @@ Generate ${numQuestions} questions now. Respond with a JSON object matching this
 					format: questionGenerationOutputSchema,
 				});
 				console.log('OLLAMA RESPONSE:\n', response);
-				
+
 				if (!response || !response.message || !response.message.content) {
 					console.error('[Generator] Ollama failed to generate questions');
 					return [];
@@ -245,7 +274,7 @@ Generate ${numQuestions} questions now. Respond with a JSON object matching this
 			} else {
 				// Use Gemini
 				console.log('Using Gemini for question generation');
-				const model = this.genAI.getGenerativeModel({ 
+				const model = this.genAI.getGenerativeModel({
 					model: this.model,
 					generationConfig: {
 						responseMimeType: 'application/json',
@@ -267,8 +296,40 @@ Generate ${numQuestions} questions now. Respond with a JSON object matching this
 				return [];
 			}
 
-			// Extract questions array
-			const questions = structuredOutput.questions || [];
+			// Extract questions array and normalize MCQ structure
+			const rawQuestions = structuredOutput.questions || [];
+
+			const questions = rawQuestions.map((q) => {
+				if (!q || q.type !== 'multiple-choice') {
+					return q;
+				}
+
+				const correctOption =
+					typeof q.correctOption === 'string' ? q.correctOption.trim() : '';
+				const incorrectOptions = Array.isArray(q.incorrectOptions)
+					? q.incorrectOptions
+							.filter((opt) => typeof opt === 'string')
+							.map((opt) => opt.trim())
+							.filter((opt) => opt.length > 0)
+					: [];
+
+				if (!correctOption) {
+					// If the model didn't follow the spec, fall back to the original object.
+					return q;
+				}
+
+				// Start from the incorrect options and insert the correct option at a random index.
+				const options = [...incorrectOptions];
+				const insertIndex = Math.floor(Math.random() * (options.length + 1));
+				options.splice(insertIndex, 0, correctOption);
+
+				return {
+					...q,
+					options,
+					correctAnswerIndex: insertIndex,
+				};
+			});
+
 			console.log(`[Generator] Generated ${questions.length} questions`);
 			return questions;
 		} catch (error) {

@@ -41,6 +41,7 @@ export default function EditQuizPage() {
 	const [showAIGenerate, setShowAIGenerate] = useState(false);
 	const [aiTopic, setAiTopic] = useState('');
 	const [aiNumQuestions, setAiNumQuestions] = useState(3);
+	const [aiQuestionType, setAiQuestionType] = useState<QuizQuestionType>('open-response');
 
 	// Load existing quiz data
 	useEffect(() => {
@@ -282,7 +283,8 @@ export default function EditQuizPage() {
 			const generatedQuestions = await aiApi.generateQuestions(
 				aiTopic.trim(),
 				aiNumQuestions,
-				courseId
+				courseId,
+				aiQuestionType
 			);
 
 			if (generatedQuestions.length === 0) {
@@ -291,17 +293,40 @@ export default function EditQuizPage() {
 			}
 
 			// Add generated questions to the questions list with default points of 1
-			const newQuestions: NewQuestion[] = generatedQuestions.map(q => ({
-				question: q.question,
-				points: 1,
-				type: 'open-response',
-			}));
+			const newQuestions: NewQuestion[] = generatedQuestions.map(q => {
+				if (aiQuestionType === 'multiple-choice') {
+					const base: NewQuestion = {
+						question: q.question,
+						points: 1,
+						type: 'multiple-choice',
+						options: Array.isArray(q.options) && q.options.length >= 2 ? q.options : ['', ''],
+						correctAnswer:
+							typeof q.correctAnswerIndex === 'number' ? q.correctAnswerIndex : 0,
+					};
+					return ensureMultipleChoiceDefaults(base);
+				}
+
+				if (aiQuestionType === 'short-answer') {
+					return {
+						question: q.question,
+						points: 1,
+						type: 'short-answer',
+					};
+				}
+
+				return {
+					question: q.question,
+					points: 1,
+					type: 'open-response',
+				};
+			});
 
 			setQuestions(prev => [...prev, ...newQuestions]);
 			
 			// Reset AI form and hide AI generation card
 			setAiTopic('');
 			setAiNumQuestions(3);
+			setAiQuestionType('open-response');
 			setShowAIGenerate(false);
 		} catch (err) {
 			console.error('Failed to generate questions', err);
@@ -689,6 +714,7 @@ export default function EditQuizPage() {
 											setShowAIGenerate(false);
 											setAiTopic('');
 											setAiNumQuestions(3);
+											setAiQuestionType('open-response');
 										}}
 									>
 										×
@@ -719,6 +745,21 @@ export default function EditQuizPage() {
 													{num}
 												</option>
 											))}
+										</select>
+									</div>
+									<div className="form-field">
+										<label className="form-label">Question type</label>
+										<select
+											value={aiQuestionType}
+											onChange={e =>
+												setAiQuestionType(e.target.value as QuizQuestionType)
+											}
+											className="form-input"
+											disabled={isGenerating}
+										>
+											<option value="open-response">Open response</option>
+											<option value="multiple-choice">Multiple choice</option>
+											<option value="short-answer">Short answer</option>
 										</select>
 									</div>
 									<button

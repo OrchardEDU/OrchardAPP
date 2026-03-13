@@ -32,8 +32,9 @@ export const demoOutputJsonSchema = {
 	required: ['question', 'relevancy'],
 };
 
-// JSON Schema for question generation output (multiple questions)
-// TODO: Replace with actual schema definition
+// JSON Schema for question generation output (multiple questions).
+// NOTE: Gemini's responseSchema only supports a subset of JSON Schema, so we avoid
+// oneOf/const here and enforce stricter rules via the prompt and our own validation.
 export const questionGenerationOutputSchema = {
 	type: 'object',
 	properties: {
@@ -46,8 +47,26 @@ export const questionGenerationOutputSchema = {
 						type: 'string',
 						description: 'The generated question text',
 					},
+					type: {
+						type: 'string',
+						enum: ['open-response', 'multiple-choice', 'short-answer'],
+						description: 'The type of question that was generated',
+					},
+					correctOption: {
+						type: 'string',
+						description:
+							'For multiple-choice questions, the single correct answer option',
+					},
+					incorrectOptions: {
+						type: 'array',
+						items: {
+							type: 'string',
+						},
+						description:
+							'For multiple-choice questions, an array of incorrect but plausible options',
+					},
 				},
-				required: ['question'],
+				required: ['question', 'type'],
 			},
 			description: 'Array of generated questions',
 		},

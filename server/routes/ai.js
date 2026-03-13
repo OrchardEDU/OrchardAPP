@@ -13,6 +13,15 @@ import { createUploadMiddleware } from '../utils/upload.js';
 
 const router = express.Router();
 
+// Fisher-Yates shuffle for small arrays (used to randomize MCQ options)
+function shuffleArray(array) {
+	for (let i = array.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[array[i], array[j]] = [array[j], array[i]];
+	}
+	return array;
+}
+
 // All routes require authentication and teacher role
 router.use(requireAuth);
 router.use(requireRole('teacher'));
@@ -120,6 +129,10 @@ router.post(
 		body('numQuestions')
 			.isInt({ min: 1, max: 20 })
 			.withMessage('Number of questions must be between 1 and 20'),
+		body('questionType')
+			.optional()
+			.isIn(['open-response', 'multiple-choice', 'short-answer'])
+			.withMessage('Invalid question type'),
 		body('courseId')
 			.optional()
 			.custom((value) => {
@@ -155,6 +168,7 @@ router.post(
 		const topic = String(req.body.topic || '').trim();
 		const numQuestions = parseInt(req.body.numQuestions, 10);
 		const courseId = req.body.courseId || null;
+		const questionType = req.body.questionType || 'open-response';
 		const userId = req.session.userId;
 
 		// Validate course ownership if courseId provided
@@ -178,7 +192,9 @@ router.post(
 		}
 
 		try {
-			console.log(`[AI] Generating ${numQuestions} questions for topic: "${topic}"`);
+			console.log(
+				`[AI] Generating ${numQuestions} questions for topic: "${topic}" (type: ${questionType})`
+			);
 			
 			let context = null;
 			// Try to use RAG if available and courseId provided
@@ -197,7 +213,12 @@ router.post(
 			}
 
 			// Generate questions
-			const questions = await generator.generateQuestions(topic, numQuestions, context);
+			const questions = await generator.generateQuestions(
+				topic,
+				numQuestions,
+				context,
+				questionType
+			);
 
 			if (!questions || questions.length === 0) {
 				return res.status(500).json({
@@ -207,12 +228,41 @@ router.post(
 				});
 			}
 
-			console.log(`[AI] Successfully generated ${questions.length} questions`);
+			// For multiple-choice questions, randomize the option order on the backend
+			// while keeping the correct answer correctly mapped via correctAnswerIndex.
+			const randomizedQuestions = questions.map((q) => {
+				if (
+					!q ||
+					q.type !== 'multiple-choice' ||
+					!Array.isArray(q.options) ||
+					q.options.length <= 1
+				) {
+					return q;
+				}
+				const originalOptions = q.options;
+				const originalCorrectIndex =
+				typeof q.correctAnswerIndex === 'number' ? q.correctAnswerIndex : 0;
+				
+				// Build and shuffle index mapping
+				const indices = originalOptions.map((_, idx) => idx);
+				shuffleArray(indices);
+
+				const newOptions = indices.map((idx) => originalOptions[idx]);
+				const newCorrectIndex = indices.indexOf(originalCorrectIndex);
+
+				return {
+					...q,
+					options: newOptions,
+					correctAnswerIndex: newCorrectIndex,
+				};
+			});
+
+			console.log(`[AI] Successfully generated ${randomizedQuestions.length} questions`);
 
 			res.json({
 				success: true,
 				message: 'Questions generated successfully',
-				data: questions,
+				data: randomizedQuestions,
 			});
 		} catch (error) {
 			console.error('Error in question generation endpoint:', error);
