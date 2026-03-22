@@ -323,6 +323,74 @@ export async function updateQuiz(quizId, title, description, published, dueDate,
 }
 
 /**
+ * Delete a quiz and all its submissions (transaction)
+ * @param {string} quizId - The quiz ID to delete
+ * @param {string} courseId - The course ID (for verification)
+ * @returns {Promise<boolean>} True if quiz was deleted, false if not found
+ */
+export async function deleteQuiz(quizId, courseId) {
+	const client = await pool.connect();
+	
+	try {
+		await client.query('BEGIN');
+		
+		// First, verify the quiz exists and belongs to the specified course
+		const quizCheckResult = await client.query(
+			'SELECT id FROM quizzes WHERE id = $1 AND course_id = $2',
+			[quizId, courseId]
+		);
+		
+		if (quizCheckResult.rows.length === 0) {
+			await client.query('ROLLBACK');
+			return false;
+		}
+		
+		// Delete all submissions and submission_answers for this quiz
+		// This uses the existing function which handles the transaction properly
+		// We need to do it manually here since we're already in a transaction
+		const submissionsResult = await client.query(
+			'SELECT id FROM submissions WHERE quiz_id = $1',
+			[quizId]
+		);
+		
+		const submissionIds = submissionsResult.rows.map(row => row.id);
+		
+		if (submissionIds.length > 0) {
+			// Delete submission_answers first (foreign key constraint)
+			await client.query(
+				'DELETE FROM submission_answers WHERE submission_id = ANY($1)',
+				[submissionIds]
+			);
+			
+			// Delete submissions
+			await client.query(
+				'DELETE FROM submissions WHERE quiz_id = $1',
+				[quizId]
+			);
+		}
+		
+		// Delete the quiz itself
+		const deleteResult = await client.query(
+			'DELETE FROM quizzes WHERE id = $1 AND course_id = $2 RETURNING id',
+			[quizId, courseId]
+		);
+		
+		if (deleteResult.rows.length === 0) {
+			await client.query('ROLLBACK');
+			return false;
+		}
+		
+		await client.query('COMMIT');
+		return true;
+	} catch (error) {
+		await client.query('ROLLBACK');
+		throw error;
+	} finally {
+		client.release();
+	}
+}
+
+/**
  * Check if quiz is published and not past due
  */
 export async function canSubmitQuiz(quizId, studentId) {

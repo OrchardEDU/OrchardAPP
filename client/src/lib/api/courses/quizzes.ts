@@ -102,4 +102,9 @@ export const quizzesApi = {
 		}
 		return null;
 	},
+
+	async deleteQuiz(courseId: string, quizId: string): Promise<boolean> {
+		const response = await apiClient.delete<{ success: boolean }>(`/api/courses/${courseId}/quizzes/${quizId}`);
+		return response.success || false;
+	},
 };

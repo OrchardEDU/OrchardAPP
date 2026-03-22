@@ -462,6 +462,77 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 });
 
 /**
+ * DELETE /api/courses/:courseId/quizzes/:quizId
+ * Delete a quiz (teachers only, course owners only)
+ */
+router.delete('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teacher'), async (req, res) => {
+	try {
+		const { courseId, quizId } = req.params;
+
+		// Check ownership - only course owners can delete quizzes
+		if (!req.courseAccess.isOwner) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied. Only course owners can delete quizzes.',
+			});
+		}
+
+		// Validate UUIDs
+		if (!isValidUUID(courseId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid course ID',
+			});
+		}
+
+		if (!isValidUUID(quizId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid quiz ID',
+			});
+		}
+
+		// Verify quiz exists and belongs to the course
+		const existingQuiz = await quizQueries.getQuizById(quizId, null, 'teacher');
+		if (!existingQuiz) {
+			return res.status(404).json({
+				success: false,
+				message: 'Quiz not found',
+			});
+		}
+
+		// Double-check that the quiz belongs to the specified course
+		if (existingQuiz.course_id !== courseId) {
+			return res.status(403).json({
+				success: false,
+				message: 'Quiz does not belong to this course',
+			});
+		}
+
+		// Delete the quiz (this also deletes all related submissions)
+		const deleted = await quizQueries.deleteQuiz(quizId, courseId);
+		
+		if (!deleted) {
+			return res.status(404).json({
+				success: false,
+				message: 'Quiz not found or could not be deleted',
+			});
+		}
+
+		res.json({
+			success: true,
+			message: 'Quiz deleted successfully',
+		});
+	} catch (error) {
+		console.error('Error deleting quiz:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+});
+
+/**
  * GET /api/courses/:courseId/quizzes/:quizId/submissions
  * Get all submissions for a quiz (teachers only)
  */
