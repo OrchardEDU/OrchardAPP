@@ -21,6 +21,7 @@ export default function StudentQuizPage() {
 	const [answers, setAnswers] = useState<(string | number)[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+	const [timeInfo, setTimeInfo] = useState<{ startedAt: string | null; expiresAt: string | null; timeLimitMinutes: number | null } | null>(null);
 
 	useEffect(() => {
 		const loadQuiz = async () => {
@@ -33,6 +34,14 @@ export default function StudentQuizPage() {
 				} else {
 					setQuiz(data);
 					setAnswers(new Array(data.questions.length).fill(''));
+					if (!data.hasSubmission && data.timeLimitMinutes) {
+						try {
+							const startData = await quizzesApi.startQuiz(courseId, quizId);
+							setTimeInfo(startData);
+						} catch (startErr) {
+							console.error('Failed to start quiz timer', startErr);
+						}
+					}
 				}
 			} catch (err) {
 				console.error('Failed to load quiz', err);
@@ -112,16 +121,12 @@ export default function StudentQuizPage() {
 				};
 			});
 			const submission = await quizzesApi.submitQuiz(courseId, quizId, payload);
-			if (!submission) {
-				setSubmitMessage('Failed to submit quiz. Please try again.');
-				return false;
-			}
 			// Redirect to course dashboard after successful submission
 			router.push(`/dashboard/student/courses/${courseId}`);
 			return true;
 		} catch (err) {
 			console.error('Failed to submit quiz', err);
-			setSubmitMessage('Failed to submit quiz. Please try again.');
+			setSubmitMessage(err instanceof Error ? err.message : 'Failed to submit quiz. Please try again.');
 			return false;
 		} finally {
 			setIsSubmitting(false);
@@ -300,6 +305,16 @@ export default function StudentQuizPage() {
 									Due date: <strong>{new Date(quiz.dueDate).toLocaleDateString()}</strong>
 								</span>
 							)}
+							{quiz.timeLimitMinutes ? (
+								<span>
+									Time limit: <strong>{quiz.timeLimitMinutes} min</strong>
+								</span>
+							) : null}
+							{timeInfo?.expiresAt ? (
+								<span>
+									Timer ends: <strong>{new Date(timeInfo.expiresAt).toLocaleTimeString()}</strong>
+								</span>
+							) : null}
 							{quiz.questionCount !== undefined && (
 								<span>
 									Questions: <strong>{quiz.questionCount}</strong>

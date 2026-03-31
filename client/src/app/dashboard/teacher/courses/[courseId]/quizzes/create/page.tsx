@@ -17,6 +17,7 @@ export default function CreateQuizPage() {
 	const [description, setDescription] = useState('');
 	const [published, setPublished] = useState(false);
 	const [dueDate, setDueDate] = useState('');
+	const [timeLimitMinutes, setTimeLimitMinutes] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -282,6 +283,16 @@ export default function CreateQuizPage() {
 			return;
 		}
 
+		let parsedTimeLimit: number | null = null;
+		if (timeLimitMinutes.trim() !== '') {
+			const value = Number(timeLimitMinutes);
+			if (!Number.isInteger(value) || value <= 0) {
+				setError('Time limit must be a positive whole number of minutes.');
+				return;
+			}
+			parsedTimeLimit = value;
+		}
+
 		// Basic validation for multiple-choice questions
 		for (const q of questions) {
 			if (q.type === 'multiple-choice') {
@@ -305,6 +316,7 @@ export default function CreateQuizPage() {
 				description: description.trim(),
 				published,
 				dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+				timeLimitMinutes: parsedTimeLimit,
 				questions: questions.map(q => {
 					const base = {
 						question: q.question.trim(),
@@ -401,6 +413,22 @@ export default function CreateQuizPage() {
 						value={dueDate}
 						onChange={e => setDueDate(e.target.value)}
 						className="form-input"
+					/>
+				</div>
+
+				<div className="form-field">
+					<label htmlFor="quiz-time-limit" className="form-label">
+						Time Limit (minutes)
+					</label>
+					<input
+						id="quiz-time-limit"
+						type="number"
+						min={1}
+						step={1}
+						value={timeLimitMinutes}
+						onChange={e => setTimeLimitMinutes(e.target.value)}
+						className="form-input"
+						placeholder="Optional (e.g. 30)"
 					/>
 				</div>
 

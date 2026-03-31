@@ -20,6 +20,7 @@ export default function EditQuizPage() {
 	const [description, setDescription] = useState('');
 	const [published, setPublished] = useState(false);
 	const [dueDate, setDueDate] = useState('');
+	const [timeLimitMinutes, setTimeLimitMinutes] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -69,6 +70,11 @@ export default function EditQuizPage() {
 				setTitle(quizData.title || '');
 				setDescription(quizData.description || '');
 				setPublished(quizData.published || false);
+				setTimeLimitMinutes(
+					typeof quizData.timeLimitMinutes === 'number' && quizData.timeLimitMinutes > 0
+						? String(quizData.timeLimitMinutes)
+						: ''
+				);
 				
 				// Format due date for datetime-local input
 				if (quizData.dueDate) {
@@ -346,6 +352,16 @@ export default function EditQuizPage() {
 			return;
 		}
 
+		let parsedTimeLimit: number | null = null;
+		if (timeLimitMinutes.trim() !== '') {
+			const value = Number(timeLimitMinutes);
+			if (!Number.isInteger(value) || value <= 0) {
+				setError('Time limit must be a positive whole number of minutes.');
+				return;
+			}
+			parsedTimeLimit = value;
+		}
+
 		// Prevent editing if quiz is published
 		if (quiz?.published) {
 			setError('Cannot edit a published quiz.');
@@ -375,6 +391,7 @@ export default function EditQuizPage() {
 				description: description.trim(),
 				published,
 				dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+				timeLimitMinutes: parsedTimeLimit,
 				questions: questions.map(q => {
 					const base = {
 						question: q.question.trim(),
@@ -497,6 +514,22 @@ export default function EditQuizPage() {
 						value={dueDate}
 						onChange={e => setDueDate(e.target.value)}
 						className="form-input"
+					/>
+				</div>
+
+				<div className="form-field">
+					<label htmlFor="quiz-time-limit" className="form-label">
+						Time Limit (minutes)
+					</label>
+					<input
+						id="quiz-time-limit"
+						type="number"
+						min={1}
+						step={1}
+						value={timeLimitMinutes}
+						onChange={e => setTimeLimitMinutes(e.target.value)}
+						className="form-input"
+						placeholder="Optional (e.g. 30)"
 					/>
 				</div>
 

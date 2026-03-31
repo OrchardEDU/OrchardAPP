@@ -9,7 +9,7 @@ export async function getQuizzesForCourse(courseId, userId, role) {
 		// Teachers see all quizzes
 		const result = await pool.query(
 			`SELECT 
-				q.id, q.course_id, q.title, q.description, q.published, q.due_date, q.questions_json,
+				q.id, q.course_id, q.title, q.description, q.published, q.time_limit_minutes, q.due_date, q.questions_json,
 				q.created_at, q.updated_at,
 				COALESCE(jsonb_array_length(q.questions_json), 0) as question_count,
 				COUNT(DISTINCT s.id) as submission_count
@@ -25,7 +25,7 @@ export async function getQuizzesForCourse(courseId, userId, role) {
 		// Students only see published quizzes
 		const result = await pool.query(
 			`SELECT 
-				q.id, q.course_id, q.title, q.description, q.published, q.due_date, q.questions_json,
+				q.id, q.course_id, q.title, q.description, q.published, q.time_limit_minutes, q.due_date, q.questions_json,
 				q.created_at, q.updated_at,
 				COALESCE(jsonb_array_length(q.questions_json), 0) as question_count,
 				EXISTS(SELECT 1 FROM submissions WHERE quiz_id = q.id AND student_id = $2) as has_submission,
@@ -92,7 +92,7 @@ export async function getQuizById(quizId, userId, role) {
 /**
  * Create quiz with questions (transaction)
  */
-export async function createQuiz(courseId, title, description, published, dueDate, questions) {
+export async function createQuiz(courseId, title, description, published, dueDate, timeLimitMinutes, questions) {
 	const client = await pool.connect();
 	
 	try {
@@ -128,10 +128,10 @@ export async function createQuiz(courseId, title, description, published, dueDat
 			: [];
 
 		const quizResult = await client.query(
-			`INSERT INTO quizzes (course_id, title, description, published, due_date, questions_json)
-			 VALUES ($1, $2, $3, $4, $5, $6)
+			`INSERT INTO quizzes (course_id, title, description, published, due_date, time_limit_minutes, questions_json)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7)
 			 RETURNING *`,
-			[courseId, title, description, published, dueDate, JSON.stringify(normalizedQuestions)]
+			[courseId, title, description, published, dueDate, timeLimitMinutes, JSON.stringify(normalizedQuestions)]
 		);
 		
 		const quiz = quizResult.rows[0];
@@ -151,7 +151,7 @@ export async function createQuiz(courseId, title, description, published, dueDat
 /**
  * Update quiz with questions (transaction)
  */
-export async function updateQuiz(quizId, title, description, published, dueDate, questions) {
+export async function updateQuiz(quizId, title, description, published, dueDate, timeLimitMinutes, questions) {
 	const client = await pool.connect();
 	
 	try {
@@ -298,11 +298,12 @@ export async function updateQuiz(quizId, title, description, published, dueDate,
 			     description = COALESCE($2, description),
 			     published = COALESCE($3, published),
 			     due_date = COALESCE($4, due_date),
-			     questions_json = COALESCE($5, questions_json),
+			     time_limit_minutes = COALESCE($5, time_limit_minutes),
+			     questions_json = COALESCE($6, questions_json),
 			     updated_at = CURRENT_TIMESTAMP
-			 WHERE id = $6
+			 WHERE id = $7
 			 RETURNING *`,
-			[title, description, published, dueDate, normalizedQuestions ? JSON.stringify(normalizedQuestions) : null, quizId]
+			[title, description, published, dueDate, timeLimitMinutes, normalizedQuestions ? JSON.stringify(normalizedQuestions) : null, quizId]
 		);
 		
 		if (quizResult.rows.length === 0) {

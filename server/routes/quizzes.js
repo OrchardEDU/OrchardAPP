@@ -83,6 +83,12 @@ router.get('/:courseId/quizzes', validateCourseAccess, async (req, res) => {
 			title: quiz.title,
 			description: quiz.description || '',
 			published: quiz.published,
+			timeLimitMinutes:
+				typeof quiz.time_limit_minutes === 'number'
+					? quiz.time_limit_minutes
+					: quiz.time_limit_minutes
+					? parseInt(quiz.time_limit_minutes, 10) || null
+					: null,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
 			questions: Array.isArray(quiz.questions_json)
 				? quiz.questions_json.map(q => formatQuestion(q))
@@ -148,6 +154,12 @@ router.get('/:courseId/quizzes/:quizId', validateCourseAccess, async (req, res) 
 			title: quiz.title,
 			description: quiz.description || '',
 			published: quiz.published,
+			timeLimitMinutes:
+				typeof quiz.time_limit_minutes === 'number'
+					? quiz.time_limit_minutes
+					: quiz.time_limit_minutes
+					? parseInt(quiz.time_limit_minutes, 10) || null
+					: null,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
 			questions: (quiz.questions || []).map(q => formatQuestion(q)),
 			createdAt: quiz.created_at.toISOString(),
@@ -176,7 +188,7 @@ router.get('/:courseId/quizzes/:quizId', validateCourseAccess, async (req, res) 
 router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), async (req, res) => {
 	try {
 		const { courseId } = req.params;
-		const { title, description, published, dueDate, questions } = req.body;
+		const { title, description, published, dueDate, timeLimitMinutes, questions } = req.body;
 
 		// Check ownership
 		if (!req.courseAccess.isOwner) {
@@ -190,6 +202,17 @@ router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), 
 			return res.status(400).json({
 				success: false,
 				message: 'Quiz title is required',
+			});
+		}
+
+		if (
+			timeLimitMinutes !== undefined &&
+			timeLimitMinutes !== null &&
+			(typeof timeLimitMinutes !== 'number' || !Number.isInteger(timeLimitMinutes) || timeLimitMinutes <= 0)
+		) {
+			return res.status(400).json({
+				success: false,
+				message: 'timeLimitMinutes must be a positive integer when provided',
 			});
 		}
 
@@ -254,6 +277,7 @@ router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), 
 			description?.trim() || '',
 			published || false,
 			dueDate || null,
+			timeLimitMinutes ?? null,
 			questions || []
 		);
 
@@ -264,6 +288,12 @@ router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), 
 			title: quiz.title,
 			description: quiz.description || '',
 			published: quiz.published,
+			timeLimitMinutes:
+				typeof quiz.time_limit_minutes === 'number'
+					? quiz.time_limit_minutes
+					: quiz.time_limit_minutes
+					? parseInt(quiz.time_limit_minutes, 10) || null
+					: null,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
 			questions: (quiz.questions || []).map(q => formatQuestion(q)),
 			createdAt: quiz.created_at.toISOString(),
@@ -291,7 +321,7 @@ router.post('/:courseId/quizzes', validateCourseAccess, requireRole('teacher'), 
 router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teacher'), async (req, res) => {
 	try {
 		const { quizId } = req.params;
-		const { title, description, published, dueDate, questions } = req.body;
+		const { title, description, published, dueDate, timeLimitMinutes, questions } = req.body;
 
 		// Check ownership
 		if (!req.courseAccess.isOwner) {
@@ -324,7 +354,7 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 			const requestKeys = Object.keys(req.body);
 			const hasOtherChanges = requestKeys.some(key => 
 				key !== 'published' && 
-				(key === 'title' || key === 'description' || key === 'dueDate' || key === 'questions')
+				(key === 'title' || key === 'description' || key === 'dueDate' || key === 'timeLimitMinutes' || key === 'questions')
 			);
 			
 			// If there are other changes, block them (even if also unpublishing)
@@ -340,6 +370,17 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 				});
 			}
 			// If only published status is being changed, allow it (unpublishing)
+		}
+
+		if (
+			timeLimitMinutes !== undefined &&
+			timeLimitMinutes !== null &&
+			(typeof timeLimitMinutes !== 'number' || !Number.isInteger(timeLimitMinutes) || timeLimitMinutes <= 0)
+		) {
+			return res.status(400).json({
+				success: false,
+				message: 'timeLimitMinutes must be a positive integer when provided',
+			});
 		}
 
 		// Validate questions if provided
@@ -403,6 +444,7 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 			description?.trim(),
 			published,
 			dueDate || null,
+			timeLimitMinutes ?? null,
 			questions
 		);
 
@@ -420,6 +462,12 @@ router.put('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('teac
 			title: quiz.title,
 			description: quiz.description || '',
 			published: quiz.published,
+			timeLimitMinutes:
+				typeof quiz.time_limit_minutes === 'number'
+					? quiz.time_limit_minutes
+					: quiz.time_limit_minutes
+					? parseInt(quiz.time_limit_minutes, 10) || null
+					: null,
 			dueDate: quiz.due_date ? quiz.due_date.toISOString() : null,
 			questions: (quiz.questions || []).map(q => ({
 				question: q.question,
@@ -525,6 +573,80 @@ router.delete('/:courseId/quizzes/:quizId', validateCourseAccess, requireRole('t
 		});
 	} catch (error) {
 		console.error('Error deleting quiz:', error);
+		res.status(500).json({
+			success: false,
+			message: 'Internal server error',
+		});
+	}
+});
+
+/**
+ * POST /api/courses/:courseId/quizzes/:quizId/start
+ * Start quiz timer for a student (students only)
+ */
+router.post('/:courseId/quizzes/:quizId/start', validateCourseAccess, requireRole('student'), async (req, res) => {
+	try {
+		const { quizId } = req.params;
+		const studentId = req.session.userId;
+
+		if (!req.courseAccess.isEnrolled) {
+			return res.status(403).json({
+				success: false,
+				message: 'Access denied',
+			});
+		}
+
+		if (!isValidUUID(quizId)) {
+			return res.status(400).json({
+				success: false,
+				message: 'Invalid quiz ID',
+			});
+		}
+
+		const quiz = await quizQueries.getQuizById(quizId, studentId, 'student');
+		if (!quiz) {
+			return res.status(404).json({
+				success: false,
+				message: 'Quiz not found',
+			});
+		}
+
+		const timeLimitMinutes =
+			typeof quiz.time_limit_minutes === 'number'
+				? quiz.time_limit_minutes
+				: quiz.time_limit_minutes
+				? parseInt(quiz.time_limit_minutes, 10) || null
+				: null;
+
+		if (!timeLimitMinutes) {
+			return res.json({
+				success: true,
+				data: {
+					startedAt: null,
+					expiresAt: null,
+					timeLimitMinutes: null,
+				},
+			});
+		}
+
+		const attempt = await submissionQueries.startQuizAttempt(quizId, studentId);
+
+		const startedAt = attempt?.started_at ? new Date(attempt.started_at) : null;
+		const expiresAt =
+			startedAt && timeLimitMinutes
+				? new Date(startedAt.getTime() + timeLimitMinutes * 60 * 1000)
+				: null;
+
+		res.json({
+			success: true,
+			data: {
+				startedAt: startedAt ? startedAt.toISOString() : null,
+				expiresAt: expiresAt ? expiresAt.toISOString() : null,
+				timeLimitMinutes,
+			},
+		});
+	} catch (error) {
+		console.error('Start quiz error:', error);
 		res.status(500).json({
 			success: false,
 			message: 'Internal server error',
@@ -645,6 +767,40 @@ router.post('/:courseId/quizzes/:quizId/submit', validateCourseAccess, requireRo
 				success: false,
 				message: canSubmit.reason,
 			});
+		}
+
+		// Enforce quiz time limit when present
+		const quiz = await quizQueries.getQuizById(quizId, studentId, 'student');
+		if (!quiz) {
+			return res.status(404).json({
+				success: false,
+				message: 'Quiz not found',
+			});
+		}
+		const timeLimitMinutes =
+			typeof quiz.time_limit_minutes === 'number'
+				? quiz.time_limit_minutes
+				: quiz.time_limit_minutes
+				? parseInt(quiz.time_limit_minutes, 10) || null
+				: null;
+
+		if (timeLimitMinutes) {
+			const attempt = await submissionQueries.getQuizAttempt(quizId, studentId);
+			if (!attempt || !attempt.started_at) {
+				return res.status(400).json({
+					success: false,
+					message: 'Quiz timer has not started for this attempt',
+				});
+			}
+
+			const startedAt = new Date(attempt.started_at);
+			const deadline = new Date(startedAt.getTime() + timeLimitMinutes * 60 * 1000);
+			if (new Date() > deadline) {
+				return res.status(400).json({
+					success: false,
+					message: 'Submission denied: time limit has expired',
+				});
+			}
 		}
 
 		// Create or overwrite submission

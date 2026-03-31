@@ -24,6 +24,7 @@ export const quizzesApi = {
 		description: string;
 		published: boolean;
 		dueDate: string | null;
+		timeLimitMinutes?: number | null;
 		questions: Array<{
 			question: string;
 			points: number;
@@ -46,6 +47,7 @@ export const quizzesApi = {
 		description?: string;
 		published?: boolean;
 		dueDate?: string | null;
+		timeLimitMinutes?: number | null;
 		questions?: Array<{
 			question: string;
 			points: number;
@@ -75,6 +77,17 @@ export const quizzesApi = {
 		const response = await apiClient.post<{ submission: Submission }>(`/api/courses/${courseId}/quizzes/${quizId}/submit`, { answers });
 		if (response.success && response.data?.submission) {
 			return response.data.submission;
+		}
+		throw new Error(response.message || response.error || 'Failed to submit quiz. Please try again.');
+	},
+
+	async startQuiz(courseId: string, quizId: string): Promise<{ startedAt: string | null; expiresAt: string | null; timeLimitMinutes: number | null } | null> {
+		const response = await apiClient.post<{ startedAt: string | null; expiresAt: string | null; timeLimitMinutes: number | null }>(
+			`/api/courses/${courseId}/quizzes/${quizId}/start`,
+			{}
+		);
+		if (response.success && response.data) {
+			return response.data;
 		}
 		return null;
 	},

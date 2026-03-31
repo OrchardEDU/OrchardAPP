@@ -18,6 +18,7 @@ export interface Quiz {
 	description: string;
 	published: boolean;
 	dueDate: string | null;
+	timeLimitMinutes?: number | null;
 	questions: QuizQuestion[];
 	createdAt: string;
 	questionCount?: number;
