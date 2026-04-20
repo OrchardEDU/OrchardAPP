@@ -191,6 +191,11 @@
 	font-weight: 600;
 }
 
+.grading-indicator {
+	color: #d97706;
+	font-weight: 600;
+}
+
 .empty-state {
 	grid-column: 1 / -1;
 	text-align: center;

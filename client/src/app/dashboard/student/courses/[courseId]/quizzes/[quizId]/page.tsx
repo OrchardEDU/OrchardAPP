@@ -21,7 +21,11 @@ export default function StudentQuizPage() {
 	const [answers, setAnswers] = useState<(string | number)[]>([]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [submitMessage, setSubmitMessage] = useState<string | null>(null);
-	const [timeInfo, setTimeInfo] = useState<{ startedAt: string | null; expiresAt: string | null; timeLimitMinutes: number | null } | null>(null);
+	const [timeInfo, setTimeInfo] = useState<{
+		startedAt: string | null;
+		expiresAt: string | null;
+		timeLimitMinutes: number | null;
+	} | null>(null);
 
 	useEffect(() => {
 		const loadQuiz = async () => {
@@ -91,7 +95,7 @@ export default function StudentQuizPage() {
 	}, [isSubmitting, quiz, submission]);
 
 	const handleChangeAnswer = (index: number, value: string | number) => {
-		setAnswers(prev => prev.map((a, i) => (i === index ? value : a)));
+		setAnswers((prev) => prev.map((a, i) => (i === index ? value : a)));
 	};
 
 	const submitCurrentAnswers = async () => {
@@ -126,7 +130,9 @@ export default function StudentQuizPage() {
 			return true;
 		} catch (err) {
 			console.error('Failed to submit quiz', err);
-			setSubmitMessage(err instanceof Error ? err.message : 'Failed to submit quiz. Please try again.');
+			setSubmitMessage(
+				err instanceof Error ? err.message : 'Failed to submit quiz. Please try again.'
+			);
 			return false;
 		} finally {
 			setIsSubmitting(false);
@@ -143,7 +149,7 @@ export default function StudentQuizPage() {
 		if (submission || quiz?.hasSubmission) {
 			return; // Allow normal link navigation
 		}
-		
+
 		if (!quiz) return;
 		e.preventDefault();
 		const confirmLeave = window.confirm(
@@ -189,287 +195,396 @@ export default function StudentQuizPage() {
 								<p>Your quiz has been graded.</p>
 								<div className="quiz-meta-row">
 									<span>
-										Score: <strong>{submission.score} / {submission.maxScore}</strong>
+										Score:{' '}
+										<strong>
+											{submission.score} / {submission.maxScore}
+										</strong>
 									</span>
 									<span>
-										Submitted: <strong>{new Date(submission.submittedAt).toLocaleString()}</strong>
+										Submitted:{' '}
+										<strong>
+											{new Date(submission.submittedAt).toLocaleString()}
+										</strong>
 									</span>
 								</div>
 							</div>
 
 							<div className="student-quiz-questions">
-								{submission.quizQuestions && submission.quizQuestions.map((q: any, index: number) => {
-									const answer = submission.answers.find((a: any) => a.questionIndex === index);
-									const type = q.type || 'open-response';
-									const studentAnswerIndex = answer?.answer ? parseInt(answer.answer, 10) : null;
-									
-									return (
-										<div key={index} className="student-question-card graded-question-card">
-											<div className="student-question-header">
-												<span className="student-question-number">Question {index + 1}</span>
-												<span className="student-question-points">
-													{answer?.pointsAwarded || 0} / {q.points} pts
-												</span>
-											</div>
-											<div className="student-question-text">{q.question}</div>
-											{type === 'multiple-choice' && q.options ? (
-												<>
-													<div className="graded-answer-section">
-														<label className="graded-answer-label">Your Answer:</label>
-														<div className="graded-answer-text">
-															{studentAnswerIndex !== null && studentAnswerIndex >= 0 && studentAnswerIndex < q.options.length
-																? `${String.fromCharCode(65 + studentAnswerIndex)}. ${q.options[studentAnswerIndex]}`
-																: 'No answer provided'}
-														</div>
-													</div>
-													<div className="graded-mc-section">
-														<label className="graded-answer-label">Answer Options:</label>
-														<div className="graded-mc-options">
-															{q.options.map((option: string, optIndex: number) => {
-																const isSelected = studentAnswerIndex === optIndex;
-																const isCorrect = q.correctAnswer === optIndex;
-																
-																return (
-																	<div
-																		key={optIndex}
-																		className={`graded-mc-option ${
-																			isSelected && isCorrect
-																				? 'graded-mc-option-correct'
-																				: isSelected
-																				? 'graded-mc-option-incorrect'
-																				: isCorrect
-																				? 'graded-mc-option-correct-unselected'
-																				: ''
-																		}`}
-																	>
-																		<div className="graded-mc-option-content">
-																			<span className="graded-mc-option-label">
-																				{String.fromCharCode(65 + optIndex)}.
-																			</span>
-																			<span className="graded-mc-option-text">{option}</span>
-																		</div>
-																		<div className="graded-mc-option-badges">
-																			{isCorrect && (
-																				<span className="graded-mc-badge graded-mc-badge-correct">
-																					Correct Answer
-																				</span>
-																			)}
-																			{isSelected && (
-																				<span className="graded-mc-badge graded-mc-badge-selected">
-																					Your Answer
-																				</span>
-																			)}
-																		</div>
-																	</div>
-																);
-															})}
-														</div>
-													</div>
-												</>
-											) : (
-												<div className="graded-answer-section">
-													<label className="graded-answer-label">Your Answer:</label>
-													<div className="graded-answer-text">{answer?.answer || 'No answer provided'}</div>
+								{submission.quizQuestions &&
+									submission.quizQuestions.map((q: any, index: number) => {
+										const answer = submission.answers.find(
+											(a: any) => a.questionIndex === index
+										);
+										const type = q.type || 'open-response';
+										const studentAnswerIndex = answer?.answer
+											? parseInt(answer.answer, 10)
+											: null;
+
+										return (
+											<div
+												key={index}
+												className="student-question-card graded-question-card"
+											>
+												<div className="student-question-header">
+													<span className="student-question-number">
+														Question {index + 1}
+													</span>
+													<span className="student-question-points">
+														{answer?.pointsAwarded || 0} / {q.points}{' '}
+														pts
+													</span>
 												</div>
-											)}
-										</div>
-									);
-								})}
+												<div className="student-question-text">
+													{q.question}
+												</div>
+												{type === 'multiple-choice' && q.options ? (
+													<>
+														<div className="graded-answer-section">
+															<label className="graded-answer-label">
+																Your Answer:
+															</label>
+															<div className="graded-answer-text">
+																{studentAnswerIndex !== null &&
+																studentAnswerIndex >= 0 &&
+																studentAnswerIndex <
+																	q.options.length
+																	? `${String.fromCharCode(65 + studentAnswerIndex)}. ${q.options[studentAnswerIndex]}`
+																	: 'No answer provided'}
+															</div>
+														</div>
+														<div className="graded-mc-section">
+															<label className="graded-answer-label">
+																Answer Options:
+															</label>
+															<div className="graded-mc-options">
+																{q.options.map(
+																	(
+																		option: string,
+																		optIndex: number
+																	) => {
+																		const isSelected =
+																			studentAnswerIndex ===
+																			optIndex;
+																		const isCorrect =
+																			q.correctAnswer ===
+																			optIndex;
+
+																		return (
+																			<div
+																				key={optIndex}
+																				className={`graded-mc-option ${
+																					isSelected &&
+																					isCorrect
+																						? 'graded-mc-option-correct'
+																						: isSelected
+																							? 'graded-mc-option-incorrect'
+																							: isCorrect
+																								? 'graded-mc-option-correct-unselected'
+																								: ''
+																				}`}
+																			>
+																				<div className="graded-mc-option-content">
+																					<span className="graded-mc-option-label">
+																						{String.fromCharCode(
+																							65 +
+																								optIndex
+																						)}
+																						.
+																					</span>
+																					<span className="graded-mc-option-text">
+																						{option}
+																					</span>
+																				</div>
+																				<div className="graded-mc-option-badges">
+																					{isCorrect && (
+																						<span className="graded-mc-badge graded-mc-badge-correct">
+																							Correct
+																							Answer
+																						</span>
+																					)}
+																					{isSelected && (
+																						<span className="graded-mc-badge graded-mc-badge-selected">
+																							Your
+																							Answer
+																						</span>
+																					)}
+																				</div>
+																			</div>
+																		);
+																	}
+																)}
+															</div>
+														</div>
+													</>
+												) : (
+													<div className="graded-answer-section">
+														<label className="graded-answer-label">
+															Your Answer:
+														</label>
+														<div className="graded-answer-text">
+															{answer?.answer || 'No answer provided'}
+														</div>
+													</div>
+												)}
+											</div>
+										);
+									})}
 							</div>
 						</div>
 					) : (
 						/* Show quiz form if no submission or not graded */
 						<>
-						{quiz.hasSubmission && !submission ? (
-							/* Show awaiting grading message if submitted but not graded */
-							<div className="quiz-body">
-								<div className="quiz-info-card">
-									<h2>Quiz Submitted</h2>
-									<p>Your quiz has been submitted and is awaiting grading. You will be able to view your results once your teacher has graded it.</p>
-									<div className="quiz-meta-row">
-										<span className="submission-indicator">
-											<strong>Awaiting Grading</strong>
-										</span>
+							{quiz.hasSubmission && !submission ? (
+								/* Show awaiting grading message if submitted but not graded */
+								<div className="quiz-body">
+									<div className="quiz-info-card">
+										<h2>Quiz Submitted</h2>
+										<p>
+											Your quiz has been submitted and is awaiting grading.
+											You will be able to view your results once your teacher
+											has graded it.
+										</p>
+										<div className="quiz-meta-row">
+											<span className="submission-indicator">
+												<strong>Awaiting Grading</strong>
+											</span>
+										</div>
 									</div>
 								</div>
-							</div>
-						) : (
-							/* Show quiz form if not submitted */
-							<form className="quiz-body" onSubmit={handleSubmit}>
-					<div className="quiz-info-card">
-						<h2>Quiz Overview</h2>
-						{quiz.description && <p>{quiz.description}</p>}
-						<div className="quiz-meta-row">
-							{quiz.dueDate && (
-								<span>
-									Due date: <strong>{new Date(quiz.dueDate).toLocaleDateString()}</strong>
-								</span>
-							)}
-							{quiz.timeLimitMinutes ? (
-								<span>
-									Time limit: <strong>{quiz.timeLimitMinutes} min</strong>
-								</span>
-							) : null}
-							{timeInfo?.expiresAt ? (
-								<span>
-									Timer ends: <strong>{new Date(timeInfo.expiresAt).toLocaleTimeString()}</strong>
-								</span>
-							) : null}
-							{quiz.questionCount !== undefined && (
-								<span>
-									Questions: <strong>{quiz.questionCount}</strong>
-								</span>
-							)}
-						</div>
-					</div>
-
-					<div className="student-quiz-questions">
-						{quiz.questions.map((q, index) => {
-							const type = q.type || 'open-response';
-
-							if (type === 'multiple-choice' && Array.isArray(q.options)) {
-								const selectedIndex =
-									typeof answers[index] === 'number'
-										? (answers[index] as number)
-										: parseInt(String(answers[index] || ''), 10);
-
-								return (
-									<div key={index} className="student-question-card">
-										<div className="student-question-header">
-											<span className="student-question-number">
-												Question {index + 1}
-											</span>
-											<span className="student-question-points">
-												{q.points} pts
-											</span>
-										</div>
-										<div className="student-question-text">{q.question}</div>
-										<div className="student-mc-options-list">
-											{q.options.map((option, optionIndex) => (
-												<button
-													type="button"
-													key={optionIndex}
-													className={`student-mc-option-card${
-														selectedIndex === optionIndex
-															? ' student-mc-option-card-selected'
-															: ''
-													}`}
-													onClick={() => handleChangeAnswer(index, optionIndex)}
-												>
-													<span className="student-mc-option-label">
-														Option {optionIndex + 1}
-													</span>
-													<span className="student-mc-option-text">{option}</span>
-												</button>
-											))}
-										</div>
-									</div>
-								);
-							}
-
-							if (type === 'short-answer') {
-								const rawValue = String(answers[index] || '');
-								const wordLimit = q.wordLimit;
-								const charLimit = q.charLimit;
-
-								let displayValue = rawValue;
-								if (charLimit && displayValue.length > charLimit) {
-									displayValue = displayValue.slice(0, charLimit);
-								}
-
-								const handleShortAnswerChange = (value: string) => {
-									let next = value;
-									if (charLimit && next.length > charLimit) {
-										next = next.slice(0, charLimit);
-									}
-									if (wordLimit) {
-										const words = next.split(/\s+/).filter(Boolean);
-										if (words.length > wordLimit) {
-											next = words.slice(0, wordLimit).join(' ');
-										}
-									}
-									handleChangeAnswer(index, next);
-								};
-
-								const currentLength = displayValue.length;
-								const wordCount = displayValue.split(/\s+/).filter(Boolean).length;
-
-								return (
-									<div key={index} className="student-question-card">
-										<div className="student-question-header">
-											<span className="student-question-number">
-												Question {index + 1}
-											</span>
-											<span className="student-question-points">
-												{q.points} pts
-											</span>
-										</div>
-										<div className="student-question-text">{q.question}</div>
-										<textarea
-											className="student-answer-textarea"
-											rows={4}
-											value={displayValue}
-											onChange={e => handleShortAnswerChange(e.target.value)}
-											placeholder="Type your answer here..."
-										/>
-										<div className="short-answer-counter">
-											{wordLimit && (
+							) : (
+								/* Show quiz form if not submitted */
+								<form className="quiz-body" onSubmit={handleSubmit}>
+									<div className="quiz-info-card">
+										<h2>Quiz Overview</h2>
+										{quiz.description && <p>{quiz.description}</p>}
+										<div className="quiz-meta-row">
+											{quiz.dueDate && (
 												<span>
-													Words: {wordCount} / {wordLimit}
+													Due date:{' '}
+													<strong>
+														{new Date(
+															quiz.dueDate
+														).toLocaleDateString()}
+													</strong>
 												</span>
 											)}
-											{charLimit && (
+											{quiz.timeLimitMinutes ? (
 												<span>
-													Characters: {currentLength} / {charLimit}
+													Time limit:{' '}
+													<strong>{quiz.timeLimitMinutes} min</strong>
+												</span>
+											) : null}
+											{timeInfo?.expiresAt ? (
+												<span>
+													Timer ends:{' '}
+													<strong>
+														{new Date(
+															timeInfo.expiresAt
+														).toLocaleTimeString()}
+													</strong>
+												</span>
+											) : null}
+											{quiz.questionCount !== undefined && (
+												<span>
+													Questions: <strong>{quiz.questionCount}</strong>
 												</span>
 											)}
 										</div>
 									</div>
-								);
-							}
 
-							// Default: open-response
-							return (
-								<div key={index} className="student-question-card">
-									<div className="student-question-header">
-										<span className="student-question-number">
-											Question {index + 1}
-										</span>
-										<span className="student-question-points">
-											{q.points} pts
-										</span>
+									<div className="student-quiz-questions">
+										{quiz.questions.map((q, index) => {
+											const type = q.type || 'open-response';
+
+											if (
+												type === 'multiple-choice' &&
+												Array.isArray(q.options)
+											) {
+												const selectedIndex =
+													typeof answers[index] === 'number'
+														? (answers[index] as number)
+														: parseInt(
+																String(answers[index] || ''),
+																10
+															);
+
+												return (
+													<div
+														key={index}
+														className="student-question-card"
+													>
+														<div className="student-question-header">
+															<span className="student-question-number">
+																Question {index + 1}
+															</span>
+															<span className="student-question-points">
+																{q.points} pts
+															</span>
+														</div>
+														<div className="student-question-text">
+															{q.question}
+														</div>
+														<div className="student-mc-options-list">
+															{q.options.map(
+																(option, optionIndex) => (
+																	<button
+																		type="button"
+																		key={optionIndex}
+																		className={`student-mc-option-card${
+																			selectedIndex ===
+																			optionIndex
+																				? ' student-mc-option-card-selected'
+																				: ''
+																		}`}
+																		onClick={() =>
+																			handleChangeAnswer(
+																				index,
+																				optionIndex
+																			)
+																		}
+																	>
+																		<span className="student-mc-option-label">
+																			Option {optionIndex + 1}
+																		</span>
+																		<span className="student-mc-option-text">
+																			{option}
+																		</span>
+																	</button>
+																)
+															)}
+														</div>
+													</div>
+												);
+											}
+
+											if (type === 'short-answer') {
+												const rawValue = String(answers[index] || '');
+												const wordLimit = q.wordLimit;
+												const charLimit = q.charLimit;
+
+												let displayValue = rawValue;
+												if (charLimit && displayValue.length > charLimit) {
+													displayValue = displayValue.slice(0, charLimit);
+												}
+
+												const handleShortAnswerChange = (value: string) => {
+													let next = value;
+													if (charLimit && next.length > charLimit) {
+														next = next.slice(0, charLimit);
+													}
+													if (wordLimit) {
+														const words = next
+															.split(/\s+/)
+															.filter(Boolean);
+														if (words.length > wordLimit) {
+															next = words
+																.slice(0, wordLimit)
+																.join(' ');
+														}
+													}
+													handleChangeAnswer(index, next);
+												};
+
+												const currentLength = displayValue.length;
+												const wordCount = displayValue
+													.split(/\s+/)
+													.filter(Boolean).length;
+
+												return (
+													<div
+														key={index}
+														className="student-question-card"
+													>
+														<div className="student-question-header">
+															<span className="student-question-number">
+																Question {index + 1}
+															</span>
+															<span className="student-question-points">
+																{q.points} pts
+															</span>
+														</div>
+														<div className="student-question-text">
+															{q.question}
+														</div>
+														<textarea
+															className="student-answer-textarea"
+															rows={4}
+															value={displayValue}
+															onChange={(e) =>
+																handleShortAnswerChange(
+																	e.target.value
+																)
+															}
+															placeholder="Type your answer here..."
+														/>
+														<div className="short-answer-counter">
+															{wordLimit && (
+																<span>
+																	Words: {wordCount} / {wordLimit}
+																</span>
+															)}
+															{charLimit && (
+																<span>
+																	Characters: {currentLength} /{' '}
+																	{charLimit}
+																</span>
+															)}
+														</div>
+													</div>
+												);
+											}
+
+											// Default: open-response
+											return (
+												<div key={index} className="student-question-card">
+													<div className="student-question-header">
+														<span className="student-question-number">
+															Question {index + 1}
+														</span>
+														<span className="student-question-points">
+															{q.points} pts
+														</span>
+													</div>
+													<div className="student-question-text">
+														{q.question}
+													</div>
+													<textarea
+														className="student-answer-textarea"
+														rows={4}
+														value={String(answers[index] || '')}
+														onChange={(e) =>
+															handleChangeAnswer(
+																index,
+																e.target.value
+															)
+														}
+														placeholder="Type your answer here..."
+													/>
+												</div>
+											);
+										})}
 									</div>
-									<div className="student-question-text">{q.question}</div>
-									<textarea
-										className="student-answer-textarea"
-										rows={4}
-										value={String(answers[index] || '')}
-										onChange={e => handleChangeAnswer(index, e.target.value)}
-										placeholder="Type your answer here..."
-									/>
-								</div>
-							);
-						})}
-					</div>
 
-					{submitMessage && (
-						<p className={`status-text ${submitMessage.includes('Failed') ? 'error-text' : ''}`}>
-							{submitMessage}
-						</p>
-					)}
+									{submitMessage && (
+										<p
+											className={`status-text ${submitMessage.includes('Failed') ? 'error-text' : ''}`}
+										>
+											{submitMessage}
+										</p>
+									)}
 
-					<div className="quiz-submit-actions">
-						<button
-							type="submit"
-							className="primary-action-btn"
-							disabled={isSubmitting}
-						>
-							{isSubmitting ? 'Submitting...' : 'Submit Quiz'}
-						</button>
-					</div>
-				</form>
-						)}
-					</>
+									<div className="quiz-submit-actions">
+										<button
+											type="submit"
+											className="primary-action-btn"
+											disabled={isSubmitting}
+										>
+											{isSubmitting ? 'Submitting...' : 'Submit Quiz'}
+										</button>
+									</div>
+								</form>
+							)}
+						</>
 					)}
 				</>
 			)}
