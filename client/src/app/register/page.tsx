@@ -67,7 +67,7 @@ export default function RegisterPage() {
 				password,
 				name,
 				role,
-				...(demoMode ? { demoCode } : {}),
+				...(demoMode && role === 'teacher' ? { demoCode } : {}),
 			});
 
 			if (response.success && response.data?.user) {
@@ -196,7 +196,7 @@ export default function RegisterPage() {
 								<option value="teacher">Teacher</option>
 							</select>
 						</div>
-						{demoMode && (
+						{demoMode && role === 'teacher' && (
 							<div className="auth-field">
 								<label htmlFor="demo-code" className="auth-label">
 									Demo access code
@@ -205,7 +205,7 @@ export default function RegisterPage() {
 									id="demo-code"
 									name="demo-code"
 									type="password"
-									required={demoMode}
+									required={demoMode && role === 'teacher'}
 									value={demoCode}
 									onChange={(e) => setDemoCode(e.target.value)}
 									className="auth-input"

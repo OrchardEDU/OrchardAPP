@@ -14,7 +14,6 @@ import { pool } from './db/connection.js';
 import authRoutes from './routes/auth.js';
 import courseRoutes from './routes/courses.js';
 import quizRoutes from './routes/quizzes.js';
-import demoRoutes from './routes/demo.js';
 import aiRoutes from './routes/ai.js';
 
 // Import middleware
@@ -140,7 +139,6 @@ nextApp.prepare().then(async () => {
 	expressApp.use('/api/auth', authRoutes);
 	expressApp.use('/api/courses', courseRoutes);
 	expressApp.use('/api/courses', quizRoutes); // Quiz routes handle /:courseId/quizzes internally
-	expressApp.use('/api/demo', demoRoutes);
 	expressApp.use('/api/ai', aiRoutes);
 
 	// Example backend API route (keep for compatibility)

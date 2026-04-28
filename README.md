@@ -57,12 +57,6 @@ OrchardAPP leverages advanced AI technology to help teachers create high-quality
 - **Input sanitization** and validation throughout the application
 - **Course ownership validation** ensuring teachers can only manage their own courses
 
-#### Demo Mode
-- **Standalone demo interface** for showcasing AI capabilities
-- **File upload and processing** for demonstration purposes
-- **Question generation demo** with RAG context retrieval
-- **Password-protected demo access** for controlled access
-
 ## Benefits
 
 ### For Educators

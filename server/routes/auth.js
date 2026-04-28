@@ -18,11 +18,16 @@ if (DEMO_MODE && !DEMO_PWD) {
 }
 
 /**
- * Helper to enforce demo access when DEMO_MODE is enabled.
+ * Enforce demo access code only for teacher registration when demo mode is enabled.
  * Returns true if request may proceed, false if it has already been handled.
  */
-function ensureDemoAccess(req, res) {
+function ensureTeacherSignupDemoAccess(req, res) {
 	if (!DEMO_MODE) {
+		return true;
+	}
+
+	const role = sanitizeString(req.body?.role || '', 20);
+	if (role !== 'teacher') {
 		return true;
 	}
 
@@ -32,7 +37,7 @@ function ensureDemoAccess(req, res) {
 	if (!demoCode) {
 		res.status(403).json({
 			success: false,
-			message: 'Demo access code required',
+			message: 'Demo access code required for teacher signup',
 		});
 		return false;
 	}
@@ -103,8 +108,8 @@ router.post('/register', async (req, res) => {
 			});
 		}
 
-		// Enforce demo access gate if enabled
-		if (!ensureDemoAccess(req, res)) {
+		// Enforce demo access only for teacher signup when enabled
+		if (!ensureTeacherSignupDemoAccess(req, res)) {
 			return;
 		}
 
@@ -160,11 +165,6 @@ router.post('/login', async (req, res) => {
 				success: false,
 				message: 'Email and password are required',
 			});
-		}
-
-		// Enforce demo access gate if enabled
-		if (!ensureDemoAccess(req, res)) {
-			return;
 		}
 
 		// Get user by email
