@@ -5,7 +5,7 @@
 ## Overview
 
 OrchardAPP leverages advanced AI technology to help teachers create high-quality educational assessments with minimal effort. By uploading course materials (lecture slides, PDFs, documents), teachers can automatically generate relevant quiz questions that align with their curriculum. Students can then take these quizzes online and receive immediate feedback, while teachers gain valuable insights into class performance.
-
+<!-- 
 ## Key Features
 
 ### For Teachers
@@ -170,4 +170,4 @@ OrchardAPP/
 
 ---
 
-**OrchardAPP** - Transforming education through intelligent automation.
+**OrchardAPP** - Transforming education through intelligent automation. -->
