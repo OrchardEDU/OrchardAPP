@@ -50,7 +50,36 @@ export default function StudentCoursePage() {
 				setQuizzesLoading(true);
 				setQuizzesError(null);
 				const data = await quizzesApi.getCourseQuizzes(courseId);
-				setQuizzes(data);
+				// Backfill grade data for submitted quizzes when the list payload does not include it.
+				const quizzesWithGrades = await Promise.all(
+					data.map(async (quiz) => {
+						if (quiz.isGraded && quiz.score !== undefined && quiz.maxScore !== undefined) {
+							return quiz;
+						}
+
+						if (!quiz.hasSubmission) {
+							return quiz;
+						}
+
+						try {
+							const submission = await quizzesApi.getMySubmission(courseId, quiz.id);
+							if (submission?.isGraded) {
+								return {
+									...quiz,
+									isGraded: true,
+									score: submission.score,
+									maxScore: submission.maxScore,
+								};
+							}
+						} catch (submissionErr) {
+							console.error(`Failed to load submission for quiz ${quiz.id}`, submissionErr);
+						}
+
+						return quiz;
+					})
+				);
+
+				setQuizzes(quizzesWithGrades);
 			} catch (err) {
 				console.error('Failed to load quizzes', err);
 				setQuizzesError('Failed to load quizzes. Please try again.');
@@ -136,6 +165,14 @@ export default function StudentCoursePage() {
 													<span>{quiz.questionCount} question{quiz.questionCount !== 1 ? 's' : ''}</span>
 												)}
 												{quiz.hasSubmission && <span className="submission-indicator">Submitted</span>}
+												{quiz.isGraded && quiz.score !== undefined && quiz.maxScore !== undefined && (
+													<span className="grade-indicator">
+														Grade: {quiz.score} / {quiz.maxScore}
+													</span>
+												)}
+												{quiz.hasSubmission && !quiz.isGraded && (
+													<span className="grading-indicator">Awaiting grading</span>
+												)}
 											</div>
 										</Link>
 									))

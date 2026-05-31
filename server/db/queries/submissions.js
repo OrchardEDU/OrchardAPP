@@ -1,6 +1,42 @@
 import { pool } from '../connection.js';
 
 /**
+ * Record quiz start time for a student (first start wins)
+ */
+export async function startQuizAttempt(quizId, studentId) {
+	const result = await pool.query(
+		`INSERT INTO quiz_attempts (quiz_id, student_id)
+		 VALUES ($1, $2)
+		 ON CONFLICT (quiz_id, student_id) DO NOTHING
+		 RETURNING *`,
+		[quizId, studentId]
+	);
+
+	if (result.rows.length > 0) {
+		return result.rows[0];
+	}
+
+	const existing = await pool.query(
+		`SELECT * FROM quiz_attempts WHERE quiz_id = $1 AND student_id = $2`,
+		[quizId, studentId]
+	);
+
+	return existing.rows[0] || null;
+}
+
+/**
+ * Get a student's quiz start time
+ */
+export async function getQuizAttempt(quizId, studentId) {
+	const result = await pool.query(
+		`SELECT * FROM quiz_attempts WHERE quiz_id = $1 AND student_id = $2`,
+		[quizId, studentId]
+	);
+
+	return result.rows[0] || null;
+}
+
+/**
  * Get all submissions for a quiz
  */
 export async function getQuizSubmissions(quizId) {

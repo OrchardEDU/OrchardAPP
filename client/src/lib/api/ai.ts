@@ -2,6 +2,14 @@ import { apiClient } from './client';
 
 export interface GeneratedQuestion {
 	question: string;
+	// Optional structured fields used for richer question types (e.g. MCQ)
+	type?: 'open-response' | 'multiple-choice' | 'short-answer';
+	options?: string[];
+	/**
+	 * Index of the correct answer in the options array (0-based)
+	 * Only used for multiple-choice questions.
+	 */
+	correctAnswerIndex?: number;
 }
 
 export interface EmbedContentResponse {
@@ -17,12 +25,14 @@ export const aiApi = {
 	 * @param topic - The topic for question generation
 	 * @param numQuestions - Number of questions to generate (1-20)
 	 * @param courseId - Optional course ID for RAG context
+	 * @param questionType - Optional question type hint for generation
 	 * @returns Array of generated questions
 	 */
 	async generateQuestions(
 		topic: string,
 		numQuestions: number,
-		courseId?: string
+		courseId?: string,
+		questionType?: 'open-response' | 'multiple-choice' | 'short-answer'
 	): Promise<GeneratedQuestion[]> {
 		const body: any = {
 			topic,
@@ -30,6 +40,9 @@ export const aiApi = {
 		};
 		if (courseId) {
 			body.courseId = courseId;
+		}
+		if (questionType) {
+			body.questionType = questionType;
 		}
 
 		const response = await apiClient.post<GeneratedQuestion[]>(

@@ -11,8 +11,6 @@ import './page.css';
 export default function LoginPage() {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
-	const [demoCode, setDemoCode] = useState('');
-	const [demoMode, setDemoMode] = useState(false);
 	const [error, setError] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -37,22 +35,6 @@ export default function LoginPage() {
 		checkAuth();
 	}, [router]);
 
-	// Fetch auth config (demo mode flag)
-	useEffect(() => {
-		const loadConfig = async () => {
-			try {
-				const response = await apiClient.get<{ demoMode: boolean }>('/api/auth/config');
-				if (response.success && response.data) {
-					setDemoMode(!!response.data.demoMode);
-				}
-			} catch {
-				// If config fails, default to demoMode=false
-			}
-		};
-
-		loadConfig();
-	}, []);
-
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		e.stopPropagation();
@@ -60,13 +42,10 @@ export default function LoginPage() {
 		setIsLoading(true);
 
 		try {
-			const body: any = {
+			const body = {
 				email,
 				password,
 			};
-			if (demoMode) {
-				body.demoCode = demoCode;
-			}
 
 			const response = await apiClient.post<{ user: User }>('/api/auth/login', body);
 
@@ -163,26 +142,6 @@ export default function LoginPage() {
 								placeholder="Enter your password"
 							/>
 						</div>
-						{demoMode && (
-							<div className="auth-field">
-								<label htmlFor="demo-code" className="auth-label">
-									Demo access code
-								</label>
-								<input
-									id="demo-code"
-									name="demo-code"
-									type="password"
-									required={demoMode}
-									value={demoCode}
-									onChange={(e) => setDemoCode(e.target.value)}
-									className="auth-input"
-									placeholder="Enter demo access code"
-								/>
-								<p className="auth-hint">
-									Ask the Orchard team for the current demo access code.
-								</p>
-							</div>
-						)}
 					</div>
 
 					<div>

@@ -574,6 +574,35 @@
 	transform: scale(0.98);
 }
 
+.quiz-delete-btn {
+	margin-top: 0.75rem;
+	padding: 0.5rem 1rem;
+	border-radius: 0.5rem;
+	font-size: 0.85rem;
+	font-weight: 500;
+	border: 1px solid #dc2626;
+	background-color: #ffffff;
+	color: #dc2626;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	width: 100%;
+}
+
+.quiz-delete-btn:hover:not(:disabled) {
+	background-color: #fee2e2;
+	border-color: #b91c1c;
+	color: #b91c1c;
+}
+
+.quiz-delete-btn:active:not(:disabled) {
+	transform: scale(0.98);
+}
+
+.quiz-delete-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
 @media (max-width: 768px) {
 	.quizzes-grid {
 		grid-template-columns: 1fr;

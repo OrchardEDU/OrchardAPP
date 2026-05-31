@@ -32,6 +32,7 @@ export default function TeacherCoursePage() {
 	const [studentsLoading, setStudentsLoading] = useState(true);
 	const [studentsError, setStudentsError] = useState<string | null>(null);
 	const [isDeletingCourse, setIsDeletingCourse] = useState(false);
+	const [deletingQuizId, setDeletingQuizId] = useState<string | null>(null);
 	const [materials, setMaterials] = useState<EmbedContentResponse[]>([]);
 	const [materialsLoading, setMaterialsLoading] = useState(false);
 	const [uploadingFile, setUploadingFile] = useState<string | null>(null);
@@ -233,6 +234,31 @@ export default function TeacherCoursePage() {
 		} catch (err) {
 			console.error('Failed to delete material', err);
 			alert('Failed to delete material. Please try again.');
+		}
+	};
+
+	const handleDeleteQuiz = async (e: React.MouseEvent, quizId: string, quizTitle: string) => {
+		e.preventDefault();
+		e.stopPropagation();
+
+		if (!confirm(`Are you sure you want to delete "${quizTitle}"? This will also delete all submissions for this quiz. This action cannot be undone.`)) {
+			return;
+		}
+
+		try {
+			setDeletingQuizId(quizId);
+			const success = await quizzesApi.deleteQuiz(courseId, quizId);
+			if (success) {
+				// Remove quiz from list
+				setQuizzes(prevQuizzes => prevQuizzes.filter(quiz => quiz.id !== quizId));
+			} else {
+				alert('Failed to delete quiz. Please try again.');
+			}
+		} catch (err) {
+			console.error('Failed to delete quiz', err);
+			alert('Failed to delete quiz. Please try again.');
+		} finally {
+			setDeletingQuizId(null);
 		}
 	};
 
@@ -451,6 +477,14 @@ export default function TeacherCoursePage() {
 														Edit
 													</Link>
 												)}
+												<button
+													className="quiz-delete-btn"
+													onClick={(e) => handleDeleteQuiz(e, quiz.id, quiz.title)}
+													disabled={deletingQuizId === quiz.id}
+													title="Delete quiz"
+												>
+													{deletingQuizId === quiz.id ? 'Deleting...' : 'Delete'}
+												</button>
 											</div>
 										))}
 										<Link href={`/dashboard/teacher/courses/${courseId}/quizzes/create`} className="create-quiz-card">

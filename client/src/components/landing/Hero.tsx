@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link'; // 1. Import Link from next/link
 import './Hero.css';
 
 const Hero = () => {
@@ -20,9 +19,6 @@ const Hero = () => {
 					</p>
 					<div className="hero-actions">
 						<button className="btn btn-primary btn-lg">Coming Soon</button>
-						<Link href="/demo">
-							<button className="btn btn-secondary btn-lg">Watch Demo</button>
-						</Link>
 					</div>
 				</div>
 				<div className="hero-visual">

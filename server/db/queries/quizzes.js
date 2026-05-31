@@ -9,7 +9,7 @@ export async function getQuizzesForCourse(courseId, userId, role) {
 		// Teachers see all quizzes
 		const result = await pool.query(
 			`SELECT 
-				q.id, q.course_id, q.title, q.description, q.published, q.due_date, q.questions_json,
+				q.id, q.course_id, q.title, q.description, q.published, q.time_limit_minutes, q.due_date, q.questions_json,
 				q.created_at, q.updated_at,
 				COALESCE(jsonb_array_length(q.questions_json), 0) as question_count,
 				COUNT(DISTINCT s.id) as submission_count
@@ -25,13 +25,15 @@ export async function getQuizzesForCourse(courseId, userId, role) {
 		// Students only see published quizzes
 		const result = await pool.query(
 			`SELECT 
-				q.id, q.course_id, q.title, q.description, q.published, q.due_date, q.questions_json,
+				q.id, q.course_id, q.title, q.description, q.published, q.time_limit_minutes, q.due_date, q.questions_json,
 				q.created_at, q.updated_at,
 				COALESCE(jsonb_array_length(q.questions_json), 0) as question_count,
-				EXISTS(SELECT 1 FROM submissions WHERE quiz_id = q.id AND student_id = $2) as has_submission
+				EXISTS(SELECT 1 FROM submissions WHERE quiz_id = q.id AND student_id = $2) as has_submission,
+				s.score, s.max_score, s.is_graded
 			FROM quizzes q
+			LEFT JOIN submissions s ON q.id = s.quiz_id AND s.student_id = $2
 			WHERE q.course_id = $1 AND q.published = true
-			GROUP BY q.id
+			GROUP BY q.id, s.score, s.max_score, s.is_graded
 			ORDER BY q.created_at DESC`,
 			[courseId, userId]
 		);
@@ -90,7 +92,7 @@ export async function getQuizById(quizId, userId, role) {
 /**
  * Create quiz with questions (transaction)
  */
-export async function createQuiz(courseId, title, description, published, dueDate, questions) {
+export async function createQuiz(courseId, title, description, published, dueDate, timeLimitMinutes, questions) {
 	const client = await pool.connect();
 	
 	try {
@@ -126,10 +128,10 @@ export async function createQuiz(courseId, title, description, published, dueDat
 			: [];
 
 		const quizResult = await client.query(
-			`INSERT INTO quizzes (course_id, title, description, published, due_date, questions_json)
-			 VALUES ($1, $2, $3, $4, $5, $6)
+			`INSERT INTO quizzes (course_id, title, description, published, due_date, time_limit_minutes, questions_json)
+			 VALUES ($1, $2, $3, $4, $5, $6, $7)
 			 RETURNING *`,
-			[courseId, title, description, published, dueDate, JSON.stringify(normalizedQuestions)]
+			[courseId, title, description, published, dueDate, timeLimitMinutes, JSON.stringify(normalizedQuestions)]
 		);
 		
 		const quiz = quizResult.rows[0];
@@ -149,7 +151,7 @@ export async function createQuiz(courseId, title, description, published, dueDat
 /**
  * Update quiz with questions (transaction)
  */
-export async function updateQuiz(quizId, title, description, published, dueDate, questions) {
+export async function updateQuiz(quizId, title, description, published, dueDate, timeLimitMinutes, questions) {
 	const client = await pool.connect();
 	
 	try {
@@ -296,11 +298,12 @@ export async function updateQuiz(quizId, title, description, published, dueDate,
 			     description = COALESCE($2, description),
 			     published = COALESCE($3, published),
 			     due_date = COALESCE($4, due_date),
-			     questions_json = COALESCE($5, questions_json),
+			     time_limit_minutes = COALESCE($5, time_limit_minutes),
+			     questions_json = COALESCE($6, questions_json),
 			     updated_at = CURRENT_TIMESTAMP
-			 WHERE id = $6
+			 WHERE id = $7
 			 RETURNING *`,
-			[title, description, published, dueDate, normalizedQuestions ? JSON.stringify(normalizedQuestions) : null, quizId]
+			[title, description, published, dueDate, timeLimitMinutes, normalizedQuestions ? JSON.stringify(normalizedQuestions) : null, quizId]
 		);
 		
 		if (quizResult.rows.length === 0) {
@@ -312,6 +315,74 @@ export async function updateQuiz(quizId, title, description, published, dueDate,
 		
 		// Fetch complete quiz with questions
 		return await getQuizById(quizId, null, 'teacher');
+	} catch (error) {
+		await client.query('ROLLBACK');
+		throw error;
+	} finally {
+		client.release();
+	}
+}
+
+/**
+ * Delete a quiz and all its submissions (transaction)
+ * @param {string} quizId - The quiz ID to delete
+ * @param {string} courseId - The course ID (for verification)
+ * @returns {Promise<boolean>} True if quiz was deleted, false if not found
+ */
+export async function deleteQuiz(quizId, courseId) {
+	const client = await pool.connect();
+	
+	try {
+		await client.query('BEGIN');
+		
+		// First, verify the quiz exists and belongs to the specified course
+		const quizCheckResult = await client.query(
+			'SELECT id FROM quizzes WHERE id = $1 AND course_id = $2',
+			[quizId, courseId]
+		);
+		
+		if (quizCheckResult.rows.length === 0) {
+			await client.query('ROLLBACK');
+			return false;
+		}
+		
+		// Delete all submissions and submission_answers for this quiz
+		// This uses the existing function which handles the transaction properly
+		// We need to do it manually here since we're already in a transaction
+		const submissionsResult = await client.query(
+			'SELECT id FROM submissions WHERE quiz_id = $1',
+			[quizId]
+		);
+		
+		const submissionIds = submissionsResult.rows.map(row => row.id);
+		
+		if (submissionIds.length > 0) {
+			// Delete submission_answers first (foreign key constraint)
+			await client.query(
+				'DELETE FROM submission_answers WHERE submission_id = ANY($1)',
+				[submissionIds]
+			);
+			
+			// Delete submissions
+			await client.query(
+				'DELETE FROM submissions WHERE quiz_id = $1',
+				[quizId]
+			);
+		}
+		
+		// Delete the quiz itself
+		const deleteResult = await client.query(
+			'DELETE FROM quizzes WHERE id = $1 AND course_id = $2 RETURNING id',
+			[quizId, courseId]
+		);
+		
+		if (deleteResult.rows.length === 0) {
+			await client.query('ROLLBACK');
+			return false;
+		}
+		
+		await client.query('COMMIT');
+		return true;
 	} catch (error) {
 		await client.query('ROLLBACK');
 		throw error;

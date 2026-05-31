@@ -18,9 +18,13 @@ export interface Quiz {
 	description: string;
 	published: boolean;
 	dueDate: string | null;
+	timeLimitMinutes?: number | null;
 	questions: QuizQuestion[];
 	createdAt: string;
 	questionCount?: number;
 	submissionCount?: number; // only for teachers
 	hasSubmission?: boolean; // only for students
+	score?: number; // only for students, if graded
+	maxScore?: number; // only for students, if graded
+	isGraded?: boolean; // only for students
 }

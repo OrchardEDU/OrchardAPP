@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS quizzes (
     description TEXT,
     questions_json JSONB NOT NULL DEFAULT '[]'::jsonb,
     published BOOLEAN DEFAULT FALSE,
+    time_limit_minutes INTEGER CHECK (time_limit_minutes IS NULL OR time_limit_minutes > 0),
     due_date TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -79,6 +80,15 @@ CREATE TABLE IF NOT EXISTS submissions (
     UNIQUE(quiz_id, student_id)
 );
 
+-- Quiz attempts table (tracks when a student starts a timed quiz)
+CREATE TABLE IF NOT EXISTS quiz_attempts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    quiz_id UUID NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,
+    student_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    started_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(quiz_id, student_id)
+);
+
 -- Submission answers table
 CREATE TABLE IF NOT EXISTS submission_answers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -97,6 +107,8 @@ CREATE INDEX IF NOT EXISTS idx_quizzes_course_id ON quizzes(course_id);
 CREATE INDEX IF NOT EXISTS idx_questions_quiz_id ON questions(quiz_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_quiz_id ON submissions(quiz_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_student_id ON submissions(student_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_quiz_id ON quiz_attempts(quiz_id);
+CREATE INDEX IF NOT EXISTS idx_quiz_attempts_student_id ON quiz_attempts(student_id);
 CREATE INDEX IF NOT EXISTS idx_submission_answers_submission_id ON submission_answers(submission_id);
 
 -- Function to update updated_at timestamp

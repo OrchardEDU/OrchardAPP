@@ -17,6 +17,7 @@ export default function CreateQuizPage() {
 	const [description, setDescription] = useState('');
 	const [published, setPublished] = useState(false);
 	const [dueDate, setDueDate] = useState('');
+	const [timeLimitMinutes, setTimeLimitMinutes] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -38,6 +39,7 @@ export default function CreateQuizPage() {
 	const [showAIGenerate, setShowAIGenerate] = useState(false);
 	const [aiTopic, setAiTopic] = useState('');
 	const [aiNumQuestions, setAiNumQuestions] = useState(3);
+	const [aiQuestionType, setAiQuestionType] = useState<QuizQuestionType>('open-response');
 
 	const createEmptyQuestion = (): NewQuestion => ({
 		question: '',
@@ -217,7 +219,8 @@ export default function CreateQuizPage() {
 			const generatedQuestions = await aiApi.generateQuestions(
 				aiTopic.trim(),
 				aiNumQuestions,
-				courseId
+				courseId,
+				aiQuestionType
 			);
 
 			if (generatedQuestions.length === 0) {
@@ -226,17 +229,41 @@ export default function CreateQuizPage() {
 			}
 
 			// Add generated questions to the questions list with default points of 1
-			const newQuestions = generatedQuestions.map(q => ({
-				question: q.question,
-				points: 1,
-				type: 'open-response' as QuizQuestionType,
-			}));
+			const newQuestions = generatedQuestions.map((q): NewQuestion => {
+				if (aiQuestionType === 'multiple-choice') {
+					const base: NewQuestion = {
+						question: q.question,
+						points: 1,
+						type: 'multiple-choice',
+						options: Array.isArray(q.options) && q.options.length >= 2 ? q.options : ['', ''],
+						correctAnswer:
+							typeof q.correctAnswerIndex === 'number' ? q.correctAnswerIndex : 0,
+					};
+					return ensureMultipleChoiceDefaults(base);
+				}
+
+				if (aiQuestionType === 'short-answer') {
+					return {
+						question: q.question,
+						points: 1,
+						type: 'short-answer',
+					};
+				}
+
+				// Default to open-response
+				return {
+					question: q.question,
+					points: 1,
+					type: 'open-response',
+				};
+			});
 
 			setQuestions(prev => [...prev, ...newQuestions]);
 			
 			// Reset AI form and hide AI generation card
 			setAiTopic('');
 			setAiNumQuestions(3);
+			setAiQuestionType('open-response');
 			setShowAIGenerate(false);
 		} catch (err) {
 			console.error('Failed to generate questions', err);
@@ -254,6 +281,16 @@ export default function CreateQuizPage() {
 		if (!trimmedTitle) {
 			setError('Quiz title is required.');
 			return;
+		}
+
+		let parsedTimeLimit: number | null = null;
+		if (timeLimitMinutes.trim() !== '') {
+			const value = Number(timeLimitMinutes);
+			if (!Number.isInteger(value) || value <= 0) {
+				setError('Time limit must be a positive whole number of minutes.');
+				return;
+			}
+			parsedTimeLimit = value;
 		}
 
 		// Basic validation for multiple-choice questions
@@ -279,6 +316,7 @@ export default function CreateQuizPage() {
 				description: description.trim(),
 				published,
 				dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+				timeLimitMinutes: parsedTimeLimit,
 				questions: questions.map(q => {
 					const base = {
 						question: q.question.trim(),
@@ -375,6 +413,22 @@ export default function CreateQuizPage() {
 						value={dueDate}
 						onChange={e => setDueDate(e.target.value)}
 						className="form-input"
+					/>
+				</div>
+
+				<div className="form-field">
+					<label htmlFor="quiz-time-limit" className="form-label">
+						Time Limit (minutes)
+					</label>
+					<input
+						id="quiz-time-limit"
+						type="number"
+						min={1}
+						step={1}
+						value={timeLimitMinutes}
+						onChange={e => setTimeLimitMinutes(e.target.value)}
+						className="form-input"
+						placeholder="Optional (e.g. 30)"
 					/>
 				</div>
 
@@ -588,6 +642,7 @@ export default function CreateQuizPage() {
 											setShowAIGenerate(false);
 											setAiTopic('');
 											setAiNumQuestions(3);
+											setAiQuestionType('open-response');
 										}}
 									>
 										×
@@ -618,6 +673,21 @@ export default function CreateQuizPage() {
 													{num}
 												</option>
 											))}
+										</select>
+									</div>
+									<div className="form-field">
+										<label className="form-label">Question type</label>
+										<select
+											value={aiQuestionType}
+											onChange={e =>
+												setAiQuestionType(e.target.value as QuizQuestionType)
+											}
+											className="form-input"
+											disabled={isGenerating}
+										>
+											<option value="open-response">Open response</option>
+											<option value="multiple-choice">Multiple choice</option>
+											<option value="short-answer">Short answer</option>
 										</select>
 									</div>
 									<button

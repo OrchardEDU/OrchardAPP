@@ -20,6 +20,7 @@ export default function EditQuizPage() {
 	const [description, setDescription] = useState('');
 	const [published, setPublished] = useState(false);
 	const [dueDate, setDueDate] = useState('');
+	const [timeLimitMinutes, setTimeLimitMinutes] = useState('');
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
@@ -41,6 +42,7 @@ export default function EditQuizPage() {
 	const [showAIGenerate, setShowAIGenerate] = useState(false);
 	const [aiTopic, setAiTopic] = useState('');
 	const [aiNumQuestions, setAiNumQuestions] = useState(3);
+	const [aiQuestionType, setAiQuestionType] = useState<QuizQuestionType>('open-response');
 
 	// Load existing quiz data
 	useEffect(() => {
@@ -68,6 +70,11 @@ export default function EditQuizPage() {
 				setTitle(quizData.title || '');
 				setDescription(quizData.description || '');
 				setPublished(quizData.published || false);
+				setTimeLimitMinutes(
+					typeof quizData.timeLimitMinutes === 'number' && quizData.timeLimitMinutes > 0
+						? String(quizData.timeLimitMinutes)
+						: ''
+				);
 				
 				// Format due date for datetime-local input
 				if (quizData.dueDate) {
@@ -282,7 +289,8 @@ export default function EditQuizPage() {
 			const generatedQuestions = await aiApi.generateQuestions(
 				aiTopic.trim(),
 				aiNumQuestions,
-				courseId
+				courseId,
+				aiQuestionType
 			);
 
 			if (generatedQuestions.length === 0) {
@@ -291,17 +299,40 @@ export default function EditQuizPage() {
 			}
 
 			// Add generated questions to the questions list with default points of 1
-			const newQuestions: NewQuestion[] = generatedQuestions.map(q => ({
-				question: q.question,
-				points: 1,
-				type: 'open-response',
-			}));
+			const newQuestions: NewQuestion[] = generatedQuestions.map(q => {
+				if (aiQuestionType === 'multiple-choice') {
+					const base: NewQuestion = {
+						question: q.question,
+						points: 1,
+						type: 'multiple-choice',
+						options: Array.isArray(q.options) && q.options.length >= 2 ? q.options : ['', ''],
+						correctAnswer:
+							typeof q.correctAnswerIndex === 'number' ? q.correctAnswerIndex : 0,
+					};
+					return ensureMultipleChoiceDefaults(base);
+				}
+
+				if (aiQuestionType === 'short-answer') {
+					return {
+						question: q.question,
+						points: 1,
+						type: 'short-answer',
+					};
+				}
+
+				return {
+					question: q.question,
+					points: 1,
+					type: 'open-response',
+				};
+			});
 
 			setQuestions(prev => [...prev, ...newQuestions]);
 			
 			// Reset AI form and hide AI generation card
 			setAiTopic('');
 			setAiNumQuestions(3);
+			setAiQuestionType('open-response');
 			setShowAIGenerate(false);
 		} catch (err) {
 			console.error('Failed to generate questions', err);
@@ -319,6 +350,16 @@ export default function EditQuizPage() {
 		if (!trimmedTitle) {
 			setError('Quiz title is required.');
 			return;
+		}
+
+		let parsedTimeLimit: number | null = null;
+		if (timeLimitMinutes.trim() !== '') {
+			const value = Number(timeLimitMinutes);
+			if (!Number.isInteger(value) || value <= 0) {
+				setError('Time limit must be a positive whole number of minutes.');
+				return;
+			}
+			parsedTimeLimit = value;
 		}
 
 		// Prevent editing if quiz is published
@@ -350,6 +391,7 @@ export default function EditQuizPage() {
 				description: description.trim(),
 				published,
 				dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+				timeLimitMinutes: parsedTimeLimit,
 				questions: questions.map(q => {
 					const base = {
 						question: q.question.trim(),
@@ -472,6 +514,22 @@ export default function EditQuizPage() {
 						value={dueDate}
 						onChange={e => setDueDate(e.target.value)}
 						className="form-input"
+					/>
+				</div>
+
+				<div className="form-field">
+					<label htmlFor="quiz-time-limit" className="form-label">
+						Time Limit (minutes)
+					</label>
+					<input
+						id="quiz-time-limit"
+						type="number"
+						min={1}
+						step={1}
+						value={timeLimitMinutes}
+						onChange={e => setTimeLimitMinutes(e.target.value)}
+						className="form-input"
+						placeholder="Optional (e.g. 30)"
 					/>
 				</div>
 
@@ -689,6 +747,7 @@ export default function EditQuizPage() {
 											setShowAIGenerate(false);
 											setAiTopic('');
 											setAiNumQuestions(3);
+											setAiQuestionType('open-response');
 										}}
 									>
 										×
@@ -719,6 +778,21 @@ export default function EditQuizPage() {
 													{num}
 												</option>
 											))}
+										</select>
+									</div>
+									<div className="form-field">
+										<label className="form-label">Question type</label>
+										<select
+											value={aiQuestionType}
+											onChange={e =>
+												setAiQuestionType(e.target.value as QuizQuestionType)
+											}
+											className="form-input"
+											disabled={isGenerating}
+										>
+											<option value="open-response">Open response</option>
+											<option value="multiple-choice">Multiple choice</option>
+											<option value="short-answer">Short answer</option>
 										</select>
 									</div>
 									<button
