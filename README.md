@@ -46,8 +46,9 @@ OrchardAPP leverages advanced AI technology to help teachers create high-quality
 ### Technical Features
 
 #### AI Integration
-- **Dual AI provider support** - Works with local Ollama instances or Google Gemini API
-- **Embedding generation** using Ollama for semantic search and context retrieval
+- **Dual AI provider support** - Works with local Ollama instances or Google Gemini API for question generation
+- **Gemini embeddings** using `gemini-embedding-2` (1024-dim) for course material indexing and RAG retrieval
+- **Embedding generation** stored in Qdrant for semantic search and context retrieval
 - **Structured output** for consistent question generation
 - **RAG (Retrieval-Augmented Generation)** system that uses Qdrant vector database for intelligent context retrieval
 
@@ -84,8 +85,8 @@ OrchardAPP leverages advanced AI technology to help teachers create high-quality
 - **Node.js** with Express.js for the API server
 - **PostgreSQL** for relational data storage
 - **Qdrant** vector database for semantic search and RAG
-- **Ollama** for local AI model hosting and embeddings
-- **Google Gemini API** as an alternative AI provider
+- **Ollama** for local AI model hosting (optional, when `USE_LOCAL=true`)
+- **Google Gemini API** for question generation and embeddings
 - **express-session** with PostgreSQL session store
 - **Multer** for file upload handling
 - **pdf-parse** and **mammoth** for document text extraction

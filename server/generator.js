@@ -1,79 +1,116 @@
 import { Ollama } from 'ollama';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { demoOutputJsonSchema, questionGenerationOutputSchema } from './schemas.js';
 
 export class Generator {
 	constructor() {
-		// Always initialize Ollama for embeddings
-		const ollamaHost = process.env.PORT_OLLAMA || 'http://localhost:11434';
-		this.embeddingModel = process.env.OLLAMA_EMBEDDING_MODEL || 'mxbai-embed-large';
-		this.ollama = new Ollama({ host: ollamaHost });
-		
+		const geminiApiKey = process.env.GEMINI_API;
+		if (!geminiApiKey) {
+			throw new Error('GEMINI_API not set. Required for embeddings.');
+		}
+
+		this.embeddingModel = process.env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-2';
+		this.embeddingDimension = parseInt(process.env.GEMINI_EMBEDDING_DIMENSION || '1024', 10);
+		if (!Number.isInteger(this.embeddingDimension) || this.embeddingDimension <= 0) {
+			throw new Error('GEMINI_EMBEDDING_DIMENSION must be a positive integer');
+		}
+
+		this.embeddingClient = new GoogleGenAI({ apiKey: geminiApiKey });
+
 		// Determine which provider to use for generation based on USE_LOCAL env var
 		this.useLocal = process.env.USE_LOCAL === 'true' || process.env.USE_LOCAL === '1';
-		
+
 		if (this.useLocal) {
-			// Use Ollama for generation
+			const ollamaHost = process.env.PORT_OLLAMA || 'http://localhost:11434';
 			this.model = process.env.OLLAMA_MODEL || 'llama3';
+			this.ollama = new Ollama({ host: ollamaHost });
 			console.log(
-				`Generator initialized with Ollama for generation and embeddings (host: ${ollamaHost}, model: ${this.model}, embedding model: ${this.embeddingModel})`
+				`Generator initialized with Ollama for generation (host: ${ollamaHost}, model: ${this.model}) and Gemini for embeddings (model: ${this.embeddingModel}, dimensions: ${this.embeddingDimension})`
 			);
 		} else {
-			// Use Gemini for generation (embeddings still use Ollama)
-			const geminiApiKey = process.env.GEMINI_API;
-			if (!geminiApiKey) {
-				throw new Error(
-					'GEMINI_API not set. Required when USE_LOCAL is false or not set.'
-				);
-			}
 			this.genAI = new GoogleGenerativeAI(geminiApiKey);
 			this.model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 			console.log(
-				`Generator initialized with Gemini for generation (model: ${this.model}) and Ollama for embeddings (model: ${this.embeddingModel})`
+				`Generator initialized with Gemini for generation (model: ${this.model}) and embeddings (model: ${this.embeddingModel}, dimensions: ${this.embeddingDimension})`
 			);
 		}
 	}
 
 	/**
-	 * Check if Generator is running
-	 * @returns {Promise<boolean>} True if generator is running
+	 * Check if Gemini embedding service is reachable
+	 * @returns {Promise<boolean>}
 	 */
-	async isRunning() {
+	async isEmbeddingRunning() {
 		try {
-			// Always check Ollama (required for embeddings)
-			await this.ollama.list();
-			
-			// Check generation provider
-			if (this.useLocal) {
-				// Ollama is already checked above
-				return true;
-			} else {
-				// Check if Gemini is accessible by making a simple request
-				const model = this.genAI.getGenerativeModel({ model: this.model });
-				await model.generateContent('test');
-				return true;
-			}
+			await this._embedText('healthcheck');
+			return true;
 		} catch (error) {
-			console.error('[Generator] Not running:', error.message);
+			console.log('[Generator] Embeddings not running:', error.message);
 			return false;
 		}
 	}
 
 	/**
-	 * Generate embeddings for text using Ollama (always uses Ollama regardless of USE_LOCAL)
+	 * Check if the generation provider is reachable
+	 * @returns {Promise<boolean>}
+	 */
+	async isGenerationRunning() {
+		try {
+			if (this.useLocal) {
+				await this.ollama.list();
+				return true;
+			}
+			const model = this.genAI.getGenerativeModel({ model: this.model });
+			await model.generateContent('test');
+			return true;
+		} catch (error) {
+			console.log('[Generator] Generation not running:', error.message);
+			return false;
+		}
+	}
+
+	/**
+	 * Check if Generator is running (embeddings + generation)
+	 * @returns {Promise<boolean>} True if generator is running
+	 */
+	async isRunning() {
+		const [embeddingsOk, generationOk] = await Promise.all([
+			this.isEmbeddingRunning(),
+			this.isGenerationRunning(),
+		]);
+		return embeddingsOk && generationOk;
+	}
+
+	async _embedText(text, model = null) {
+		const embeddingModel = model || this.embeddingModel;
+		const response = await this.embeddingClient.models.embedContent({
+			model: embeddingModel,
+			contents: text,
+			config: { outputDimensionality: this.embeddingDimension },
+		});
+
+		const values = response?.embeddings?.[0]?.values;
+		if (!Array.isArray(values) || values.length === 0) {
+			throw new Error('Gemini returned an empty embedding');
+		}
+		if (values.length !== this.embeddingDimension) {
+			throw new Error(
+				`Expected embedding dimension ${this.embeddingDimension}, got ${values.length}`
+			);
+		}
+		return values;
+	}
+
+	/**
+	 * Generate embeddings for text using Gemini
 	 * @param {string} text - Text to generate embedding for
 	 * @param {string} model - Embedding model to use (optional, uses default)
 	 * @returns {Promise<number[]>} Embedding vector
 	 */
 	async getEmbedding(text, model = null) {
 		try {
-			// Always use Ollama for embeddings
-			const embeddingModel = model || this.embeddingModel;
-			const response = await this.ollama.embeddings({
-				model: embeddingModel,
-				prompt: text,
-			});
-			return response.embedding;
+			return await this._embedText(text, model);
 		} catch (error) {
 			console.error('Error getting embedding:', error);
 			throw new Error(`Failed to get embedding: ${error.message}`);

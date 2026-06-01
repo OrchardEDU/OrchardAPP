@@ -16,22 +16,17 @@ const postgresConfig = {
 // Create PostgreSQL connection pool
 const pool = new Pool(postgresConfig);
 
-// Test database connection
-pool.on('connect', () => {
-	console.log('Connected to PostgreSQL database');
-});
-
 pool.on('error', (err) => {
 	console.error('Unexpected error on idle PostgreSQL client', err);
 	process.exit(-1);
 });
 
-// Test connection on startup
+// Test connection on startup — one success line, errors only on failure
 (async () => {
 	try {
 		const client = await pool.connect();
-		console.log('PostgreSQL connection test successful');
 		client.release();
+		console.log('Connected to PostgreSQL database');
 	} catch (err) {
 		console.error('Failed to connect to PostgreSQL:', err.message);
 	}

@@ -39,7 +39,6 @@ const nextApp = next({
 const handle = nextApp.getRequestHandler();
 
 nextApp.prepare().then(async () => {
-	console.log('\n=== Server Starting ===');
 	const expressApp = express();
 
 	// Trust proxy ONLY in production (needed to read X-Forwarded-Proto from Cloudflare)
@@ -155,10 +154,7 @@ nextApp.prepare().then(async () => {
 	});
 
 	const listener = expressApp.listen(PORT, IP, () => {
-		console.log(`\nServer running on http://${IP}:${PORT}`);
-		console.log(`Visit: http://${IP}:${PORT}`);
-		console.log(`Session store: PostgreSQL`);
-		console.log(`Request logging: ${ENABLE_FRONTEND_LOGGING ? 'Enabled' : 'Disabled'}\n`);
+		console.log(`Server running on http://${IP}:${PORT}`);
 	});
 });
 

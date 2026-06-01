@@ -25,8 +25,8 @@ export class RagOperator {
 		// Generator instance for embeddings (optional - can be set later)
 		this.generator = generator;
 
-		this.embeddingModel = 'mxbai-embed-large';
-		this.vectorSize = 1024;
+		this.embeddingModel = process.env.GEMINI_EMBEDDING_MODEL || 'gemini-embedding-2';
+		this.vectorSize = parseInt(process.env.GEMINI_EMBEDDING_DIMENSION || '1024', 10);
 		this._collectionVerified = false;
 		console.log(
 			`RAG Operator initialized with Qdrant (collection: ${this.collectionName}). Point IDs will be initialized from existing data.`
@@ -52,7 +52,7 @@ export class RagOperator {
 			await this.client.getCollection(this.collectionName);
 			return true;
 		} catch (error) {
-			console.error('[RAG Operator] Not running:', error.message);
+			console.log('[RAG Operator] Not running:', error.message);
 			return false;
 		}
 	}
@@ -149,7 +149,13 @@ export class RagOperator {
 				'Generator not set. Call setGenerator() first or pass generator to constructor.'
 			);
 		}
-		return await this.generator.getEmbedding(text, this.embeddingModel);
+		const embedding = await this.generator.getEmbedding(text, this.embeddingModel);
+		if (embedding.length !== this.vectorSize) {
+			throw new Error(
+				`Embedding dimension mismatch: expected ${this.vectorSize}, got ${embedding.length}`
+			);
+		}
+		return embedding;
 	}
 
 	/**

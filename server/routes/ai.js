@@ -34,13 +34,17 @@ const initializeAIServices = async () => {
 	if (!generator) {
 		try {
 			generator = new Generator();
-			const isRunning = await generator.isRunning();
-			if (!isRunning) {
-				console.warn('[AI] Generator not running, but continuing...');
+			const embeddingsOk = await generator.isEmbeddingRunning();
+			const generationOk = await generator.isGenerationRunning();
+			if (!embeddingsOk) {
+				console.log('[AI] Gemini embeddings not running, but continuing...');
+			}
+			if (!generationOk) {
+				console.log('[AI] Question generation provider not running, but continuing...');
 			}
 			console.log('[AI] Generator initialized');
 		} catch (error) {
-			console.error('[AI] Failed to initialize Generator:', error.message);
+			console.log('[AI] Failed to initialize Generator:', error.message);
 			throw error;
 		}
 	}
@@ -51,11 +55,11 @@ const initializeAIServices = async () => {
 			ragoperator.setGenerator(generator);
 			const isRunning = await ragoperator.isRunning();
 			if (!isRunning) {
-				console.warn('[AI] RAG Operator not running, but continuing...');
+				console.log('[AI] RAG Operator not running, but continuing...');
 			}
 			console.log('[AI] RAG Operator initialized');
 		} catch (error) {
-			console.warn('[AI] Failed to initialize RAG Operator:', error.message);
+			console.log('[AI] Failed to initialize RAG Operator:', error.message);
 			console.log('[AI] RAG features disabled. Using basic question generation.');
 			ragoperator = null;
 		}
