@@ -53,6 +53,9 @@ export default function CreateCoursePage() {
 					<p>Set up a course for your students with a name and description.</p>
 				</div>
 				<div className="create-course-actions">
+					<Link href="/dashboard/teacher/settings" className="secondary-action-btn">
+						Settings
+					</Link>
 					<Link href="/dashboard/teacher" className="secondary-action-btn">
 						Back to Dashboard
 					</Link>

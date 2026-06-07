@@ -68,8 +68,8 @@ export default function TeacherDashboardPage() {
 					<Link href="/dashboard/teacher/courses/create" className="primary-action-btn">
 						+ Create Course
 					</Link>
-					<Link href="/" className="secondary-action-btn">
-						Back to Home
+					<Link href="/dashboard/teacher/settings" className="secondary-action-btn">
+						Settings
 					</Link>
 				</div>
 			</div>

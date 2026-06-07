@@ -277,6 +277,9 @@ export default function TeacherCoursePage() {
 					)}
 				</div>
 				<div className="course-actions">
+					<Link href="/dashboard/teacher/settings" className="secondary-action-btn">
+						Settings
+					</Link>
 					<Link href="/dashboard/teacher" className="secondary-action-btn">
 						Back to Dashboard
 					</Link>

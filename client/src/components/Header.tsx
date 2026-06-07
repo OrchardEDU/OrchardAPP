@@ -61,11 +61,12 @@ const Header = () => {
 
 	// Select logo based on theme
 	const logoSrc = theme === 'dark' ? '/orchardedulogowhite.png' : '/orchardedulogo.png';
+	const homeUrl = user ? getDashboardUrl(user) : '/';
 
 	return (
 		<header className={`header ${scrolled ? 'scrolled' : ''}`}>
 			<div className="container header-container">
-				<Link href="/" className="logo">
+				<Link href={homeUrl} className="logo">
 					<Image src={logoSrc} alt="Orchard Logo" width={40} height={40} />
 					<span>Orchard</span>
 				</Link>
@@ -92,7 +93,7 @@ const Header = () => {
 						<span className="btn btn-secondary btn-sm">Loading...</span>
 					) : user ? (
 						<>
-							<Link href={getDashboardUrl(user)} className="btn btn-secondary btn-sm">
+							<Link href={homeUrl} className="btn btn-secondary btn-sm">
 								Home
 							</Link>
 							<button onClick={handleLogout} className="btn btn-primary btn-sm">

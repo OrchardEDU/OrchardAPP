@@ -72,6 +72,9 @@ export default function StudentDashboardPage() {
 					<p>View and join your courses.</p>
 				</div>
 				<div className="dashboard-actions">
+					<Link href="/dashboard/student/settings" className="secondary-action-btn">
+						Settings
+					</Link>
 					<Link href="/" className="secondary-action-btn">
 						Back to Home
 					</Link>
