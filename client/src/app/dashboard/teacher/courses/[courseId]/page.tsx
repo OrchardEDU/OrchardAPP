@@ -4,9 +4,11 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { coursesApi } from '@/lib/api/courses';
+import { canvasApi } from '@/lib/api/canvas';
 import { quizzesApi } from '@/lib/api/courses/quizzes';
 import { aiApi, EmbedContentResponse } from '@/lib/api/ai';
 import { Course } from '@/types/course';
+import type { CanvasConnectionStatus, CanvasCourseOption } from '@/types/canvas';
 import { Quiz } from '@/types/quiz';
 import './page.css';
 
@@ -37,6 +39,13 @@ export default function TeacherCoursePage() {
 	const [materialsLoading, setMaterialsLoading] = useState(false);
 	const [uploadingFile, setUploadingFile] = useState<string | null>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [canvasStatus, setCanvasStatus] = useState<CanvasConnectionStatus | null>(null);
+	const [canvasCourses, setCanvasCourses] = useState<CanvasCourseOption[]>([]);
+	const [canvasCoursesLoading, setCanvasCoursesLoading] = useState(false);
+	const [selectedCanvasCourseId, setSelectedCanvasCourseId] = useState('');
+	const [isLinkingCanvas, setIsLinkingCanvas] = useState(false);
+	const [isUnlinkingCanvas, setIsUnlinkingCanvas] = useState(false);
+	const [canvasLinkError, setCanvasLinkError] = useState<string | null>(null);
 
 	useEffect(() => {
 		const loadCourse = async () => {
@@ -61,6 +70,89 @@ export default function TeacherCoursePage() {
 			loadCourse();
 		}
 	}, [courseId]);
+
+	useEffect(() => {
+		const loadCanvasStatus = async () => {
+			const status = await canvasApi.getStatus();
+			setCanvasStatus(status);
+		};
+
+		loadCanvasStatus();
+	}, []);
+
+	useEffect(() => {
+		const loadCanvasCourses = async () => {
+			if (!canvasStatus?.connected || course?.canvas?.connected) {
+				return;
+			}
+
+			try {
+				setCanvasCoursesLoading(true);
+				setCanvasLinkError(null);
+				const courses = await canvasApi.getCanvasCourses();
+				setCanvasCourses(courses);
+			} catch (err) {
+				console.error('Failed to load Canvas courses', err);
+				setCanvasLinkError('Failed to load Canvas courses.');
+			} finally {
+				setCanvasCoursesLoading(false);
+			}
+		};
+
+		loadCanvasCourses();
+	}, [canvasStatus?.connected, course?.canvas?.connected]);
+
+	const handleLinkCanvasCourse = async () => {
+		if (!selectedCanvasCourseId) {
+			setCanvasLinkError('Select a Canvas course to link.');
+			return;
+		}
+
+		try {
+			setIsLinkingCanvas(true);
+			setCanvasLinkError(null);
+			const linked = await canvasApi.linkCourse(courseId, Number(selectedCanvasCourseId));
+			if (!linked) {
+				setCanvasLinkError('Failed to link Canvas course.');
+				return;
+			}
+
+			setCourse(prev => (prev ? { ...prev, canvas: linked } : prev));
+			setSelectedCanvasCourseId('');
+		} catch (err) {
+			console.error('Failed to link Canvas course', err);
+			setCanvasLinkError('Failed to link Canvas course.');
+		} finally {
+			setIsLinkingCanvas(false);
+		}
+	};
+
+	const handleUnlinkCanvasCourse = async () => {
+		if (!window.confirm('Unlink this course from Canvas?')) {
+			return;
+		}
+
+		try {
+			setIsUnlinkingCanvas(true);
+			setCanvasLinkError(null);
+			const success = await canvasApi.unlinkCourse(courseId);
+			if (!success) {
+				setCanvasLinkError('Failed to unlink Canvas course.');
+				return;
+			}
+
+			setCourse(prev => {
+				if (!prev) return prev;
+				const { canvas: _canvas, ...rest } = prev;
+				return rest;
+			});
+		} catch (err) {
+			console.error('Failed to unlink Canvas course', err);
+			setCanvasLinkError('Failed to unlink Canvas course.');
+		} finally {
+			setIsUnlinkingCanvas(false);
+		}
+	};
 
 	useEffect(() => {
 		const loadQuizzes = async () => {
@@ -311,6 +403,84 @@ export default function TeacherCoursePage() {
 								<span>
 									Students enrolled: <strong>{course.studentCount}</strong>
 								</span>
+							)}
+						</div>
+
+						<div className="canvas-course-section">
+							<h3 className="canvas-section-title">Canvas Integration</h3>
+
+							{course.canvas?.connected ? (
+								<div className="canvas-linked-info">
+									<span className="canvas-connected-badge">Connected to Canvas</span>
+									<p className="canvas-linked-name">
+										Linked course: <strong>{course.canvas.canvasCourseName}</strong>
+									</p>
+									<div className="canvas-linked-actions">
+										{course.canvas.canvasCourseUrl && (
+											<a
+												href={course.canvas.canvasCourseUrl}
+												target="_blank"
+												rel="noopener noreferrer"
+												className="canvas-open-link"
+											>
+												Open in Canvas
+											</a>
+										)}
+										<button
+											type="button"
+											className="canvas-unlink-btn"
+											onClick={handleUnlinkCanvasCourse}
+											disabled={isUnlinkingCanvas}
+										>
+											{isUnlinkingCanvas ? 'Unlinking...' : 'Unlink'}
+										</button>
+									</div>
+								</div>
+							) : canvasStatus?.connected ? (
+								<div className="canvas-link-form">
+									<p className="canvas-link-help">
+										Select a Canvas course to link with this Orchard course.
+									</p>
+									{canvasCoursesLoading ? (
+										<p className="status-text">Loading Canvas courses...</p>
+									) : (
+										<div className="canvas-link-controls">
+											<select
+												className="canvas-course-select"
+												value={selectedCanvasCourseId}
+												onChange={e => setSelectedCanvasCourseId(e.target.value)}
+											>
+												<option value="">Select a Canvas course...</option>
+												{canvasCourses.map(canvasCourse => (
+													<option key={canvasCourse.id} value={canvasCourse.id}>
+														{canvasCourse.name}
+														{canvasCourse.courseCode ? ` (${canvasCourse.courseCode})` : ''}
+													</option>
+												))}
+											</select>
+											<button
+												type="button"
+												className="canvas-link-btn"
+												onClick={handleLinkCanvasCourse}
+												disabled={isLinkingCanvas || !selectedCanvasCourseId}
+											>
+												{isLinkingCanvas ? 'Linking...' : 'Link Course'}
+											</button>
+										</div>
+									)}
+								</div>
+							) : (
+								<p className="canvas-link-help">
+									Connect Canvas in{' '}
+									<Link href="/dashboard/teacher/settings" className="canvas-settings-link">
+										Settings
+									</Link>{' '}
+									to link this course.
+								</p>
+							)}
+
+							{canvasLinkError && (
+								<p className="status-text error-text">{canvasLinkError}</p>
 							)}
 						</div>
 					</div>

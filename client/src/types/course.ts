@@ -1,3 +1,5 @@
+import type { CourseCanvasLink } from './canvas';
+
 export interface Course {
 	id: string;
 	name: string;
@@ -8,4 +10,5 @@ export interface Course {
 	createdAt: string;
 	enrolledAt?: string; // only for students
 	studentCount?: number; // only for teachers
+	canvas?: CourseCanvasLink;
 }

@@ -15,6 +15,7 @@ import authRoutes from './routes/auth.js';
 import courseRoutes from './routes/courses.js';
 import quizRoutes from './routes/quizzes.js';
 import aiRoutes from './routes/ai.js';
+import canvasRoutes from './routes/canvas.js';
 
 // Import middleware
 import { createRequestLogger } from './middleware/logger.js';
@@ -137,6 +138,7 @@ nextApp.prepare().then(async () => {
 
 	// API routes
 	expressApp.use('/api/auth', authRoutes);
+	expressApp.use('/api/canvas', canvasRoutes);
 	expressApp.use('/api/courses', courseRoutes);
 	expressApp.use('/api/courses', quizRoutes); // Quiz routes handle /:courseId/quizzes internally
 	expressApp.use('/api/ai', aiRoutes);

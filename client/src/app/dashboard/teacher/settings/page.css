@@ -41,8 +41,187 @@
 	background-color: rgba(22, 163, 74, 0.06);
 }
 
+.settings-banner {
+	padding: 0.75rem 1rem;
+	border-radius: 0.5rem;
+	margin-bottom: 1.5rem;
+	font-size: 0.9rem;
+}
+
+.settings-banner-success {
+	background-color: #ecfdf5;
+	border: 1px solid #86efac;
+	color: #166534;
+}
+
+.settings-banner-error {
+	background-color: #fef2f2;
+	border: 1px solid #fca5a5;
+	color: #991b1b;
+}
+
+.settings-section {
+	padding: 1.5rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 1rem;
+	background-color: #ffffff;
+}
+
+.settings-section h2 {
+	margin: 0 0 0.5rem;
+	font-size: 1.25rem;
+}
+
+.settings-section-description {
+	margin: 0 0 1.25rem;
+	color: #4b5563;
+}
+
+.status-text {
+	color: #4b5563;
+}
+
+.canvas-status-card {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	padding: 1rem 1.25rem;
+	border-radius: 0.75rem;
+	border: 1px solid #e5e7eb;
+	background-color: #f9fafb;
+}
+
+.canvas-status-connected {
+	border-color: #86efac;
+	background-color: #f0fdf4;
+}
+
+.canvas-status-label {
+	margin: 0 0 0.25rem;
+	font-size: 0.8rem;
+	color: #6b7280;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.canvas-status-value {
+	margin: 0;
+	font-size: 1.1rem;
+	font-weight: 600;
+	color: #111827;
+}
+
+.canvas-status-meta {
+	margin: 0.35rem 0 0;
+	font-size: 0.85rem;
+	color: #6b7280;
+}
+
+.canvas-connect-btn,
+.canvas-disconnect-btn {
+	padding: 0.6rem 1.2rem;
+	border-radius: 999px;
+	font-size: 0.9rem;
+	font-weight: 500;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.canvas-connect-btn {
+	border: none;
+	background-color: #16a34a;
+	color: #ffffff;
+}
+
+.canvas-connect-btn:hover {
+	background-color: #15803d;
+}
+
+.canvas-disconnect-btn {
+	border: 1px solid #dc2626;
+	background-color: transparent;
+	color: #dc2626;
+}
+
+.canvas-disconnect-btn:hover:not(:disabled) {
+	background-color: #fef2f2;
+}
+
+.canvas-disconnect-btn:disabled {
+	opacity: 0.7;
+	cursor: default;
+}
+
+.canvas-connect-confirm {
+	padding: 1.25rem;
+	border-radius: 0.75rem;
+	border: 1px solid #e5e7eb;
+	background-color: #f9fafb;
+}
+
+.canvas-connect-confirm-title {
+	margin: 0 0 0.5rem;
+	font-size: 1.1rem;
+	color: #111827;
+}
+
+.canvas-connect-confirm-text {
+	margin: 0 0 1rem;
+	color: #4b5563;
+	font-size: 0.9rem;
+}
+
+.canvas-connect-confirm-actions {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	margin-bottom: 0.75rem;
+}
+
+.canvas-cancel-btn {
+	padding: 0.6rem 1.2rem;
+	border-radius: 999px;
+	font-size: 0.9rem;
+	font-weight: 500;
+	cursor: pointer;
+	border: 1px solid #d1d5db;
+	background-color: #ffffff;
+	color: #374151;
+}
+
+.canvas-cancel-btn:hover {
+	background-color: #f3f4f6;
+}
+
+.canvas-not-you {
+	margin: 0;
+	font-size: 0.85rem;
+	color: #6b7280;
+}
+
+.canvas-not-you-link {
+	border: none;
+	background: none;
+	padding: 0;
+	color: #16a34a;
+	font-size: 0.85rem;
+	font-weight: 500;
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.canvas-not-you-link:hover {
+	color: #15803d;
+}
+
 @media (max-width: 768px) {
 	.settings-header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.canvas-status-card {
 		flex-direction: column;
 		align-items: flex-start;
 	}

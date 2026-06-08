@@ -3,6 +3,11 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 import { isValidUUID } from '../utils/validation.js';
 import * as courseQueries from '../db/queries/courses.js';
 import * as userQueries from '../db/queries/users.js';
+import * as canvasQueries from '../db/queries/canvas.js';
+import {
+	formatCourseCanvasLink,
+	linkOrchardCourseToCanvas,
+} from '../services/canvas/courseLink.js';
 
 const router = express.Router();
 
@@ -149,6 +154,81 @@ router.delete('/:courseId/students/:studentId', requireRole('teacher'), async (r
 });
 
 /**
+ * POST /api/courses/:courseId/canvas/link
+ * Link an Orchard course to a Canvas course (owner only)
+ */
+router.post('/:courseId/canvas/link', requireRole('teacher'), async (req, res) => {
+	try {
+		const { courseId } = req.params;
+		const userId = req.session.userId;
+		const { canvasCourseId } = req.body;
+
+		if (!isValidUUID(courseId)) {
+			return res.status(400).json({ success: false, message: 'Invalid course ID' });
+		}
+
+		if (!canvasCourseId) {
+			return res.status(400).json({ success: false, message: 'canvasCourseId is required' });
+		}
+
+		const isOwner = await courseQueries.isCourseOwner(userId, courseId);
+		if (!isOwner) {
+			return res.status(403).json({ success: false, message: 'Access denied' });
+		}
+
+		const link = await linkOrchardCourseToCanvas({
+			courseId,
+			teacherId: userId,
+			canvasCourseId,
+		});
+
+		res.json({
+			success: true,
+			data: {
+				canvas: formatCourseCanvasLink(link),
+			},
+		});
+	} catch (error) {
+		console.error('Canvas link course error:', error);
+		const status = error.statusCode || 500;
+		res.status(status).json({
+			success: false,
+			message: error.message || 'Failed to link Canvas course',
+		});
+	}
+});
+
+/**
+ * DELETE /api/courses/:courseId/canvas/link
+ * Unlink an Orchard course from Canvas (owner only)
+ */
+router.delete('/:courseId/canvas/link', requireRole('teacher'), async (req, res) => {
+	try {
+		const { courseId } = req.params;
+		const userId = req.session.userId;
+
+		if (!isValidUUID(courseId)) {
+			return res.status(400).json({ success: false, message: 'Invalid course ID' });
+		}
+
+		const isOwner = await courseQueries.isCourseOwner(userId, courseId);
+		if (!isOwner) {
+			return res.status(403).json({ success: false, message: 'Access denied' });
+		}
+
+		await canvasQueries.deleteCourseCanvasLink(courseId);
+
+		res.json({
+			success: true,
+			data: { connected: false },
+		});
+	} catch (error) {
+		console.error('Canvas unlink course error:', error);
+		res.status(500).json({ success: false, message: 'Failed to unlink Canvas course' });
+	}
+});
+
+/**
  * GET /api/courses/:courseId
  * Get a specific course
  */
@@ -204,6 +284,14 @@ router.get('/:courseId', async (req, res) => {
 				studentCount: parseInt(course.student_count) || 0,
 			}),
 		};
+
+		if (role === 'teacher' && isOwner) {
+			const canvasLink = await canvasQueries.getCourseCanvasLink(courseId);
+			const formattedCanvas = formatCourseCanvasLink(canvasLink);
+			if (formattedCanvas) {
+				formattedCourse.canvas = formattedCanvas;
+			}
+		}
 
 		res.json({
 			success: true,

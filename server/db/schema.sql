@@ -111,6 +111,47 @@ CREATE INDEX IF NOT EXISTS idx_quiz_attempts_quiz_id ON quiz_attempts(quiz_id);
 CREATE INDEX IF NOT EXISTS idx_quiz_attempts_student_id ON quiz_attempts(student_id);
 CREATE INDEX IF NOT EXISTS idx_submission_answers_submission_id ON submission_answers(submission_id);
 
+-- Canvas institutions (per-school Canvas install + developer key)
+CREATE TABLE IF NOT EXISTS canvas_institutions (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    base_url VARCHAR(512) NOT NULL,
+    client_id VARCHAR(255) NOT NULL,
+    client_secret VARCHAR(512) NOT NULL,
+    redirect_uri VARCHAR(512) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Teacher OAuth connections to Canvas
+CREATE TABLE IF NOT EXISTS teacher_canvas_connections (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    teacher_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    institution_id UUID NOT NULL REFERENCES canvas_institutions(id) ON DELETE CASCADE,
+    canvas_user_id BIGINT,
+    access_token TEXT NOT NULL,
+    refresh_token TEXT NOT NULL,
+    token_expires_at TIMESTAMP NOT NULL,
+    connected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(teacher_id, institution_id)
+);
+
+-- Links between Orchard courses and Canvas courses
+CREATE TABLE IF NOT EXISTS course_canvas_links (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    course_id UUID NOT NULL UNIQUE REFERENCES courses(id) ON DELETE CASCADE,
+    canvas_course_id BIGINT NOT NULL,
+    canvas_course_name VARCHAR(255) NOT NULL,
+    canvas_course_url VARCHAR(512) NOT NULL,
+    linked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_teacher_canvas_connections_teacher_id ON teacher_canvas_connections(teacher_id);
+CREATE INDEX IF NOT EXISTS idx_teacher_canvas_connections_institution_id ON teacher_canvas_connections(institution_id);
+CREATE INDEX IF NOT EXISTS idx_course_canvas_links_course_id ON course_canvas_links(course_id);
+
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -128,4 +169,13 @@ CREATE TRIGGER update_courses_updated_at BEFORE UPDATE ON courses
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_quizzes_updated_at BEFORE UPDATE ON quizzes
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_canvas_institutions_updated_at BEFORE UPDATE ON canvas_institutions
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_teacher_canvas_connections_updated_at BEFORE UPDATE ON teacher_canvas_connections
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_course_canvas_links_updated_at BEFORE UPDATE ON course_canvas_links
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
