@@ -216,6 +216,17 @@ export default function TeacherCoursePage() {
 		e.preventDefault();
 		e.stopPropagation();
 
+		if (currentPublished) {
+			const quizTitle = quizzes.find(quiz => quiz.id === quizId)?.title || 'this quiz';
+			if (
+				!window.confirm(
+					`Unpublish "${quizTitle}"? Students will no longer be able to access it until you publish again.`
+				)
+			) {
+				return;
+			}
+		}
+
 		try {
 			const updatedQuiz = await quizzesApi.updateQuiz(courseId, quizId, {
 				published: !currentPublished,
