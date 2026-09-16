@@ -1,0 +1,260 @@
+/* Auth pages share the marketing surface. Keep every rule under o-auth
+   so dashboard forms are untouched. */
+
+.o-auth {
+	position: relative;
+	overflow: hidden;
+	min-height: 100%;
+	padding-top: clamp(7.5rem, 12vh, 10rem);
+	padding-bottom: clamp(3.5rem, 7vw, 6rem);
+}
+
+.o-auth__rays {
+	top: -18%;
+	opacity: 0.5;
+}
+
+.o-auth__mark {
+	top: -120px;
+	right: -180px;
+}
+
+.o-auth__inner {
+	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+	gap: clamp(2.5rem, 6vw, 5.5rem);
+	align-items: start;
+}
+
+.o-auth__copy {
+	display: flex;
+	flex-direction: column;
+	gap: 1.15rem;
+	padding-top: 0.4rem;
+	max-width: 36rem;
+}
+
+.o-auth__title {
+	max-width: 14ch;
+}
+
+.o-auth__rule {
+	max-width: 280px;
+}
+
+.o-auth__facts {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 1.25rem 1.75rem;
+	margin: 1.4rem 0 0;
+	padding-top: 1.4rem;
+	border-top: 1px solid var(--o-line);
+}
+
+.o-auth__fact dt {
+	margin-bottom: 0.35rem;
+	color: var(--o-brass);
+}
+
+.o-auth__fact dd {
+	margin: 0;
+	font-size: 0.95rem;
+	color: var(--o-text);
+}
+
+.o-auth__card {
+	width: 100%;
+	padding: clamp(1.6rem, 3vw, 2.2rem);
+}
+
+.o-auth__form {
+	display: flex;
+	flex-direction: column;
+	gap: 1.2rem;
+}
+
+.o-auth__fields {
+	display: flex;
+	flex-direction: column;
+	gap: 1.05rem;
+}
+
+.o-auth__field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+
+.o-auth__label {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	font-size: 0.68rem;
+	letter-spacing: 0.22em;
+	text-transform: uppercase;
+	color: var(--o-text-faint);
+}
+
+.o-auth__input,
+.o-auth__select {
+	width: 100%;
+	padding: 0.85rem 0.95rem;
+	border: 1px solid var(--o-line-strong);
+	border-radius: 0;
+	background: var(--o-panel-2);
+	color: var(--o-text);
+	font-family: var(--font-body), 'Inter', sans-serif;
+	font-size: 0.95rem;
+	line-height: 1.4;
+	transition:
+		border-color 0.3s var(--o-ease),
+		box-shadow 0.3s var(--o-ease);
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.o-auth__input::placeholder {
+	color: var(--o-text-faint);
+}
+
+.o-auth__input:focus,
+.o-auth__select:focus {
+	outline: none;
+	border-color: var(--o-brass);
+	box-shadow: 0 0 0 3px var(--o-brass-veil);
+}
+
+.o-auth__input:-webkit-autofill,
+.o-auth__input:-webkit-autofill:hover,
+.o-auth__input:-webkit-autofill:focus {
+	-webkit-text-fill-color: var(--o-text);
+	-webkit-box-shadow: 0 0 0 1000px var(--o-panel-2) inset;
+	caret-color: var(--o-text);
+	transition: background-color 9999s ease-out;
+}
+
+.o-auth__select {
+	background-image: linear-gradient(45deg, transparent 50%, var(--o-brass) 50%),
+		linear-gradient(135deg, var(--o-brass) 50%, transparent 50%);
+	background-position:
+		calc(100% - 18px) 50%,
+		calc(100% - 12px) 50%;
+	background-size: 6px 6px, 6px 6px;
+	background-repeat: no-repeat;
+	padding-right: 2.2rem;
+	cursor: pointer;
+}
+
+.o-auth__hint {
+	margin: 0;
+	font-size: 0.78rem;
+	line-height: 1.5;
+	color: var(--o-text-faint);
+}
+
+.o-auth__error {
+	padding: 0.85rem 1rem;
+	background: color-mix(in srgb, var(--o-red) 8%, transparent);
+	border-left: 2px solid var(--o-red);
+}
+
+.o-auth__error p,
+.o-auth__error ul {
+	margin: 0;
+	font-size: 0.86rem;
+	line-height: 1.55;
+	color: var(--o-red);
+}
+
+.o-auth__error ul {
+	padding-left: 1.1rem;
+}
+
+[data-theme='dark'] .o-auth__error p,
+[data-theme='dark'] .o-auth__error ul {
+	color: #e8636a;
+}
+
+.o-auth__submit {
+	width: 100%;
+	margin-top: 0.15rem;
+}
+
+.o-auth__submitContent {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.7rem;
+}
+
+.o-auth__foot {
+	margin: 1.35rem 0 0;
+	padding-top: 1.2rem;
+	border-top: 1px solid var(--o-line);
+	text-align: center;
+}
+
+.o-auth__link {
+	color: var(--o-brass);
+	font-weight: 600;
+	text-decoration: none;
+	letter-spacing: 0.04em;
+}
+
+.o-auth__link:hover {
+	color: var(--o-brass-bright);
+}
+
+.o-auth__busy {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	min-height: 14rem;
+}
+
+.o-auth__spinner {
+	width: 1.15rem;
+	height: 1.15rem;
+	border: 1.5px solid var(--o-line-strong);
+	border-right-color: var(--o-brass);
+	animation: o-authSpin 0.7s linear infinite;
+}
+
+@keyframes o-authSpin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (max-width: 900px) {
+	.o-auth__inner {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 2.25rem;
+	}
+
+	.o-auth__copy {
+		max-width: none;
+	}
+
+	.o-auth__title {
+		max-width: 18ch;
+	}
+
+	.o-auth__card {
+		max-width: 32rem;
+	}
+}
+
+@media (max-width: 520px) {
+	.o-auth__facts {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.o-auth__spinner {
+		animation: none;
+		border-right-color: var(--o-line-strong);
+	}
+}

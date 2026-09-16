@@ -64,7 +64,7 @@ const Footer = () => (
 							<a href="mailto:bskandhasuhas@gmail.com">Skandha Suhas Badrinarayan</a>
 						</li>
 						<li>
-							<a href="mailto:jonnyjamesrice@gmail.com">Jonathan James Rice</a>
+							<a href="mailto:admin@orchardedu.com">Ethan Kusse</a>
 						</li>
 					</ul>
 				</div>

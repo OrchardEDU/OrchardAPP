@@ -5,7 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 /** Routes that render the art deco marketing surface. */
-const MARKETING_ROUTES = new Set(['/', '/how-it-works', '/demo']);
+const MARKETING_ROUTES = new Set(['/', '/how-it-works', '/demo', '/login', '/register']);
 
 interface ConditionalLayoutProps {
 	children: React.ReactNode;

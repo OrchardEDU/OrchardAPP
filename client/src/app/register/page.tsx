@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api/client';
 import { getDashboardUrl } from '@/lib/utils/dashboard';
 import { User } from '@/types/user';
-import './page.css';
+import AuthShell, { AuthSpin } from '@/components/marketing/auth/AuthShell';
 
 export default function RegisterPage() {
 	const [email, setEmail] = useState('');
@@ -20,17 +20,15 @@ export default function RegisterPage() {
 	const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 	const router = useRouter();
 
-	// Check if already authenticated
 	useEffect(() => {
 		const checkAuth = async () => {
 			try {
 				const response = await apiClient.get<{ user: User }>('/api/auth/me');
 				if (response.success && response.data?.user) {
-					// Already logged in, redirect to dashboard
 					router.push(getDashboardUrl(response.data.user));
 				}
-			} catch (error) {
-				// Not authenticated, show register page
+			} catch {
+				// Not authenticated — stay on the form.
 			} finally {
 				setIsCheckingAuth(false);
 			}
@@ -39,7 +37,6 @@ export default function RegisterPage() {
 		checkAuth();
 	}, [router]);
 
-	// Fetch auth config (demo mode flag)
 	useEffect(() => {
 		const loadConfig = async () => {
 			try {
@@ -71,200 +68,163 @@ export default function RegisterPage() {
 			});
 
 			if (response.success && response.data?.user) {
-				// Server handles session creation, redirect to dashboard
 				router.push(getDashboardUrl(response.data.user));
 				router.refresh();
+			} else if (response.errors && response.errors.length > 0) {
+				setError(response.errors.map((err: any) => err.msg || err.message).join(', '));
 			} else {
-				// Display validation errors or general error
-				if (response.errors && response.errors.length > 0) {
-					const errorMessages = response.errors.map((err: any) => err.msg || err.message).join(', ');
-					setError(errorMessages);
-				} else {
-					setError(response.error || 'Registration failed. Please check your information and try again.');
-				}
+				setError(
+					response.error ||
+						'Registration failed. Please check your information and try again.'
+				);
 			}
 		} catch (err: any) {
-			const errorMessage = err?.message || err?.error || 'An error occurred. Please try again.';
-			setError(errorMessage);
+			setError(err?.message || err?.error || 'An error occurred. Please try again.');
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	// Show loading state while checking auth
-	if (isCheckingAuth) {
-		return (
-			<div className="auth-loading">
-				<div className="auth-loading-text">Loading...</div>
-			</div>
-		);
-	}
-
 	return (
-		<div className="auth-container">
-			<div className="auth-card">
-				{/* Header */}
-				<div className="auth-header">
-					<h2 className="auth-title">
-						Create your account
-					</h2>
-					<p className="auth-subtitle">
-						Get started with Orchard today
-					</p>
-				</div>
+		<AuthShell
+			eyebrow="Pilot"
+			title="Request access"
+			lede="A departmental pilot connects a single course, indexes the material already in it, and is free for the first hundred students."
+			facts={[
+				{ label: 'Pilot', value: 'First 100 students free' },
+				{ label: 'Time to value', value: 'Under one hour' },
+			]}
+		>
+			{isCheckingAuth ? (
+				<AuthSpin label="Checking your session" />
+			) : (
+				<>
+					{error && (
+						<div className="o-auth__error" role="alert">
+							{error.includes(',') ? (
+								<ul>
+									{error.split(', ').map((err, idx) => (
+										<li key={idx}>{err.trim()}</li>
+									))}
+								</ul>
+							) : (
+								<p>{error}</p>
+							)}
+						</div>
+					)}
 
-				{/* Error Message */}
-				{error && (
-					<div className="auth-error">
-						{error.includes(',') ? (
-							<ul className="auth-error-text" style={{ listStyle: 'disc', listStylePosition: 'inside' }}>
-								{error.split(', ').map((err, idx) => (
-									<li key={idx}>{err.trim()}</li>
-								))}
-							</ul>
-						) : (
-							<p className="auth-error-text">{error}</p>
-						)}
-					</div>
-				)}
-
-				{/* Form */}
-				<form className="auth-form" onSubmit={handleSubmit}>
-					<div className="auth-form-fields">
-						<div className="auth-field">
-							<label htmlFor="name" className="auth-label">
-								Full Name
-							</label>
-							<input
-								id="name"
-								name="name"
-								type="text"
-								required
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								className="auth-input"
-								placeholder="John Doe"
-							/>
-						</div>
-						<div className="auth-field">
-							<label htmlFor="email" className="auth-label">
-								Email address
-							</label>
-							<input
-								id="email"
-								name="email"
-								type="email"
-								autoComplete="email"
-								required
-								value={email}
-								onChange={(e) => setEmail(e.target.value)}
-								className="auth-input"
-								placeholder="you@example.com"
-							/>
-						</div>
-						<div className="auth-field">
-							<label htmlFor="password" className="auth-label">
-								Password
-							</label>
-							<input
-								id="password"
-								name="password"
-								type="password"
-								autoComplete="new-password"
-								required
-								value={password}
-								onChange={(e) => setPassword(e.target.value)}
-								className="auth-input"
-								placeholder="Enter your password"
-							/>
-							<p className="auth-hint">
-								Password must be at least 8 characters
-							</p>
-						</div>
-						<div className="auth-field">
-							<label htmlFor="role" className="auth-label">
-								I am a:
-							</label>
-							<select
-								id="role"
-								name="role"
-								value={role}
-								onChange={(e) => setRole(e.target.value as 'student' | 'teacher')}
-								className="auth-select"
-							>
-								<option value="student">Student</option>
-								<option value="teacher">Teacher</option>
-							</select>
-						</div>
-						{demoMode && role === 'teacher' && (
-							<div className="auth-field">
-								<label htmlFor="demo-code" className="auth-label">
-									Demo access code
+					<form className="o-auth__form" onSubmit={handleSubmit}>
+						<div className="o-auth__fields">
+							<div className="o-auth__field">
+								<label htmlFor="name" className="o-auth__label">
+									Full name
 								</label>
 								<input
-									id="demo-code"
-									name="demo-code"
-									type="password"
-									required={demoMode && role === 'teacher'}
-									value={demoCode}
-									onChange={(e) => setDemoCode(e.target.value)}
-									className="auth-input"
-									placeholder="Enter demo access code"
+									id="name"
+									name="name"
+									type="text"
+									autoComplete="name"
+									required
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+									className="o-auth__input"
+									placeholder="Your name"
 								/>
-								<p className="auth-hint">
-									Ask the Orchard team for the current demo access code.
-								</p>
 							</div>
-						)}
-					</div>
+							<div className="o-auth__field">
+								<label htmlFor="email" className="o-auth__label">
+									Email address
+								</label>
+								<input
+									id="email"
+									name="email"
+									type="email"
+									autoComplete="email"
+									required
+									value={email}
+									onChange={(e) => setEmail(e.target.value)}
+									className="o-auth__input"
+									placeholder="you@institution.edu"
+								/>
+							</div>
+							<div className="o-auth__field">
+								<label htmlFor="password" className="o-auth__label">
+									Password
+								</label>
+								<input
+									id="password"
+									name="password"
+									type="password"
+									autoComplete="new-password"
+									required
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+									className="o-auth__input"
+									placeholder="At least 8 characters"
+								/>
+								<p className="o-auth__hint">Must be at least 8 characters.</p>
+							</div>
+							<div className="o-auth__field">
+								<label htmlFor="role" className="o-auth__label">
+									I am a
+								</label>
+								<select
+									id="role"
+									name="role"
+									value={role}
+									onChange={(e) => setRole(e.target.value as 'student' | 'teacher')}
+									className="o-auth__select"
+								>
+									<option value="student">Student</option>
+									<option value="teacher">Teacher</option>
+								</select>
+							</div>
+							{demoMode && role === 'teacher' && (
+								<div className="o-auth__field">
+									<label htmlFor="demo-code" className="o-auth__label">
+										Demo access code
+									</label>
+									<input
+										id="demo-code"
+										name="demo-code"
+										type="password"
+										required={demoMode && role === 'teacher'}
+										value={demoCode}
+										onChange={(e) => setDemoCode(e.target.value)}
+										className="o-auth__input"
+										placeholder="Enter demo access code"
+									/>
+									<p className="o-auth__hint">
+										Ask the Orchard team for the current demo access code.
+									</p>
+								</div>
+							)}
+						</div>
 
-					<div>
 						<button
 							type="submit"
 							disabled={isLoading}
-							className="auth-button"
+							className="o-btn o-btn--solid o-auth__submit"
 						>
 							{isLoading ? (
-								<span style={{ display: 'flex', alignItems: 'center' }}>
-									<svg
-										style={{ animation: 'spin 1s linear infinite', marginRight: '0.75rem', height: '1.25rem', width: '1.25rem' }}
-										xmlns="http://www.w3.org/2000/svg"
-										fill="none"
-										viewBox="0 0 24 24"
-									>
-										<circle
-											style={{ opacity: 0.25 }}
-											cx="12"
-											cy="12"
-											r="10"
-											stroke="currentColor"
-											strokeWidth="4"
-										></circle>
-										<path
-											style={{ opacity: 0.75 }}
-											fill="currentColor"
-											d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-										></path>
-									</svg>
-									Creating account...
+								<span className="o-auth__submitContent">
+									<span className="o-auth__spinner" aria-hidden="true" />
+									Creating account
 								</span>
 							) : (
-								'Create account'
+								'Request access'
 							)}
 						</button>
-					</div>
-				</form>
+					</form>
 
-				{/* Footer */}
-				<div className="auth-footer">
-					<p className="auth-footer-text">
-						Already have an account?{' '}
-						<Link href="/login" className="auth-link">
-							Sign in
+					<p className="o-small o-auth__foot">
+						Already have a seat?{' '}
+						<Link href="/login" className="o-auth__link">
+							Log in
 						</Link>
 					</p>
-				</div>
-			</div>
-		</div>
+				</>
+			)}
+		</AuthShell>
 	);
 }

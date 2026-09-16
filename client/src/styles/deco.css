@@ -306,6 +306,13 @@
 	outline-offset: 3px;
 }
 
+.o-btn:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
+	transform: none;
+	box-shadow: none;
+}
+
 .o-btn--solid {
 	background: var(--o-text);
 	color: var(--o-bg);

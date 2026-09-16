@@ -17,7 +17,7 @@ const NAV = [
 ];
 
 /** Marketing routes let the hero run beneath a transparent header. */
-const TRANSPARENT_ROUTES = new Set(NAV.map((item) => item.href));
+const TRANSPARENT_ROUTES = new Set([...NAV.map((item) => item.href), '/login', '/register']);
 
 const Header = () => {
 	const [scrolled, setScrolled] = useState(false);
