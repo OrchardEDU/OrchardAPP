@@ -1,0 +1,133 @@
+/* Ornament styles for the derived Orchard motif. */
+
+.o-rosette {
+	position: relative;
+	display: block;
+	flex: none;
+	width: var(--o-rosette-size, 320px);
+	max-width: 100%;
+	aspect-ratio: 1;
+}
+
+/* Declared here so it outranks the base .o-rosette position, which would
+   otherwise keep the watermark in flow and pad the header by its full height. */
+.o-rosette.o-watermark {
+	position: absolute;
+}
+
+.o-rosette__svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+
+.o-rosette__svg--spin .o-rosette__petals {
+	transform-origin: 100px 100px;
+	animation: o-spin 90s linear infinite;
+}
+
+.o-rosette__petal,
+.o-rosette__quadrant {
+	transform-box: fill-box;
+	opacity: 0;
+	transition:
+		opacity 0.7s var(--o-ease),
+		scale 0.9s var(--o-ease);
+}
+
+.o-rosette__petal {
+	scale: 0.2;
+	transform-origin: bottom center;
+	transition-delay: calc(240ms + var(--i) * 45ms);
+}
+
+.o-rosette__quadrant {
+	scale: 0.55;
+	transform-origin: center;
+	transition-delay: calc(var(--i) * 80ms);
+}
+
+.o-rosette.is-in .o-rosette__petal,
+.o-rosette.is-in .o-rosette__quadrant {
+	opacity: 1;
+	scale: 1;
+}
+
+.o-rosette__petal--ink {
+	fill: var(--o-text);
+}
+.o-rosette__petal--gold {
+	fill: var(--o-gold);
+}
+.o-rosette__petal--red {
+	fill: var(--o-red);
+}
+.o-rosette__petal--blue {
+	fill: var(--o-blue);
+}
+
+.o-rosette__quadrant--red {
+	fill: var(--o-red);
+}
+.o-rosette__quadrant--blue {
+	fill: var(--o-blue);
+}
+
+/* Deco divider ------------------------------------------------------------ */
+
+.o-decoRule {
+	display: flex;
+	align-items: center;
+	gap: 0.55rem;
+	width: 100%;
+	color: var(--o-brass);
+}
+
+.o-decoRule__line {
+	flex: 1;
+	height: 1px;
+	background: linear-gradient(90deg, transparent, currentColor 55%, currentColor);
+	opacity: 0.5;
+}
+
+.o-decoRule__line:last-child {
+	background: linear-gradient(270deg, transparent, currentColor 55%, currentColor);
+}
+
+.o-decoRule__lozenge {
+	width: 7px;
+	height: 7px;
+	background: currentColor;
+	rotate: 45deg;
+	opacity: 0.65;
+	flex: none;
+}
+
+.o-decoRule__pip {
+	width: 11px;
+	height: 11px;
+	border: 1px solid currentColor;
+	rotate: 45deg;
+	flex: none;
+}
+
+/* Chevron band ----------------------------------------------------------- */
+
+.o-chevrons {
+	display: block;
+	color: var(--o-brass);
+	opacity: 0.55;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.o-rosette__petal,
+	.o-rosette__quadrant {
+		opacity: 1;
+		scale: 1;
+		transition: none;
+	}
+
+	.o-rosette__svg--spin .o-rosette__petals {
+		animation: none;
+	}
+}

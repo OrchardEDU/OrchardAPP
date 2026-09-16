@@ -1,90 +1,354 @@
-.header {
+/* Orchard header — deco frame, transparent over marketing heroes. */
+
+.o-header {
 	position: fixed;
 	top: 0;
 	left: 0;
-	width: 100%;
+	right: 0;
 	z-index: 1000;
-	background-color: var(--bg-primary, #ffffff);
+	background: var(--o-bg, #f6f1e6);
 	transition:
-		background-color 0.3s ease,
-		box-shadow 0.3s ease;
-	padding: 1rem 0;
-	border-bottom: 1px solid var(--border-primary, rgba(0, 0, 0, 0.05));
-	box-shadow: var(--shadow-sm);
+		background-color 0.4s ease,
+		box-shadow 0.4s ease,
+		backdrop-filter 0.4s ease;
 }
 
-@media (prefers-color-scheme: dark) {
-	.header {
-		background-color: var(--bg-primary, #1a202c);
-		border-bottom-color: var(--border-primary, rgba(255, 255, 255, 0.1));
-	}
-}
-
-.header.scrolled {
-	background-color: var(--bg-primary, #ffffff);
-	box-shadow: var(--shadow-md);
-	padding: 0.5rem 0;
-}
-
-@media (prefers-color-scheme: dark) {
-	.header.scrolled {
-		background-color: var(--bg-primary, #1a202c);
-	}
-}
-
-.header-container {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	position: relative;
-}
-
-.logo {
+.o-header__inner {
+	width: 100%;
+	max-width: 1400px;
+	margin-inline: auto;
+	height: 80px;
+	padding-inline: clamp(1.1rem, 3.5vw, 2.5rem);
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
-	font-weight: 800;
-	font-size: 1.5rem;
-	color: var(--text-primary, var(--color-dark));
+	gap: 1.5rem;
+	transition: height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The brass hairline that underlines the whole bar */
+.o-header__rule {
+	height: 1px;
+	background: linear-gradient(
+		90deg,
+		transparent,
+		var(--o-brass-veil, rgba(157, 120, 35, 0.22)) 12%,
+		var(--o-brass-veil, rgba(157, 120, 35, 0.22)) 88%,
+		transparent
+	);
+	opacity: 1;
+	transition: opacity 0.4s ease;
+}
+
+/* Overlay mode: let the hero show through until the reader scrolls. */
+.o-header--overlay {
+	background: transparent;
+}
+
+.o-header--overlay .o-header__rule {
+	opacity: 0;
+}
+
+.o-header--overlay.is-scrolled,
+.o-header--overlay.is-open {
+	background: color-mix(in srgb, var(--o-bg, #f6f1e6) 88%, transparent);
+	backdrop-filter: saturate(140%) blur(14px);
+	-webkit-backdrop-filter: saturate(140%) blur(14px);
+	box-shadow: 0 12px 40px -30px rgba(0, 0, 0, 0.6);
+}
+
+.o-header--overlay.is-scrolled .o-header__rule,
+.o-header--overlay.is-open .o-header__rule {
+	opacity: 1;
+}
+
+.o-header--overlay.is-scrolled .o-header__inner {
+	height: 66px;
+}
+
+/* Wordmark ---------------------------------------------------------------- */
+
+.o-mark {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.7rem;
 	text-decoration: none;
+	flex: none;
+	margin-right: auto;
 }
 
-.logo img {
-	height: 40px;
-	width: auto;
+.o-mark__badge {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	flex: none;
+	transition: rotate 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-nav {
-	position: absolute;
-	left: 50%;
-	transform: translateX(-50%);
+.o-mark:hover .o-mark__badge {
+	rotate: 45deg;
 }
 
-nav ul {
+.o-mark__img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.o-mark__img--dark {
+	display: none;
+}
+
+[data-theme='dark'] .o-mark__img--light {
+	display: none;
+}
+
+[data-theme='dark'] .o-mark__img--dark {
+	display: block;
+}
+
+.o-mark__type {
 	display: flex;
+	align-items: baseline;
+	gap: 0.5rem;
+	line-height: 1;
+}
+
+.o-mark__name {
+	font-family: var(--font-display), Georgia, serif;
+	font-size: 1.5rem;
+	letter-spacing: 0.1em;
+	color: var(--o-text, #1b1610);
+	text-transform: uppercase;
+}
+
+.o-mark__sub {
+	position: relative;
+	padding-left: 0.55rem;
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-size: 0.6rem;
+	font-weight: 600;
+	letter-spacing: 0.3em;
+	text-transform: uppercase;
+	color: var(--o-brass, #9d7823);
+}
+
+.o-mark__sub::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: 50%;
+	translate: 0 -50%;
+	width: 1px;
+	height: 12px;
+	background: currentColor;
+	opacity: 0.6;
+}
+
+/* Navigation ------------------------------------------------------------- */
+
+.o-header__nav ul {
+	display: flex;
+	align-items: center;
+	gap: clamp(1.25rem, 2.6vw, 2.4rem);
 	list-style: none;
-	gap: 2rem;
 	margin: 0;
 	padding: 0;
 }
 
-nav a {
-	font-weight: 500;
-	color: var(--text-primary, var(--color-text));
+.o-navLink {
+	position: relative;
+	display: inline-block;
+	padding-block: 0.4rem;
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-size: 0.72rem;
+	font-weight: 600;
+	letter-spacing: 0.19em;
+	text-transform: uppercase;
+	color: var(--o-text-soft, #574d41);
 	text-decoration: none;
-	transition: color 0.2s;
+	transition: color 0.3s ease;
+	white-space: nowrap;
 }
 
-nav a:hover {
-	color: var(--accent-primary, var(--color-primary));
+.o-navLink::after {
+	content: '';
+	position: absolute;
+	left: 50%;
+	bottom: 0;
+	translate: -50% 0;
+	width: 0;
+	height: 1px;
+	background: var(--o-brass, #9d7823);
+	transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.header-actions {
+.o-navLink:hover {
+	color: var(--o-text, #1b1610);
+}
+
+.o-navLink:hover::after {
+	width: 100%;
+}
+
+.o-navLink.is-active {
+	color: var(--o-brass, #9d7823);
+}
+
+.o-navLink.is-active::after {
+	width: 100%;
+}
+
+/* Actions ---------------------------------------------------------------- */
+
+.o-header__actions {
 	display: flex;
-	gap: 1rem;
+	align-items: center;
+	gap: 0.7rem;
+	flex: none;
 }
 
-.btn-sm {
-	padding: 0.5rem 1rem;
-	font-size: 0.9rem;
+/* Reserves the auth buttons' width so the bar doesn't jump on resolve. */
+.o-header__placeholder {
+	display: block;
+	width: 232px;
+	height: 34px;
+}
+
+/* Burger ----------------------------------------------------------------- */
+
+.o-burger {
+	display: none;
+	flex-direction: column;
+	justify-content: center;
+	gap: 5px;
+	width: 40px;
+	height: 40px;
+	flex: none;
+	background: transparent;
+	border: 1px solid var(--o-line-strong, rgba(0, 0, 0, 0.2));
+	cursor: pointer;
+	padding: 0 10px;
+}
+
+.o-burger span {
+	display: block;
+	height: 1px;
+	width: 100%;
+	background: var(--o-text, #1b1610);
+	transition:
+		transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+		opacity 0.25s ease;
+}
+
+.is-open .o-burger span:nth-child(1) {
+	transform: translateY(6px) rotate(45deg);
+}
+
+.is-open .o-burger span:nth-child(2) {
+	opacity: 0;
+}
+
+.is-open .o-burger span:nth-child(3) {
+	transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Drawer ----------------------------------------------------------------- */
+
+.o-drawer {
+	display: none;
+	padding: 1.5rem clamp(1.1rem, 3.5vw, 2.5rem) 2.5rem;
+	background: var(--o-bg, #f6f1e6);
+	border-top: 1px solid var(--o-line, rgba(0, 0, 0, 0.12));
+	max-height: calc(100dvh - 80px);
+	overflow-y: auto;
+}
+
+.o-drawer ul {
+	list-style: none;
+	margin: 0 0 1.75rem;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+
+.o-drawer li {
+	border-bottom: 1px solid var(--o-line, rgba(0, 0, 0, 0.12));
+	opacity: 0;
+	transform: translateY(12px);
+	animation: o-drawerIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+	animation-delay: calc(var(--i) * 60ms + 60ms);
+}
+
+@keyframes o-drawerIn {
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+.o-drawer__link {
+	display: flex;
+	align-items: baseline;
+	gap: 1rem;
+	padding: 1.1rem 0;
+	font-family: var(--font-display), Georgia, serif;
+	font-size: 1.5rem;
+	letter-spacing: 0.03em;
+	color: var(--o-text, #1b1610);
+	text-decoration: none;
+}
+
+.o-drawer__index {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-size: 0.62rem;
+	font-weight: 600;
+	letter-spacing: 0.2em;
+	color: var(--o-brass, #9d7823);
+}
+
+.o-drawer__actions {
+	display: grid;
+	gap: 0.75rem;
+}
+
+/* Responsive ------------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+	.o-header__nav,
+	.o-header__actions .o-btn,
+	.o-header__placeholder {
+		display: none;
+	}
+
+	.o-burger {
+		display: flex;
+	}
+
+	.is-open .o-drawer {
+		display: block;
+	}
+}
+
+@media (max-width: 420px) {
+	.o-mark__sub {
+		display: none;
+	}
+
+	.o-mark__name {
+		font-size: 1.3rem;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.o-mark:hover .o-mark__badge {
+		rotate: none;
+	}
+
+	.o-drawer li {
+		opacity: 1;
+		transform: none;
+		animation: none;
+	}
 }

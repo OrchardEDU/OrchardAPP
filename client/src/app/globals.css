@@ -11,7 +11,7 @@
 	--color-text: #333333;
 	--color-text-light: #757575;
 
-	--font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+	--font-family: var(--font-body), 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
 
 	--spacing-xs: 0.5rem;
 	--spacing-sm: 1rem;
@@ -33,15 +33,16 @@
 	box-sizing: border-box;
 }
 
-html,
-body {
+/* The root element owns the viewport scroll. Keeping overflow off <body> means
+   window.scrollY tracks the page, which fixed-position UI depends on; dashboard
+   sections still manage their own inner scroll. */
+html {
 	height: 100%;
-	/* Allow page scrolling globally; dashboard sections manage their own scroll */
 	overflow-x: hidden;
-	overflow-y: auto;
 }
 
 body {
+	min-height: 100%;
 	font-family: var(
 		--font-family,
 		-apple-system,
@@ -123,7 +124,7 @@ h3,
 h4,
 h5,
 h6 {
-	color: var(--color-dark);
+	color: var(--text-primary, var(--color-dark));
 	line-height: 1.2;
 	margin-bottom: var(--spacing-sm);
 }

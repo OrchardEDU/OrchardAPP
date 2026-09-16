@@ -1,0 +1,1458 @@
+/* ==========================================================================
+   Demo — recording frame, transport, and the mock product UI.
+
+   The mock sizes itself from container units so the "screen" scales as one
+   piece, the way a real recording would, instead of reflowing at every width.
+   ========================================================================== */
+
+.o-player {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 280px;
+	grid-template-areas:
+		'stage chapters'
+		'caption chapters';
+	gap: clamp(1.25rem, 2.5vw, 2rem);
+	align-items: start;
+}
+
+.o-player:focus-visible {
+	outline: 2px solid var(--o-brass);
+	outline-offset: 8px;
+}
+
+.o-player__stage {
+	grid-area: stage;
+	background: var(--o-panel);
+	border: 1px solid var(--o-line-strong);
+	box-shadow: var(--o-shadow);
+}
+
+/* Recording chrome ------------------------------------------------------- */
+
+.o-player__chrome {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.7rem 0.9rem;
+	border-bottom: 1px solid var(--o-line);
+	background: var(--o-panel-2);
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-size: 0.66rem;
+	font-weight: 600;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--o-text-faint);
+}
+
+.o-player__rec {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	color: var(--o-red);
+	flex: none;
+}
+
+[data-theme='dark'] .o-player__rec {
+	color: #e8636a;
+}
+
+.o-player__rec i {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+	opacity: 0.35;
+}
+
+.o-player__rec i.is-live {
+	opacity: 1;
+	animation: o-recBlink 1.6s ease-in-out infinite;
+}
+
+@keyframes o-recBlink {
+	50% {
+		opacity: 0.25;
+	}
+}
+
+.o-player__url {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	letter-spacing: 0.08em;
+	text-transform: none;
+	font-family: var(--font-body), 'Inter', sans-serif;
+	font-weight: 400;
+	padding: 0.28rem 0.7rem;
+	background: var(--o-panel);
+	border: 1px solid var(--o-line);
+	color: var(--o-text-soft);
+}
+
+.o-player__time {
+	flex: none;
+	font-variant-numeric: tabular-nums;
+	color: var(--o-brass);
+}
+
+/* Viewport --------------------------------------------------------------- */
+
+.o-player__viewport {
+	position: relative;
+	aspect-ratio: 16 / 9;
+	overflow: hidden;
+	background: var(--o-bg);
+	container-type: inline-size;
+}
+
+/* Synthetic pointer ----------------------------------------------------- */
+
+.o-player__pointer {
+	position: absolute;
+	width: 15px;
+	height: 19px;
+	translate: -2px -2px;
+	pointer-events: none;
+	z-index: 5;
+	transition:
+		left 0.75s cubic-bezier(0.32, 0.72, 0.24, 1),
+		top 0.75s cubic-bezier(0.32, 0.72, 0.24, 1);
+	filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+}
+
+.o-player__pointer svg {
+	width: 100%;
+	height: 100%;
+	fill: #fff;
+	stroke: #14110c;
+	stroke-width: 1.1;
+}
+
+[data-theme='dark'] .o-player__pointer svg {
+	fill: #f6efe2;
+}
+
+/* Click ripple */
+.o-player__pointer::after {
+	content: '';
+	position: absolute;
+	left: -11px;
+	top: -11px;
+	width: 32px;
+	height: 32px;
+	border: 1px solid var(--o-brass);
+	border-radius: 50%;
+	opacity: 0;
+}
+
+.o-player__pointer.is-clicking::after {
+	animation: o-pulse-ring 0.45s ease-out;
+}
+
+/* Poster --------------------------------------------------------------- */
+
+.o-player__poster {
+	position: absolute;
+	inset: 0;
+	z-index: 6;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	background: color-mix(in srgb, var(--o-deep) 82%, transparent);
+	backdrop-filter: blur(3px);
+	border: 0;
+	color: #f5efe3;
+	cursor: pointer;
+}
+
+.o-player__posterIcon {
+	display: grid;
+	place-items: center;
+	width: 62px;
+	height: 62px;
+	font-size: 1.1rem;
+	color: var(--o-gold);
+	border: 1px solid var(--o-gold);
+	position: relative;
+	transition: scale 0.35s var(--o-ease);
+}
+
+.o-player__posterIcon::before {
+	content: '';
+	position: absolute;
+	inset: 5px;
+	border: 1px solid color-mix(in srgb, var(--o-gold) 45%, transparent);
+}
+
+.o-player__poster:hover .o-player__posterIcon {
+	scale: 1.06;
+}
+
+/* Transport ------------------------------------------------------------ */
+
+.o-player__transport {
+	display: flex;
+	align-items: center;
+	gap: 0.7rem;
+	padding: 0.75rem 0.9rem;
+	border-top: 1px solid var(--o-line);
+	background: var(--o-panel-2);
+}
+
+.o-player__control {
+	width: 32px;
+	height: 32px;
+	flex: none;
+	display: grid;
+	place-items: center;
+	background: transparent;
+	border: 1px solid var(--o-line-strong);
+	color: var(--o-text);
+	font-size: 0.72rem;
+	cursor: pointer;
+	transition:
+		border-color 0.3s ease,
+		color 0.3s ease;
+}
+
+.o-player__control:hover {
+	border-color: var(--o-brass);
+	color: var(--o-brass);
+}
+
+.o-player__control--speed {
+	width: auto;
+	padding-inline: 0.6rem;
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	font-size: 0.66rem;
+}
+
+.o-player__scrub {
+	display: flex;
+	align-items: stretch;
+	gap: 3px;
+	flex: 1;
+	min-width: 0;
+	height: 30px;
+}
+
+.o-player__seg {
+	position: relative;
+	flex-basis: 0;
+	min-width: 0;
+	padding: 0;
+	background: var(--o-panel);
+	border: 1px solid var(--o-line);
+	cursor: pointer;
+	overflow: hidden;
+	transition: border-color 0.3s ease;
+}
+
+.o-player__seg:hover {
+	border-color: var(--o-brass);
+}
+
+.o-player__segFill {
+	position: absolute;
+	inset: 0 auto 0 0;
+	width: 0;
+	background: linear-gradient(90deg, var(--o-brass), var(--o-brass-bright));
+	transition: width 0.12s linear;
+}
+
+.o-player__seg.is-done .o-player__segFill {
+	width: 100%;
+	opacity: 0.5;
+}
+
+.o-player__seg.is-current {
+	border-color: var(--o-brass);
+}
+
+/* Chapter list --------------------------------------------------------- */
+
+.o-player__chapters {
+	grid-area: chapters;
+	position: sticky;
+	top: 110px;
+	border: 1px solid var(--o-line);
+	background: var(--o-panel);
+	padding: 1.15rem 0.5rem 1.15rem 1.15rem;
+}
+
+.o-player__chaptersTitle {
+	color: var(--o-brass);
+	display: block;
+	margin-bottom: 0.9rem;
+}
+
+.o-player__chapters ol {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.o-player__chapter {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: baseline;
+	gap: 0.65rem;
+	width: 100%;
+	padding: 0.55rem 0.5rem 0.55rem 0;
+	background: transparent;
+	border: 0;
+	border-left: 1px solid var(--o-line);
+	padding-left: 0.85rem;
+	margin-left: 0.25rem;
+	text-align: left;
+	cursor: pointer;
+	color: var(--o-text-soft);
+	transition:
+		color 0.3s ease,
+		border-color 0.3s ease;
+}
+
+.o-player__chapter:hover {
+	color: var(--o-text);
+	border-color: var(--o-brass-veil);
+}
+
+.o-player__chapter.is-current {
+	color: var(--o-brass);
+	border-color: var(--o-brass);
+}
+
+.o-player__chapterIndex,
+.o-player__chapterTime {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-size: 0.6rem;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	color: var(--o-text-faint);
+	font-variant-numeric: tabular-nums;
+}
+
+.o-player__chapter.is-current .o-player__chapterIndex {
+	color: var(--o-brass);
+}
+
+.o-player__chapterLabel {
+	font-size: 0.87rem;
+	line-height: 1.35;
+}
+
+/* Caption ------------------------------------------------------------- */
+
+.o-player__caption {
+	grid-area: caption;
+	padding-top: 0.35rem;
+}
+
+.o-player__captionLabel {
+	color: var(--o-brass);
+	display: block;
+	margin-bottom: 0.6rem;
+}
+
+.o-player__captionText {
+	max-width: 62ch;
+	animation: o-captionIn 0.5s var(--o-ease);
+}
+
+@keyframes o-captionIn {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
+/* ==========================================================================
+   Mock product UI
+   ========================================================================== */
+
+.o-mock {
+	/* Sized in container units so the whole mock scales as one piece. The px
+	   value is the fallback where container units aren't supported. */
+	--u: 15px;
+	--u: 1.85cqw;
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	font-size: calc(var(--u) * 0.95);
+	line-height: 1.45;
+	color: var(--o-text);
+	background: var(--o-bg);
+}
+
+.o-mockGlyph {
+	width: calc(var(--u) * 1.4);
+	height: calc(var(--u) * 1.4);
+	flex: none;
+	background:
+		linear-gradient(var(--o-red), var(--o-red)) 0 0 / 50% 50% no-repeat,
+		linear-gradient(var(--o-blue), var(--o-blue)) 100% 0 / 50% 50% no-repeat,
+		linear-gradient(var(--o-blue), var(--o-blue)) 0 100% / 50% 50% no-repeat,
+		linear-gradient(var(--o-red), var(--o-red)) 100% 100% / 50% 50% no-repeat;
+}
+
+.o-mock__bar {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--u) * 0.85);
+	padding: calc(var(--u) * 0.85) calc(var(--u) * 1.4);
+	border-bottom: 1px solid var(--o-line);
+	background: var(--o-panel);
+	flex: none;
+}
+
+.o-mock__crumb {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	font-size: calc(var(--u) * 0.72);
+	color: var(--o-text-soft);
+}
+
+.o-mock__spacer {
+	flex: 1;
+}
+
+.o-mock__role {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	font-size: calc(var(--u) * 0.66);
+	color: var(--o-brass);
+}
+
+.o-mock__avatar {
+	display: grid;
+	place-items: center;
+	width: calc(var(--u) * 1.9);
+	height: calc(var(--u) * 1.9);
+	flex: none;
+	background: var(--o-text);
+	color: var(--o-bg);
+	font-size: calc(var(--u) * 0.7);
+	letter-spacing: 0.04em;
+}
+
+.o-mock__body {
+	flex: 1;
+	min-height: 0;
+	padding: calc(var(--u) * 1.25);
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--u) * 0.8);
+	overflow: hidden;
+}
+
+.o-mock__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: calc(var(--u) * 1.2);
+	padding-bottom: calc(var(--u) * 0.7);
+	border-bottom: 1px solid var(--o-line);
+	flex: none;
+}
+
+.o-mock__head h4 {
+	margin: 0;
+	font-family: var(--font-display), Georgia, serif;
+	font-weight: 400;
+	font-size: calc(var(--u) * 1.55);
+	letter-spacing: 0.02em;
+	color: var(--o-text);
+	line-height: 1.1;
+}
+
+.o-mock__meta {
+	font-size: calc(var(--u) * 0.78);
+	color: var(--o-text-faint);
+}
+
+.o-mock__label {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.15em;
+	text-transform: uppercase;
+	font-size: calc(var(--u) * 0.66);
+	color: var(--o-text-faint);
+	display: flex;
+	align-items: center;
+	gap: calc(var(--u) * 0.7);
+}
+
+.o-mock__clock {
+	font-variant-numeric: tabular-nums;
+	font-size: calc(var(--u) * 0.85);
+	color: var(--o-red);
+	letter-spacing: 0.06em;
+}
+
+[data-theme='dark'] .o-mock__clock {
+	color: #e8636a;
+}
+
+/* Cards ---------------------------------------------------------------- */
+
+.o-mock__grid {
+	display: grid;
+	gap: calc(var(--u) * 0.85);
+}
+
+.o-mock__grid--4 {
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.o-mock__card {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--u) * 0.4);
+	padding: calc(var(--u) * 1.1);
+	background: var(--o-panel);
+	border: 1px solid var(--o-line);
+	min-height: calc(var(--u) * 7);
+}
+
+.o-mock__cardCode {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	font-size: calc(var(--u) * 0.72);
+	color: var(--o-brass);
+}
+
+.o-mock__cardName {
+	font-size: calc(var(--u) * 0.94);
+	color: var(--o-text);
+	line-height: 1.3;
+}
+
+.o-mock__cardMeta {
+	margin-top: auto;
+	font-size: calc(var(--u) * 0.74);
+	color: var(--o-text-faint);
+}
+
+.o-mock__card--new {
+	align-items: center;
+	justify-content: center;
+	border-style: dashed;
+	background: transparent;
+	color: var(--o-text-faint);
+	transition:
+		border-color 0.35s ease,
+		background-color 0.35s ease,
+		color 0.35s ease;
+}
+
+.o-mock__plus {
+	font-size: calc(var(--u) * 1.7);
+	line-height: 1;
+	color: var(--o-brass);
+}
+
+/* Hover/target highlight used by the scripted pointer */
+.is-hot {
+	border-color: var(--o-brass) !important;
+	background: color-mix(in srgb, var(--o-brass) 12%, transparent) !important;
+	color: var(--o-text) !important;
+}
+
+/* Forms --------------------------------------------------------------- */
+
+.o-mock__form {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: calc(var(--u) * 0.85);
+	flex: none;
+}
+
+.o-mock__field {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--u) * 0.42);
+	min-width: 0;
+}
+
+.o-mock__field--wide {
+	grid-column: span 3;
+}
+
+/* Keeps a long first field on the same row as its two short neighbours, so the
+   panels below it get the vertical space they need. */
+.o-mock__form--lead {
+	grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.o-mock__input {
+	display: flex;
+	align-items: center;
+	min-height: calc(var(--u) * 2.5);
+	padding: calc(var(--u) * 0.45) calc(var(--u) * 0.7);
+	background: var(--o-panel);
+	border: 1px solid var(--o-line);
+	border-bottom-color: var(--o-line-strong);
+	font-size: calc(var(--u) * 0.92);
+	color: var(--o-text);
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.o-mock__caret {
+	display: inline-block;
+	width: 1px;
+	height: calc(var(--u) * 1.1);
+	margin-left: 2px;
+	background: var(--o-brass);
+	animation: o-blink 1s steps(1) infinite;
+	flex: none;
+}
+
+.o-mock__actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: calc(var(--u) * 0.7);
+	margin-top: auto;
+	flex: none;
+}
+
+.o-mock__actions--start {
+	justify-content: flex-start;
+	margin-top: 0;
+}
+
+.o-mock__btn {
+	display: inline-flex;
+	align-items: center;
+	padding: calc(var(--u) * 0.55) calc(var(--u) * 1.15);
+	background: var(--o-text);
+	color: var(--o-bg);
+	border: 1px solid var(--o-text);
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	font-size: calc(var(--u) * 0.68);
+	white-space: nowrap;
+	transition:
+		background-color 0.3s ease,
+		border-color 0.3s ease,
+		color 0.3s ease;
+}
+
+.o-mock__btn--ghost {
+	background: transparent;
+	color: var(--o-text-soft);
+	border-color: var(--o-line-strong);
+}
+
+.o-mock__btn.is-hot {
+	background: var(--o-brass) !important;
+	border-color: var(--o-brass) !important;
+	color: #17120a !important;
+}
+
+/* Notices, toasts ----------------------------------------------------- */
+
+.o-mock__notice {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--u) * 0.32);
+	padding: calc(var(--u) * 1) calc(var(--u) * 1.15);
+	background: color-mix(in srgb, var(--o-brass) 9%, transparent);
+	border-left: 2px solid var(--o-brass);
+	opacity: 0;
+	transform: translateY(calc(var(--u) * 0.5));
+	transition:
+		opacity 0.45s var(--o-ease),
+		transform 0.45s var(--o-ease);
+	flex: none;
+}
+
+.o-mock__notice.is-in {
+	opacity: 1;
+	transform: none;
+}
+
+.o-mock__code {
+	font-family: var(--font-display), Georgia, serif;
+	font-size: calc(var(--u) * 1.35);
+	letter-spacing: 0.1em;
+	color: var(--o-text);
+}
+
+/* Bottom-left, so it never sits on top of the action buttons. */
+.o-mock__toast {
+	position: absolute;
+	left: calc(var(--u) * 1.5);
+	bottom: calc(var(--u) * 1.5);
+	padding: calc(var(--u) * 0.8) calc(var(--u) * 1.2);
+	background: var(--o-deep);
+	color: #f5efe3;
+	border-left: 2px solid var(--o-gold);
+	font-size: calc(var(--u) * 0.85);
+	opacity: 0;
+	transform: translateY(calc(var(--u) * 0.8));
+	transition:
+		opacity 0.4s var(--o-ease),
+		transform 0.4s var(--o-ease);
+}
+
+.o-mock__toast.is-in {
+	opacity: 1;
+	transform: none;
+}
+
+/* Split layout ------------------------------------------------------- */
+
+.o-mock__split {
+	display: grid;
+	grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+	gap: calc(var(--u) * 0.9);
+	flex: 1;
+	min-height: 0;
+}
+
+.o-mock__panel {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--u) * 0.45);
+	padding: calc(var(--u) * 0.85);
+	background: var(--o-panel);
+	border: 1px solid var(--o-line);
+	min-width: 0;
+	overflow: hidden;
+}
+
+.o-mock__panel--flush {
+	gap: calc(var(--u) * 0.28);
+}
+
+/* Files -------------------------------------------------------------- */
+
+.o-mock__files {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--u) * 0.55);
+	min-width: 0;
+}
+
+.o-mock__drop {
+	display: grid;
+	place-items: center;
+	padding: calc(var(--u) * 1.5);
+	border: 1px dashed var(--o-line-strong);
+	color: var(--o-text-faint);
+	font-size: calc(var(--u) * 0.82);
+	transition:
+		border-color 0.35s ease,
+		background-color 0.35s ease;
+}
+
+.o-mock__file {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-areas:
+		'name size'
+		'track stage';
+	align-items: center;
+	gap: calc(var(--u) * 0.3) calc(var(--u) * 0.7);
+	padding: calc(var(--u) * 0.7) calc(var(--u) * 0.9);
+	background: var(--o-panel);
+	border: 1px solid var(--o-line);
+	animation: o-fileIn 0.4s var(--o-ease);
+}
+
+@keyframes o-fileIn {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
+.o-mock__fileName {
+	grid-area: name;
+	font-size: calc(var(--u) * 0.86);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.o-mock__fileSize {
+	grid-area: size;
+	font-size: calc(var(--u) * 0.72);
+	color: var(--o-text-faint);
+}
+
+/* The track and stage classes are reused outside the file row (concept bars,
+   chunk rows), so their placement stays scoped to the named grid that owns it. */
+.o-mock__file .o-mock__track {
+	grid-area: track;
+}
+
+.o-mock__file .o-mock__stage {
+	grid-area: stage;
+}
+
+.o-mock__track {
+	position: relative;
+	height: calc(var(--u) * 0.42);
+	background: var(--o-panel-2);
+	border: 1px solid var(--o-line);
+	min-width: calc(var(--u) * 4);
+	flex: 1;
+}
+
+.o-mock__track--thin {
+	height: calc(var(--u) * 0.3);
+	margin-left: auto;
+	max-width: calc(var(--u) * 7);
+}
+
+.o-mock__fill {
+	position: absolute;
+	inset: 0 auto 0 0;
+	background: linear-gradient(90deg, var(--o-brass), var(--o-brass-bright));
+	transition: width 0.5s var(--o-ease);
+}
+
+.o-mock__stage {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.13em;
+	text-transform: uppercase;
+	font-size: calc(var(--u) * 0.63);
+	color: var(--o-text-faint);
+	white-space: nowrap;
+}
+
+.o-mock__stage.is-done {
+	color: var(--o-brass);
+}
+
+/* Vector panel ------------------------------------------------------- */
+
+.o-mock__collection {
+	font-family: var(--font-body), 'Inter', sans-serif;
+	font-size: calc(var(--u) * 0.82);
+	color: var(--o-text-soft);
+	letter-spacing: 0.04em;
+}
+
+.o-mock__bigNumber {
+	font-family: var(--font-display), Georgia, serif;
+	font-size: calc(var(--u) * 3.4);
+	line-height: 1;
+	color: var(--o-brass);
+	font-variant-numeric: tabular-nums;
+}
+
+.o-mock__specks {
+	display: grid;
+	grid-template-columns: repeat(8, 1fr);
+	gap: calc(var(--u) * 0.28);
+	margin: calc(var(--u) * 0.6) 0;
+}
+
+.o-mock__speck {
+	aspect-ratio: 1;
+	background: var(--o-line);
+	transition: background-color 0.4s ease;
+}
+
+.o-mock__speck.is-on {
+	background: var(--o-brass);
+}
+
+/* Retrieval + generation --------------------------------------------- */
+
+.o-mock__chunk {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: calc(var(--u) * 0.7);
+	padding: calc(var(--u) * 0.38) calc(var(--u) * 0.7);
+	background: var(--o-bg);
+	border-left: 2px solid var(--o-brass);
+	opacity: 0;
+	transform: translateX(calc(var(--u) * -0.5));
+	transition:
+		opacity 0.35s var(--o-ease),
+		transform 0.35s var(--o-ease);
+}
+
+.o-mock__chunk.is-in {
+	opacity: 1;
+	transform: none;
+}
+
+.o-mock__chunkSource {
+	font-size: calc(var(--u) * 0.76);
+	color: var(--o-text-soft);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.o-mock__chunkScore {
+	font-variant-numeric: tabular-nums;
+	font-size: calc(var(--u) * 0.78);
+	color: var(--o-brass);
+	flex: none;
+}
+
+.o-mock__question {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: calc(var(--u) * 0.7);
+	padding: calc(var(--u) * 0.45) 0;
+	opacity: 0;
+	transform: translateY(calc(var(--u) * 0.5));
+	transition:
+		opacity 0.4s var(--o-ease),
+		transform 0.4s var(--o-ease);
+}
+
+.o-mock__question.is-in {
+	opacity: 1;
+	transform: none;
+}
+
+.o-mock__question--full {
+	padding: calc(var(--u) * 1.05);
+	background: var(--o-panel);
+	border: 1px solid var(--o-line);
+	flex: none;
+}
+
+/* The student's question is the whole screen at that point in the script, so it
+   takes the leftover height and stacks its options rather than pairing them. */
+.o-mock__question--tall {
+	flex: 1 1 auto;
+}
+
+.o-mock__question--tall > div {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+.o-mock__question--tall .o-mock__options {
+	grid-template-columns: minmax(0, 1fr);
+	flex: 1 1 auto;
+	align-content: space-evenly;
+}
+
+.o-mock__qIndex {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	font-size: calc(var(--u) * 0.68);
+	color: var(--o-brass);
+	padding-top: calc(var(--u) * 0.2);
+}
+
+.o-mock__qText {
+	margin: 0;
+	font-size: calc(var(--u) * 0.92);
+	line-height: 1.45;
+	color: var(--o-text);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.o-mock__question--full .o-mock__qText {
+	white-space: normal;
+	font-size: calc(var(--u) * 1);
+	margin-bottom: calc(var(--u) * 0.8);
+}
+
+.o-mock__options {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: calc(var(--u) * 0.5);
+}
+
+.o-mock__option {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: calc(var(--u) * 0.6);
+	padding: calc(var(--u) * 0.55) calc(var(--u) * 0.7);
+	background: var(--o-bg);
+	border: 1px solid var(--o-line);
+	font-size: calc(var(--u) * 0.84);
+	color: var(--o-text-soft);
+	transition:
+		border-color 0.35s ease,
+		background-color 0.35s ease,
+		color 0.35s ease;
+}
+
+.o-mock__option i {
+	display: grid;
+	place-items: center;
+	width: calc(var(--u) * 1.5);
+	height: calc(var(--u) * 1.5);
+	flex: none;
+	font-style: normal;
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	font-size: calc(var(--u) * 0.7);
+	border: 1px solid var(--o-line-strong);
+	color: var(--o-text-faint);
+}
+
+.o-mock__option.is-correct,
+.o-mock__option.is-picked {
+	border-color: var(--o-brass);
+	background: color-mix(in srgb, var(--o-brass) 11%, transparent);
+	color: var(--o-text);
+}
+
+.o-mock__option.is-correct i,
+.o-mock__option.is-picked i {
+	border-color: var(--o-brass);
+	background: var(--o-brass);
+	color: #17120a;
+}
+
+.o-mock__key {
+	margin-left: auto;
+	font-style: normal;
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	font-size: calc(var(--u) * 0.6);
+	color: var(--o-brass);
+	white-space: nowrap;
+}
+
+.o-mock__trace {
+	margin: calc(var(--u) * 0.75) 0 0;
+	font-size: calc(var(--u) * 0.72);
+	color: var(--o-text-faint);
+	letter-spacing: 0.04em;
+}
+
+/* Toggle ------------------------------------------------------------- */
+
+.o-mock__toggleRow {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--u) * 0.8);
+	padding: calc(var(--u) * 0.3) 0;
+	flex: none;
+}
+
+.o-mock__toggle {
+	position: relative;
+	width: calc(var(--u) * 2.4);
+	height: calc(var(--u) * 1.2);
+	flex: none;
+	background: var(--o-panel-2);
+	border: 1px solid var(--o-line-strong);
+	transition:
+		background-color 0.35s ease,
+		border-color 0.35s ease;
+}
+
+.o-mock__toggle i {
+	position: absolute;
+	top: 1px;
+	left: 1px;
+	width: calc(var(--u) * 1);
+	height: calc(var(--u) * 1);
+	background: var(--o-text-faint);
+	transition:
+		translate 0.35s var(--o-ease),
+		background-color 0.35s ease;
+}
+
+.o-mock__toggle.is-on {
+	background: color-mix(in srgb, var(--o-brass) 22%, transparent);
+	border-color: var(--o-brass);
+}
+
+.o-mock__toggle.is-on i {
+	translate: calc(var(--u) * 1.2) 0;
+	background: var(--o-brass);
+}
+
+/* Student flow ------------------------------------------------------- */
+
+.o-mock__assignments {
+	opacity: 0;
+	transform: translateY(calc(var(--u) * 0.6));
+	transition:
+		opacity 0.45s var(--o-ease),
+		transform 0.45s var(--o-ease);
+	flex: none;
+}
+
+.o-mock__assignments.is-in {
+	opacity: 1;
+	transform: none;
+}
+
+.o-mock__assignment {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--u) * 1);
+	padding: calc(var(--u) * 0.9) calc(var(--u) * 1.05);
+	background: var(--o-panel);
+	border: 1px solid var(--o-line);
+}
+
+.o-mock__assignmentName {
+	font-size: calc(var(--u) * 1) ;
+	color: var(--o-text);
+}
+
+.o-mock__assignment .o-mock__meta {
+	margin-right: auto;
+}
+
+.o-mock__dots {
+	display: flex;
+	gap: calc(var(--u) * 0.35);
+	flex: none;
+}
+
+.o-mock__dot {
+	width: calc(var(--u) * 1.5);
+	height: calc(var(--u) * 0.28);
+	background: var(--o-line);
+	transition: background-color 0.4s ease;
+}
+
+.o-mock__dot.is-on {
+	background: var(--o-brass);
+}
+
+/* Results ------------------------------------------------------------ */
+
+.o-mock__score {
+	display: flex;
+	align-items: center;
+	gap: calc(var(--u) * 1.5);
+	padding: calc(var(--u) * 1.05);
+	background: var(--o-panel);
+	border: 1px solid var(--o-line);
+	flex: none;
+}
+
+.o-mock__ring {
+	position: relative;
+	display: grid;
+	place-items: center;
+	width: calc(var(--u) * 6);
+	height: calc(var(--u) * 6);
+	flex: none;
+	border-radius: 50%;
+	background: conic-gradient(
+		var(--o-brass) 0 var(--p),
+		var(--o-line) var(--p) 100%
+	);
+}
+
+.o-mock__ring::before {
+	content: '';
+	position: absolute;
+	inset: calc(var(--u) * 0.5);
+	border-radius: 50%;
+	background: var(--o-panel);
+}
+
+.o-mock__ring span {
+	position: relative;
+	font-family: var(--font-display), Georgia, serif;
+	font-size: calc(var(--u) * 1.5);
+	color: var(--o-text);
+	font-variant-numeric: tabular-nums;
+}
+
+.o-mock__score p {
+	margin: calc(var(--u) * 0.4) 0 0;
+	max-width: 46ch;
+}
+
+.o-mock__feedback {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--u) * 0.4);
+	min-height: 0;
+	overflow: hidden;
+}
+
+.o-mock__fbRow {
+	display: grid;
+	grid-template-columns: auto auto minmax(0, 1fr);
+	align-items: baseline;
+	gap: calc(var(--u) * 0.7);
+	padding: calc(var(--u) * 0.55) calc(var(--u) * 0.8);
+	background: var(--o-panel);
+	border-left: 2px solid var(--o-brass);
+	opacity: 0;
+	transform: translateX(calc(var(--u) * -0.4));
+	transition:
+		opacity 0.35s var(--o-ease),
+		transform 0.35s var(--o-ease);
+}
+
+.o-mock__fbRow.is-in {
+	opacity: 1;
+	transform: none;
+}
+
+.o-mock__fbRow.is-wrong {
+	border-left-color: var(--o-red);
+	background: color-mix(in srgb, var(--o-red) 8%, var(--o-panel));
+}
+
+.o-mock__fbMark {
+	color: var(--o-brass);
+	font-size: calc(var(--u) * 0.9);
+}
+
+.o-mock__fbRow.is-wrong .o-mock__fbMark {
+	color: var(--o-red);
+}
+
+[data-theme='dark'] .o-mock__fbRow.is-wrong .o-mock__fbMark {
+	color: #e8636a;
+}
+
+.o-mock__fbNote {
+	font-size: calc(var(--u) * 0.8);
+	color: var(--o-text-soft);
+	line-height: 1.4;
+}
+
+/* Analytics ---------------------------------------------------------- */
+
+.o-mock__concepts {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-evenly;
+	gap: calc(var(--u) * 0.55);
+	flex: 1 1 auto;
+}
+
+.o-mock__concept {
+	display: grid;
+	grid-template-columns: minmax(0, 12em) minmax(0, 1fr) auto;
+	align-items: center;
+	gap: calc(var(--u) * 0.8);
+	opacity: 0;
+	transition: opacity 0.4s var(--o-ease);
+}
+
+.o-mock__concept.is-in {
+	opacity: 1;
+}
+
+.o-mock__conceptName {
+	font-size: calc(var(--u) * 0.84);
+	color: var(--o-text-soft);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.o-mock__concept .o-mock__track {
+	height: calc(var(--u) * 0.75);
+}
+
+.o-mock__concept.is-flagged .o-mock__fill {
+	background: linear-gradient(90deg, var(--o-red), color-mix(in srgb, var(--o-red) 70%, #fff));
+}
+
+.o-mock__conceptValue {
+	font-variant-numeric: tabular-nums;
+	font-size: calc(var(--u) * 0.84);
+	color: var(--o-text);
+	flex: none;
+}
+
+.o-mock__concept.is-flagged .o-mock__conceptValue {
+	color: var(--o-red);
+}
+
+[data-theme='dark'] .o-mock__concept.is-flagged .o-mock__conceptValue {
+	color: #e8636a;
+}
+
+.o-mock__callout {
+	margin-top: auto;
+	padding: calc(var(--u) * 0.9) calc(var(--u) * 1.05);
+	background: color-mix(in srgb, var(--o-red) 8%, transparent);
+	border-left: 2px solid var(--o-red);
+	opacity: 0;
+	transform: translateY(calc(var(--u) * 0.5));
+	transition:
+		opacity 0.45s var(--o-ease),
+		transform 0.45s var(--o-ease);
+	flex: none;
+}
+
+.o-mock__callout.is-in {
+	opacity: 1;
+	transform: none;
+}
+
+.o-mock__callout p {
+	margin: calc(var(--u) * 0.35) 0 0;
+	max-width: 60ch;
+}
+
+/* ==========================================================================
+   Demo page furniture
+   ========================================================================== */
+
+.o-demo__stageSection {
+	padding-block: clamp(2.5rem, 5vw, 4rem);
+}
+
+.o-demo__note {
+	margin-top: clamp(1.5rem, 3vw, 2.25rem);
+	padding-top: 1.35rem;
+	border-top: 1px solid var(--o-line);
+	max-width: 74ch;
+}
+
+.o-demo__under {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: clamp(1.1rem, 2vw, 1.6rem);
+	margin-top: clamp(2.5rem, 5vw, 4rem);
+}
+
+.o-demo__underCard {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8rem;
+}
+
+.o-demo__hint {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1.5rem;
+	margin-top: 1.15rem;
+}
+
+.o-demo__key {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.78rem;
+	color: var(--o-text-faint);
+}
+
+.o-demo__key kbd {
+	font-family: var(--font-deco), 'Inter', sans-serif;
+	font-size: 0.62rem;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	padding: 0.2rem 0.45rem;
+	border: 1px solid var(--o-line-strong);
+	color: var(--o-text-soft);
+}
+
+/* Responsive --------------------------------------------------------- */
+
+@media (max-width: 1080px) {
+	.o-player {
+		grid-template-columns: minmax(0, 1fr);
+		grid-template-areas:
+			'stage'
+			'caption'
+			'chapters';
+	}
+
+	.o-player__chapters {
+		position: static;
+	}
+
+	.o-player__chapters ol {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.o-demo__under {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+
+@media (max-width: 620px) {
+	.o-player__chapters ol {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.o-player__chrome .o-player__url {
+		display: none;
+	}
+
+	/* The mock stops being legible below this width, so it turns portrait and
+	   gets more height once its columns have stacked. */
+	.o-player__viewport {
+		aspect-ratio: 3 / 5;
+	}
+
+	.o-mock {
+		--u: 3.4cqw;
+	}
+
+	.o-mock__grid--4,
+	.o-mock__form,
+	.o-mock__split,
+	.o-mock__options {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.o-mock__field--wide {
+		grid-column: span 1;
+	}
+
+	/* Stacked panels cannot carry four rows each at this height. Two still show
+	   the retrieval scores and the questions being written, which is the point
+	   of the frame. */
+	.o-mock__panel--flush .o-mock__chunk:nth-of-type(n + 3),
+	.o-mock__panel--flush .o-mock__question:nth-of-type(n + 3) {
+		display: none;
+	}
+
+	/* Decoration only, and the passage count above it already carries the idea. */
+	.o-mock__specks {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.o-player__pointer {
+		transition: none;
+	}
+
+	.o-player__rec i.is-live,
+	.o-mock__caret {
+		animation: none;
+	}
+
+	.o-player__captionText {
+		animation: none;
+	}
+}
