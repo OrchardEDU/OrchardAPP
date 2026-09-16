@@ -219,6 +219,9 @@
 	text-transform: uppercase;
 	color: var(--o-brass);
 	margin: 0;
+	/* The wide tracking makes these long enough to wrap in a column, and a
+	   single orphaned word reads as a mistake rather than a break. */
+	text-wrap: balance;
 }
 
 .o-eyebrow::before,
