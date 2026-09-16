@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { apiClient } from '@/lib/api/client';
@@ -112,21 +111,19 @@ const Header = () => {
 			<div className="o-header__inner">
 				<Link href="/" className="o-mark" aria-label="Orchard home">
 					<span className="o-mark__badge">
-						<Image
+						<img
 							src="/orchardedulogo.png"
 							alt=""
 							width={44}
 							height={44}
 							className="o-mark__img o-mark__img--light"
-							priority
 						/>
-						<Image
+						<img
 							src="/orchardedulogowhite.png"
 							alt=""
 							width={44}
 							height={44}
 							className="o-mark__img o-mark__img--dark"
-							priority
 						/>
 					</span>
 					<span className="o-mark__type">

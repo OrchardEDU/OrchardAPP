@@ -134,6 +134,37 @@ nextApp.prepare().then(async () => {
 	// Request logging middleware (after session, before routes)
 	expressApp.use(createRequestLogger(ENABLE_FRONTEND_LOGGING));
 
+	// Allow the production hostnames to read API responses and static assets
+	// (logos, favicons) when the browser treats them as cross-origin — e.g.
+	// www vs apex, or Cloudflare fetching /_next/image on a different origin.
+	const ALLOWED_ORIGINS = new Set([
+		'https://beta.orchardedu.com',
+		'https://orchardedu.com',
+		'https://www.orchardedu.com',
+		'http://localhost:3111',
+		'http://localhost:8086',
+	]);
+
+	expressApp.use((req, res, next) => {
+		const origin = req.headers.origin;
+		if (origin && ALLOWED_ORIGINS.has(origin)) {
+			res.setHeader('Access-Control-Allow-Origin', origin);
+			res.setHeader('Access-Control-Allow-Credentials', 'true');
+			res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+			res.setHeader(
+				'Access-Control-Allow-Headers',
+				'Content-Type, Authorization, X-Requested-With'
+			);
+			res.setHeader('Vary', 'Origin');
+		}
+
+		if (req.method === 'OPTIONS') {
+			return res.sendStatus(204);
+		}
+
+		next();
+	});
+
 	// API routes
 	expressApp.use('/api/auth', authRoutes);
 	expressApp.use('/api/courses', courseRoutes);

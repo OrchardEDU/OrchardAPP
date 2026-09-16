@@ -2,7 +2,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Chevrons } from './marketing/Deco';
 import './Footer.css';
 
@@ -31,7 +30,7 @@ const Footer = () => (
 		<div className="o-footer__inner">
 			<div className="o-footer__brand">
 				<Link href="/" className="o-footer__mark" aria-label="Orchard home">
-					<Image src="/orchardedulogowhite.png" alt="" width={52} height={52} />
+					<img src="/orchardedulogowhite.png" alt="" width={52} height={52} />
 					<span>
 						<span className="o-footer__name">Orchard</span>
 						<span className="o-footer__sub">Edu</span>
